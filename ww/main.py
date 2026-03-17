@@ -86,6 +86,33 @@ def main():
         elif cmd == "kill-macos-proxy":
             from ww.proc.kill_macos_proxy import main as kill_macos_proxy_main
             kill_macos_proxy_main()
+        elif cmd == "base64":
+            from ww.utils.base64utils import main as base64_main
+            base64_main()
+        elif cmd == "ccr":
+            from ww.utils.ccr import main as ccr_main
+            ccr_main()
+        elif cmd == "clean-zip":
+            from ww.utils.clean_zip import main as clean_zip_main
+            clean_zip_main()
+        elif cmd == "decode-jwt":
+            from ww.utils.decode_jwt import main as decode_jwt_main
+            decode_jwt_main()
+        elif cmd == "py2txt":
+            from ww.utils.py2txt import main as py2txt_main
+            py2txt_main()
+        elif cmd == "request-proxy":
+            from ww.utils.request_with_proxy import main as request_proxy_main
+            request_proxy_main()
+        elif cmd == "smart-unzip":
+            from ww.utils.smart_unzip import main as smart_unzip_main
+            smart_unzip_main()
+        elif cmd == "unzip":
+            from ww.utils.unzip import main as unzip_main
+            unzip_main()
+        elif cmd == "mvn":
+            from ww.java.mvn import main as mvn_main
+            mvn_main()
         else:
             print(f"Unknown command: {cmd}")
             sys.exit(1)
