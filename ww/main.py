@@ -448,6 +448,44 @@ def main():
 
             m()
 
+    elif group == "copilot":
+        subcmd = _pop_subcmd()
+        if subcmd == "auth":
+            from ww.llm.copilot_auth import main as m
+
+            m()
+        elif subcmd == "models":
+            import os
+            from ww.llm.copilot_client import get_models
+
+            github_token = os.getenv("GITHUB_TOKEN")
+            if not github_token:
+                print("Error: GITHUB_TOKEN not set. Run: ww copilot auth")
+                sys.exit(1)
+            models = get_models(github_token)
+            for m in models:
+                print(m.get("id", m))
+        elif subcmd == "chat":
+            import argparse
+            from ww.llm.copilot_client import call_copilot_api, MODEL_MAPPING
+
+            parser = argparse.ArgumentParser(description="Chat with GitHub Copilot API")
+            parser.add_argument("prompt", nargs="?", help="Prompt text")
+            parser.add_argument(
+                "--model",
+                type=str,
+                default="gpt-4o",
+                choices=list(MODEL_MAPPING.keys()),
+            )
+            parser.add_argument("--debug", action="store_true")
+            args = parser.parse_args()
+            prompt = args.prompt or input("Prompt: ")
+            result = call_copilot_api(prompt, model=args.model, debug=args.debug)
+            print(result)
+        else:
+            print(f"Unknown copilot command: {subcmd}")
+            sys.exit(1)
+
     else:
         print(f"Unknown command: {group}")
         sys.exit(1)
