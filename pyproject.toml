@@ -1,0 +1,14 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ww"
+version = "0.1.0"
+description = "A cross-platform CLI toolkit for personal and enterprise automation, with LLM integration."
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = []
+
+[project.scripts]
+ww = "ww.main:main"
