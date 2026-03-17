@@ -23,6 +23,12 @@ dependencies = [
 [project.scripts]
 ww = "ww.main:main"
 
+[tool.pyright]
+pythonVersion = "3.8"
+typeCheckingMode = "basic"
+reportMissingImports = true
+reportMissingModuleSource = false
+
 [tool.ruff.lint]
 ignore = [
     "E731",  # lambda assignments — used intentionally as prompt builders
