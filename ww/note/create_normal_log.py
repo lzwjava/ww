@@ -2,7 +2,7 @@ import os
 import re
 
 from ww.note.create_note_utils import get_clipboard_content, generate_title
-from ww.note.gpa import gpa
+from ww.github.gitmessageai import gitmessageai
 
 logs_dir = "./logs"
 
@@ -35,5 +35,5 @@ def create_normal_log():
     print(f"Log created: {file_path}")
 
     os.chdir(logs_dir)
-    gpa()
+    gitmessageai(model="grok-fast", allow_pull_push=True)
     print(f"Changed working directory to: {os.getcwd()}")
