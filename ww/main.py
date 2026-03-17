@@ -68,6 +68,24 @@ def main():
         elif cmd == "screenshot-linux":
             from ww.image.screenshot_linux import main as screenshot_linux_main
             screenshot_linux_main()
+        elif cmd == "image-compress":
+            from ww.image.image_compress import main as image_compress_main
+            image_compress_main()
+        elif cmd == "photo-compress":
+            from ww.image.photo_compress import main as photo_compress_main
+            photo_compress_main()
+        elif cmd == "kill-by-pattern":
+            from ww.proc.kill_by_pattern import main as kill_by_pattern_main
+            kill_by_pattern_main()
+        elif cmd == "kill-by-port":
+            from ww.proc.kill_by_port import main as kill_by_port_main
+            kill_by_port_main()
+        elif cmd == "kill-jekyll":
+            from ww.proc.kill_jekyll import main as kill_jekyll_main
+            kill_jekyll_main()
+        elif cmd == "kill-macos-proxy":
+            from ww.proc.kill_macos_proxy import main as kill_macos_proxy_main
+            kill_macos_proxy_main()
         else:
             print(f"Unknown command: {cmd}")
             sys.exit(1)
