@@ -1,5 +1,9 @@
 import sys
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 def _print_help():
     print("Usage: ww <group> [command] [options]")
