@@ -8,7 +8,11 @@ version = "0.1.0"
 description = "A cross-platform CLI toolkit for personal and enterprise automation, with LLM integration."
 readme = "README.md"
 requires-python = ">=3.8"
-dependencies = []
+dependencies = [
+    "requests>=2.32.0",
+    "pyperclip>=1.8.0",
+    "markdown>=3.5.0",
+]
 
 [project.scripts]
 ww = "ww.main:main"
