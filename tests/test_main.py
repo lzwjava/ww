@@ -72,12 +72,15 @@ class TestMainDispatch(unittest.TestCase):
                 mock_fn.assert_called_once()
 
     def test_list_fonts_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "list-fonts"]):
-            with patch("ww.macos.list_fonts.main") as mock_fn:
+        from unittest.mock import MagicMock
+
+        mock_module = MagicMock()
+        with patch.dict("sys.modules", {"ww.macos.list_fonts": mock_module}):
+            with patch.object(sys, "argv", ["ww", "list-fonts"]):
                 from ww.main import main
 
                 main()
-                mock_fn.assert_called_once()
+                mock_module.main.assert_called_once()
 
     def test_list_disks_dispatches(self):
         with patch.object(sys, "argv", ["ww", "list-disks"]):

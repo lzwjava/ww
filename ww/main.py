@@ -202,6 +202,90 @@ def main():
             from ww.network.network_plot import main as network_plot_main
 
             network_plot_main()
+        elif cmd == "git-amend-push":
+            from ww.git.git_amend_push import main as git_amend_push_main
+
+            git_amend_push_main()
+        elif cmd == "git-classify":
+            from ww.git.git_classify_commit import main as git_classify_main
+
+            git_classify_main()
+        elif cmd == "find-commit":
+            from ww.git.git_commit import main as find_commit_main
+
+            find_commit_main()
+        elif cmd == "git-delete-commit":
+            from ww.git.git_delete_commit import main as git_delete_commit_main
+
+            git_delete_commit_main()
+        elif cmd == "git-diff-tree":
+            from ww.git.git_diff_tree import main as git_diff_tree_main
+
+            git_diff_tree_main()
+        elif cmd == "git-check-filenames":
+            from ww.git.git_filename import main as git_check_filenames_main
+
+            git_check_filenames_main()
+        elif cmd == "git-force-push":
+            from ww.git.git_force_push import main as git_force_push_main
+
+            git_force_push_main()
+        elif cmd == "git-show":
+            from ww.git.git_show_command import main as git_show_main
+
+            git_show_main()
+        elif cmd == "git-squash":
+            from ww.git.git_squash import main as git_squash_main
+
+            git_squash_main()
+        elif cmd == "analyze-deps":
+            from ww.java.analyze_deps import main as analyze_deps_main
+
+            analyze_deps_main()
+        elif cmd == "analyze-packages":
+            from ww.java.analyze_packages import main as analyze_packages_main
+
+            analyze_packages_main()
+        elif cmd == "analyze-poms":
+            from ww.java.analyze_poms import main as analyze_poms_main
+
+            analyze_poms_main()
+        elif cmd == "analyze-spring":
+            from ww.java.analyze_spring_boot import main as analyze_spring_main
+
+            analyze_spring_main()
+        elif cmd == "clean-log":
+            from ww.java.clean_log import main as clean_log_main
+
+            clean_log_main()
+        elif cmd == "search":
+            from ww.search.search import main as search_main
+
+            search_main()
+        elif cmd == "search-bing":
+            from ww.search.search_bing import main as search_bing_main
+
+            search_bing_main()
+        elif cmd == "search-code":
+            from ww.search.search_code import main as search_code_main
+
+            search_code_main()
+        elif cmd == "search-ddg":
+            from ww.search.search_duckduckgo import main as search_ddg_main
+
+            search_ddg_main()
+        elif cmd == "search-ecosia":
+            from ww.search.search_ecosia import main as search_ecosia_main
+
+            search_ecosia_main()
+        elif cmd == "search-filename":
+            from ww.search.search_filename import main as search_filename_main
+
+            search_filename_main()
+        elif cmd == "search-startpage":
+            from ww.search.search_startpage import main as search_startpage_main
+
+            search_startpage_main()
         else:
             print(f"Unknown command: {cmd}")
             sys.exit(1)

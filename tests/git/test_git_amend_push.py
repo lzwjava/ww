@@ -1,3 +1,4 @@
+import sys
 import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -34,6 +35,66 @@ class TestRunCommand(unittest.TestCase):
         run_command(["git", "status"], check=False)
         _, kwargs = mock_run.call_args
         self.assertEqual(kwargs["check"], False)
+
+
+class TestStageAmendPush(unittest.TestCase):
+    @patch("subprocess.run")
+    def test_stage_changes_calls_git_add(self, mock_run):
+        from ww.git.git_amend_push import stage_changes
+
+        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+        stage_changes(Path("/tmp"))
+        cmd = mock_run.call_args[0][0]
+        self.assertIn("add", cmd)
+        self.assertIn("-A", cmd)
+
+    @patch("subprocess.run")
+    def test_amend_commit_calls_git_amend(self, mock_run):
+        from ww.git.git_amend_push import amend_commit
+
+        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+        amend_commit(Path("/tmp"))
+        cmd = mock_run.call_args[0][0]
+        self.assertIn("--amend", cmd)
+        self.assertIn("--no-edit", cmd)
+
+    @patch("subprocess.run")
+    def test_push_changes_calls_force_with_lease(self, mock_run):
+        from ww.git.git_amend_push import push_changes
+
+        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+        push_changes(Path("/tmp"))
+        cmd = mock_run.call_args[0][0]
+        self.assertIn("--force-with-lease", cmd)
+
+
+class TestMainAmendPush(unittest.TestCase):
+    @patch("subprocess.run")
+    def test_main_runs_all_three_steps(self, mock_run):
+        from ww.git.git_amend_push import main
+        import tempfile
+
+        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with patch.object(sys, "argv", ["git_amend_push", tmpdir]):
+                main()
+        self.assertEqual(mock_run.call_count, 3)
+
+    def test_main_exits_when_path_not_a_dir(self):
+        from ww.git.git_amend_push import main
+
+        with patch.object(sys, "argv", ["git_amend_push", "/nonexistent/path/xyz"]):
+            with self.assertRaises(SystemExit):
+                main()
+
+    @patch("subprocess.run")
+    def test_main_uses_cwd_when_no_args(self, mock_run):
+        from ww.git.git_amend_push import main
+
+        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+        with patch.object(sys, "argv", ["git_amend_push"]):
+            main()
+        self.assertEqual(mock_run.call_count, 3)
 
 
 if __name__ == "__main__":

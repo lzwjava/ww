@@ -1,3 +1,4 @@
+import requests
 import sys
 import unittest
 from unittest.mock import MagicMock, patch
@@ -19,7 +20,7 @@ class TestRequestUrlWithProxy(unittest.TestCase):
         result = request_url_with_proxy("http://example.com", {})
         self.assertEqual(result, mock_response)
 
-    @patch("requests.get", side_effect=Exception("connection error"))
+    @patch("requests.get", side_effect=requests.RequestException("connection error"))
     def test_returns_none_on_exception(self, mock_get):
         from ww.utils.request_with_proxy import request_url_with_proxy
 
@@ -63,7 +64,7 @@ class TestMain(unittest.TestCase):
                 self.assertIn("200", output)
                 self.assertIn("Content", output)
 
-    @patch("requests.get", side_effect=Exception("fail"))
+    @patch("requests.get", side_effect=requests.RequestException("fail"))
     def test_main_handles_request_failure(self, mock_get):
         from ww.utils.request_with_proxy import main
 
