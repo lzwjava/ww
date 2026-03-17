@@ -32,6 +32,21 @@ def main():
             github_token = os.getenv("GITHUB_TOKEN")
             markdown_output = format_projects_to_markdown(all_projects, github_username, github_token)
             print(markdown_output)
+        elif cmd == "avatar":
+            from ww.image.avatar import main as avatar_main
+            avatar_main()
+        elif cmd == "crop":
+            from ww.image.crop import main as crop_main
+            crop_main()
+        elif cmd == "remove-bg":
+            from ww.image.remove_bg import main as remove_bg_main
+            remove_bg_main()
+        elif cmd == "screenshot":
+            from ww.image.screenshot import main as screenshot_main
+            screenshot_main()
+        elif cmd == "screenshot-linux":
+            from ww.image.screenshot_linux import main as screenshot_linux_main
+            screenshot_linux_main()
         else:
             print(f"Unknown command: {cmd}")
             sys.exit(1)
