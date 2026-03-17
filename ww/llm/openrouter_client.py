@@ -1,87 +1,45 @@
-import requests
 import os
 
-
-MODEL_MAPPING = {
-    "claude-opus": "anthropic/claude-opus-4.6",
-    "claude-sonnet": "anthropic/claude-sonnet-4.5",
-    "claude-haiku": "anthropic/claude-haiku-4.5",
-    "gemini-flash": "google/gemini-3-flash-preview",
-    "gemini-pro": "google/gemini-3-pro-preview",
-    "kimi": "moonshotai/kimi-k2.5",
-    "deepseek": "deepseek/deepseek-v3.2",
-    "mistral": "mistralai/mistral-medium-3.1",
-    "qwen": "qwen/qwen3-coder",
-    "gpt": "openai/gpt-5.2-chat",
-    "grok-code": "x-ai/grok-code-fast-1",
-    "grok-fast": "x-ai/grok-4.1-fast",
-    "glm": "z-ai/glm-4.7",
-    "minimax": "minimax/minimax-m2.1",
-}
-
-DEFAULT_TOKENS = {
-    "claude-opus": 8192,
-    "claude-sonnet": 8192,
-    "gemini-flash": 400000,
-    "gemini-pro": 8192,
-    "kimi": 182768,
-    "deepseek": 132768,
-    "mistral": 92768,
-    "qwen": 32768,
-    "gpt": 8192,
-    "grok-code": 62144,
-    "grok-fast": 61072,
-    "glm": 32768,
-    "minimax": 32768,
-    "kimi-thinking": 32768,
-}
+import requests
 
 
 def call_openrouter_api_with_messages(
-    messages, model="mistral", max_tokens=None, debug=False
+    messages, model=None, max_tokens=None, debug=False
 ):
-    OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-    if not OPENROUTER_API_KEY:
-        raise Exception(
-            "OPENROUTER_API_KEY environment variable is not set or is empty"
-        )
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    if not api_key:
+        raise Exception("OPENROUTER_API_KEY environment variable is not set")
+
+    if model is None:
+        model = os.getenv("MODEL")
+    if not model:
+        raise Exception("MODEL not specified and MODEL env var is not set")
 
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     }
 
-    if model not in MODEL_MAPPING:
-        raise Exception(f"Model '{model}' not found in MODEL_MAPPING")
-
-    if max_tokens is None:
-        max_tokens = DEFAULT_TOKENS.get(model, 4096)
-
-    data = {
-        "model": MODEL_MAPPING[model],
-        "messages": messages,
-        "max_tokens": max_tokens,
-    }
+    data = {"model": model, "messages": messages}
+    if max_tokens is not None:
+        data["max_tokens"] = max_tokens
 
     if debug:
         print(f"Request URL: {url}")
         print(f"Request Data: {data}")
 
-    try:
-        response = requests.post(url, headers=headers, json=data)
-        if debug:
-            print(f"Response Status Code: {response.status_code}")
-            print(f"Response Text: {response.text}")
+    response = requests.post(url, headers=headers, json=data)
+    if debug:
+        print(f"Response Status: {response.status_code}")
+        print(f"Response: {response.text}")
 
-        if response.status_code == 200:
-            return response.json()["choices"][0]["message"]["content"]
-        else:
-            raise Exception(f"Error: {response.status_code} - {response.text}")
-    except Exception as e:
-        raise Exception(f"An error occurred: {str(e)}")
+    if response.status_code == 200:
+        return response.json()["choices"][0]["message"]["content"]
+    else:
+        raise Exception(f"Error: {response.status_code} - {response.text}")
 
 
-def call_openrouter_api(prompt, model="mistral", max_tokens=None, debug=False):
+def call_openrouter_api(prompt, model=None, max_tokens=None, debug=False):
     messages = [{"role": "user", "content": prompt}]
     return call_openrouter_api_with_messages(messages, model, max_tokens, debug)

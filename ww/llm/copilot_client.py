@@ -15,15 +15,6 @@ _COPILOT_HEADERS = {
     "Copilot-Integration-Id": "vscode-chat",
 }
 
-MODEL_MAPPING = {
-    "gpt-4o": "gpt-4o",
-    "gpt-4o-mini": "gpt-4o-mini",
-    "claude-sonnet": "claude-3.5-sonnet",
-    "o1": "o1",
-    "o1-mini": "o1-mini",
-    "o3-mini": "o3-mini",
-}
-
 
 def _get_copilot_token(github_token):
     resp = requests.get(
@@ -53,19 +44,22 @@ def get_models(github_token):
     return resp.json().get("data", [])
 
 
-def call_copilot_api_with_messages(messages, model="gpt-4o", debug=False):
+def call_copilot_api_with_messages(messages, model=None, debug=False):
     github_token = os.getenv("GITHUB_TOKEN")
     if not github_token:
         raise RuntimeError("GITHUB_TOKEN environment variable is not set")
 
-    actual_model = MODEL_MAPPING.get(model, model)
-    copilot_token = _get_copilot_token(github_token)
+    if model is None:
+        model = os.getenv("MODEL")
+    if not model:
+        raise RuntimeError("MODEL not specified and MODEL env var is not set")
 
-    payload = {"model": actual_model, "messages": messages, "stream": False}
+    copilot_token = _get_copilot_token(github_token)
+    payload = {"model": model, "messages": messages, "stream": False}
 
     if debug:
         print(f"Request URL: {COPILOT_API_BASE}/chat/completions")
-        print(f"Model: {actual_model}")
+        print(f"Model: {model}")
 
     resp = requests.post(
         f"{COPILOT_API_BASE}/chat/completions",
@@ -83,6 +77,6 @@ def call_copilot_api_with_messages(messages, model="gpt-4o", debug=False):
     return resp.json()["choices"][0]["message"]["content"]
 
 
-def call_copilot_api(prompt, model="gpt-4o", debug=False):
+def call_copilot_api(prompt, model=None, debug=False):
     messages = [{"role": "user", "content": prompt}]
     return call_copilot_api_with_messages(messages, model, debug)

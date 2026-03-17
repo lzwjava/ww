@@ -139,7 +139,7 @@ def main():
         subcmd = _pop_subcmd()
         if subcmd == "gitmessageai":
             import argparse
-            from ww.github.gitmessageai import gitmessageai, MODEL_MAPPING
+            from ww.github.gitmessageai import gitmessageai
 
             parser = argparse.ArgumentParser(
                 description="Generate commit message with AI and commit changes."
@@ -147,12 +147,6 @@ def main():
             parser.add_argument("--no-push", dest="push", action="store_false")
             parser.add_argument(
                 "--only-message", dest="only_message", action="store_true"
-            )
-            parser.add_argument(
-                "--model",
-                type=str,
-                default="grok-fast",
-                choices=list(MODEL_MAPPING.keys()),
             )
             parser.add_argument(
                 "--allow-pull-push", dest="allow_pull_push", action="store_true"
@@ -164,7 +158,6 @@ def main():
             gitmessageai(
                 push=args.push,
                 only_message=args.only_message,
-                model=args.model,
                 allow_pull_push=args.allow_pull_push,
                 type=args.type,
             )
@@ -467,16 +460,11 @@ def main():
                 print(m.get("id", m))
         elif subcmd == "chat":
             import argparse
-            from ww.llm.copilot_client import call_copilot_api, MODEL_MAPPING
+            from ww.llm.copilot_client import call_copilot_api
 
             parser = argparse.ArgumentParser(description="Chat with GitHub Copilot API")
             parser.add_argument("prompt", nargs="?", help="Prompt text")
-            parser.add_argument(
-                "--model",
-                type=str,
-                default="gpt-4o",
-                choices=list(MODEL_MAPPING.keys()),
-            )
+            parser.add_argument("--model", type=str, default=None)
             parser.add_argument("--debug", action="store_true")
             args = parser.parse_args()
             prompt = args.prompt or input("Prompt: ")
