@@ -32,6 +32,27 @@ def main():
             github_token = os.getenv("GITHUB_TOKEN")
             markdown_output = format_projects_to_markdown(all_projects, github_username, github_token)
             print(markdown_output)
+        elif cmd == "find-large-dirs":
+            from ww.macos.find_largest_directories import main as find_large_dirs_main
+            find_large_dirs_main()
+        elif cmd == "system-info":
+            from ww.macos.get_system_info import main as system_info_main
+            system_info_main()
+        elif cmd == "mac-install":
+            from ww.macos.install import main as mac_install_main
+            mac_install_main()
+        elif cmd == "list-fonts":
+            from ww.macos.list_fonts import main as list_fonts_main
+            list_fonts_main()
+        elif cmd == "list-disks":
+            from ww.macos.list_portable_disks import main as list_disks_main
+            list_disks_main()
+        elif cmd == "open-terminal":
+            from ww.macos.open_terminal import main as open_terminal_main
+            open_terminal_main()
+        elif cmd == "toast":
+            from ww.macos.toast import main as toast_main
+            toast_main()
         elif cmd == "avatar":
             from ww.image.avatar import main as avatar_main
             avatar_main()
