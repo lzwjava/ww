@@ -1,11 +1,6 @@
 import requests
 import os
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-
-if not OPENROUTER_API_KEY:
-    raise Exception("OPENROUTER_API_KEY environment variable is not set or is empty")
-
 
 MODEL_MAPPING = {
     "claude-opus": "anthropic/claude-opus-4.6",
@@ -45,6 +40,12 @@ DEFAULT_TOKENS = {
 def call_openrouter_api_with_messages(
     messages, model="mistral", max_tokens=None, debug=False
 ):
+    OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+    if not OPENROUTER_API_KEY:
+        raise Exception(
+            "OPENROUTER_API_KEY environment variable is not set or is empty"
+        )
+
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",

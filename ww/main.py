@@ -90,6 +90,11 @@ def _print_help():
     print("  ww search ecosia          Search with Ecosia")
     print("  ww search filename        Search by filename")
     print("  ww search startpage       Search with StartPage")
+    print("")
+    print("Copilot:")
+    print("  ww copilot auth           Authenticate via GitHub OAuth device flow")
+    print("  ww copilot models         List available Copilot models")
+    print("  ww copilot chat           Chat with a Copilot model")
 
 
 def _pop_subcmd():
