@@ -17,7 +17,6 @@ def _print_help():
     print("")
     print("GitHub:")
     print("  ww github gitmessageai    Generate AI commit message and commit")
-    print("  ww github readme          Generate GitHub README markdown")
     print("")
     print("macOS:")
     print("  ww macos find-large-dirs  Find largest directories on disk")
@@ -102,6 +101,8 @@ def _pop_subcmd():
 def main():
     if len(sys.argv) < 2:
         print("hello world")
+        print("")
+        _print_help()
         return
 
     group = sys.argv.pop(1)
@@ -162,14 +163,6 @@ def main():
                 allow_pull_push=args.allow_pull_push,
                 type=args.type,
             )
-        elif subcmd == "readme":
-            import os
-            from ww.github.readme import format_projects_to_markdown, all_projects
-
-            markdown_output = format_projects_to_markdown(
-                all_projects, "lzwjava", os.getenv("GITHUB_TOKEN")
-            )
-            print(markdown_output)
         else:
             print(f"Unknown github command: {subcmd}")
             sys.exit(1)
