@@ -1,5 +1,7 @@
+import sys
 import unittest
-from unittest.mock import patch
+from io import StringIO
+from unittest.mock import MagicMock, patch
 
 import os
 
@@ -42,6 +44,41 @@ class TestGenerateSquashMessage(unittest.TestCase):
         rebase_todo = "pick abc123 feat: first\nsquash def456 fix: second\n"
         result = generate_squash_message(rebase_todo)
         self.assertEqual(result, "fix: squash")
+
+
+class TestCheckGitStatus(unittest.TestCase):
+    @patch("subprocess.run")
+    def test_raises_when_uncommitted_changes(self, mock_run):
+        from ww.git.git_squash import check_git_status
+
+        mock_run.return_value = MagicMock(stdout=" M dirty.py\n")
+        with self.assertRaises(Exception) as ctx:
+            check_git_status()
+        self.assertIn("unstaged changes", str(ctx.exception))
+
+    @patch("subprocess.run")
+    def test_passes_when_clean(self, mock_run):
+        from ww.git.git_squash import check_git_status
+
+        mock_run.return_value = MagicMock(stdout="")
+        check_git_status()  # should not raise
+
+
+class TestMainSquash(unittest.TestCase):
+    @patch("ww.git.git_squash.call_openrouter_api", return_value="feat: squashed")
+    @patch("subprocess.run")
+    def test_main_prints_rebase_command(self, mock_run, mock_api):
+        from ww.git.git_squash import main
+
+        mock_run.return_value = MagicMock(stdout="")
+        rebase_input = "pick abc123 feat: first\npick def456 fix: second\n"
+
+        with patch.object(sys, "argv", ["git_squash", "2"]):
+            with patch("sys.stdin", StringIO(rebase_input)):
+                with patch("builtins.print") as mock_print:
+                    main()
+                    output = " ".join(str(c) for c in mock_print.call_args_list)
+                    self.assertIn("HEAD~2", output)
 
 
 if __name__ == "__main__":

@@ -87,5 +87,63 @@ class TestGetLastCommitInfo(unittest.TestCase):
         self.assertIsNone(result)
 
 
+class TestMain(unittest.TestCase):
+    @patch("subprocess.check_output")
+    def test_main_returns_zero_with_python_files(self, mock_out):
+        from ww.git.git_show_command import main
+
+        mock_out.side_effect = [
+            "abc123def456 feat: add feature",
+            "\nww/main.py\nREADME.md\n",
+        ]
+        with patch("builtins.print"):
+            with patch("os.path.exists", return_value=True):
+                result = main()
+        self.assertEqual(result, 0)
+
+    @patch("subprocess.check_output")
+    def test_main_returns_zero_with_no_python_files(self, mock_out):
+        from ww.git.git_show_command import main
+
+        mock_out.side_effect = [
+            "abc123def456 docs: update readme",
+            "\nREADME.md\n",
+        ]
+        with patch("builtins.print"):
+            result = main()
+        self.assertEqual(result, 0)
+
+    @patch(
+        "subprocess.check_output",
+        side_effect=subprocess.CalledProcessError(1, "git"),
+    )
+    def test_main_returns_one_when_git_fails(self, mock_out):
+        from ww.git.git_show_command import main
+
+        with patch("builtins.print"):
+            result = main()
+        self.assertEqual(result, 1)
+
+    @patch("subprocess.check_output")
+    def test_main_copies_to_clipboard_when_pyperclip_available(self, mock_out):
+        from ww.git.git_show_command import main
+        import ww.git.git_show_command as module
+
+        mock_out.side_effect = [
+            "abc123def456 feat: clipboard",
+            "\nscript.py\n",
+        ]
+        original = module.CLIPBOARD_AVAILABLE
+        try:
+            module.CLIPBOARD_AVAILABLE = True
+            with patch("pyperclip.copy") as mock_copy:
+                with patch("builtins.print"):
+                    with patch("os.path.exists", return_value=True):
+                        main()
+                mock_copy.assert_called_once_with("python script.py")
+        finally:
+            module.CLIPBOARD_AVAILABLE = original
+
+
 if __name__ == "__main__":
     unittest.main()
