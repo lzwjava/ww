@@ -32,7 +32,9 @@ def get_group_id(pom_path, pom_map):
             if parent_pom_path in pom_map:
                 group_id = get_group_id(parent_pom_path, pom_map)
             else:
-                raise ValueError(f"Parent POM not found for {pom_path}: {parent_pom_path}")
+                raise ValueError(
+                    f"Parent POM not found for {pom_path}: {parent_pom_path}"
+                )
         else:
             raise ValueError(f"No groupId or parent specified in {pom_path}")
 
@@ -57,7 +59,9 @@ def get_dependencies(pom_path):
         dep_group_id_elem = dep.find(NS + "groupId")
         dep_artifact_id_elem = dep.find(NS + "artifactId")
         if dep_group_id_elem is not None and dep_artifact_id_elem is not None:
-            dependencies.append((dep_group_id_elem.text.strip(), dep_artifact_id_elem.text.strip()))
+            dependencies.append(
+                (dep_group_id_elem.text.strip(), dep_artifact_id_elem.text.strip())
+            )
     return dependencies
 
 

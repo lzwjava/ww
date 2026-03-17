@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 from ww.create.create_note_utils import (

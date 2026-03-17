@@ -22,7 +22,9 @@ def search_code(query, ignore_case=False):
         cmd = [shutil.which("ack")]
         if ignore_case:
             cmd.append("-i")
-        cmd.append("--type-add=code=.py,.js,.ts,.rs,.c,.cpp,.cc,.h,.hpp,.java,.go,.rb,.php,.sh,.kt,.swift,.scala")
+        cmd.append(
+            "--type-add=code=.py,.js,.ts,.rs,.c,.cpp,.cc,.h,.hpp,.java,.go,.rb,.php,.sh,.kt,.swift,.scala"
+        )
         cmd.append("--code")
         cmd.append("--color")
         cmd.append("--color-match=red")
@@ -82,6 +84,8 @@ def search_code(query, ignore_case=False):
 def main():
     parser = argparse.ArgumentParser(description="Search code files in the repository")
     parser.add_argument("query", help="Search pattern to look for")
-    parser.add_argument("-i", "--ignore-case", action="store_true", help="Case insensitive search")
+    parser.add_argument(
+        "-i", "--ignore-case", action="store_true", help="Case insensitive search"
+    )
     args = parser.parse_args()
     search_code(args.query, args.ignore_case)

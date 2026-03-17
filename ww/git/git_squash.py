@@ -49,7 +49,9 @@ def main():
     print("\nRun this command to start the interactive rebase:")
     print(f"git rebase -i HEAD~{args.n}")
 
-    print("\nNow copy the contents of the git-rebase-todo file here (Ctrl+D when done):")
+    print(
+        "\nNow copy the contents of the git-rebase-todo file here (Ctrl+D when done):"
+    )
     rebase_todo = sys.stdin.read().strip()
 
     modified_todo = []

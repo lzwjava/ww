@@ -96,11 +96,17 @@ def main():
 
     if package_counter:
         if count:
-            print("[INFO] Analysis complete. Printing unique packages with counts (sorted by count descending):")
-            for pkg, cnt in sorted(package_counter.items(), key=lambda x: (-x[1], x[0])):
+            print(
+                "[INFO] Analysis complete. Printing unique packages with counts (sorted by count descending):"
+            )
+            for pkg, cnt in sorted(
+                package_counter.items(), key=lambda x: (-x[1], x[0])
+            ):
                 print(f"{pkg}: {cnt}")
         else:
-            print("[INFO] Analysis complete. Printing unique packages (sorted by name ascending):")
+            print(
+                "[INFO] Analysis complete. Printing unique packages (sorted by name ascending):"
+            )
             for pkg in sorted(package_counter):
                 print(pkg)
     else:

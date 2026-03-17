@@ -86,7 +86,9 @@ def search_posts(query, ignore_case=False, dirs=None):
 def main():
     parser = argparse.ArgumentParser(description="Search posts in the repository")
     parser.add_argument("query", help="Search pattern to look for")
-    parser.add_argument("-i", "--ignore-case", action="store_true", help="Case insensitive search")
+    parser.add_argument(
+        "-i", "--ignore-case", action="store_true", help="Case insensitive search"
+    )
     parser.add_argument(
         "--dir",
         nargs="*",

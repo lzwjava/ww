@@ -15,7 +15,9 @@ def smart_unzip(zip_path):
         for file in file_names:
             extracted_path = zip_ref.extract(file, extract_dir)
 
-            if not os.path.splitext(os.path.basename(file))[1] and not file.endswith("/"):
+            if not os.path.splitext(os.path.basename(file))[1] and not file.endswith(
+                "/"
+            ):
                 new_name = extracted_path + ".unknown"
                 os.rename(extracted_path, new_name)
                 renamed_files[new_name] = extracted_path

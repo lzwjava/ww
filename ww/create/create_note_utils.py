@@ -43,6 +43,7 @@ def generate_title(content, max_words, format_prompt):
     if not title:
         print(f"Failed to generate title with max {max_words} words. Exit.")
         import sys
+
         sys.exit(1)
     title = re.sub(r"\*", " ", title).strip()
     return title
@@ -53,6 +54,7 @@ def generate_short_title(prompt):
     if not title:
         print("Failed to generate short title. Exit.")
         import sys
+
         sys.exit(1)
     return title
 

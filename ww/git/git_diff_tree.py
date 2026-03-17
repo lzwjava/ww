@@ -4,7 +4,16 @@ from pathlib import Path
 
 
 def list_files_excluding_ext(repo, commit, exclude_ext):
-    cmd = ["git", "-C", str(repo), "diff-tree", "--no-commit-id", "--name-only", "-r", commit]
+    cmd = [
+        "git",
+        "-C",
+        str(repo),
+        "diff-tree",
+        "--no-commit-id",
+        "--name-only",
+        "-r",
+        commit,
+    ]
     try:
         output = subprocess.check_output(cmd, text=True)
     except subprocess.CalledProcessError as e:
@@ -24,7 +33,9 @@ def main():
     )
     parser.add_argument("repo", type=Path, help="Path to the git repository.")
     parser.add_argument("commit", help="Commit hash to inspect.")
-    parser.add_argument("--exclude-ext", default="py", help="File extension to exclude (default: py).")
+    parser.add_argument(
+        "--exclude-ext", default="py", help="File extension to exclude (default: py)."
+    )
     args = parser.parse_args()
 
     try:

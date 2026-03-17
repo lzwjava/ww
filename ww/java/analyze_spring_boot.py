@@ -52,12 +52,16 @@ def main():
             with open(java_file, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
-            if any("@Controller" in line or "@RestController" in line for line in lines):
+            if any(
+                "@Controller" in line or "@RestController" in line for line in lines
+            ):
                 controller_name = os.path.basename(java_file).replace(".java", "")
 
                 class_line_index = None
                 for i, line in enumerate(lines):
-                    if re.search(r"public\s+(class|abstract\s+class|interface)\s+\w+", line):
+                    if re.search(
+                        r"public\s+(class|abstract\s+class|interface)\s+\w+", line
+                    ):
                         class_line_index = i
                         break
                 if class_line_index is None:

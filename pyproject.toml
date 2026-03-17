@@ -22,3 +22,13 @@ dependencies = [
 
 [project.scripts]
 ww = "ww.main:main"
+
+[tool.ruff.lint]
+ignore = [
+    "E731",  # lambda assignments — used intentionally as prompt builders
+    "E722",  # bare except — intentional in network/system code
+    "F841",  # unused local variable
+]
+
+[tool.ruff.lint.per-file-ignores]
+"ww/search/*.py" = ["E402"]  # warnings.filterwarnings must precede imports

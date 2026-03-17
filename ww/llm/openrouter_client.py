@@ -42,7 +42,9 @@ DEFAULT_TOKENS = {
 }
 
 
-def call_openrouter_api_with_messages(messages, model="mistral", max_tokens=None, debug=False):
+def call_openrouter_api_with_messages(
+    messages, model="mistral", max_tokens=None, debug=False
+):
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",

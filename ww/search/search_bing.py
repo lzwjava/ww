@@ -6,7 +6,6 @@ import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from bs4 import BeautifulSoup
 from readability import Document
-from urllib.parse import urlparse, parse_qs
 
 DEFAULT_PROXY = {"http": "http://127.0.0.1:7890", "https": "http://127.0.0.1:7890"}
 PROXY = {
@@ -56,14 +55,20 @@ def extract_text_from_url(url):
             return f"Error: Received status code {res.status_code}"
 
         soup = BeautifulSoup(res.text, "html.parser")
-        for element in soup(["script", "style", "header", "footer", "nav", "aside", "form"]):
+        for element in soup(
+            ["script", "style", "header", "footer", "nav", "aside", "form"]
+        ):
             element.decompose()
 
         content_blocks = []
         if "zhihu.com" in url:
-            targets = soup.select(".QuestionHeader-title, .RichContent-inner, .Post-RichTextContainer")
+            targets = soup.select(
+                ".QuestionHeader-title, .RichContent-inner, .Post-RichTextContainer"
+            )
         elif "zhidao.baidu.com" in url:
-            targets = soup.select(".wgt-best-mask, .wgt-best-content, .wgt-answers, .line.content, .best-text")
+            targets = soup.select(
+                ".wgt-best-mask, .wgt-best-content, .wgt-answers, .line.content, .best-text"
+            )
         elif "wikipedia.org" in url:
             targets = soup.select("#firstHeading, .mw-parser-output p")
         elif "github.com" in url:
@@ -73,7 +78,9 @@ def extract_text_from_url(url):
                 doc = Document(res.text)
                 summary_html = doc.summary()
                 if summary_html:
-                    text = BeautifulSoup(summary_html, "html.parser").get_text(separator=" ", strip=True)
+                    text = BeautifulSoup(summary_html, "html.parser").get_text(
+                        separator=" ", strip=True
+                    )
                     if len(text) > 100:
                         return text
             except Exception as e:
@@ -88,7 +95,11 @@ def extract_text_from_url(url):
                 if text:
                     content_blocks.append(text)
 
-        return "\n\n".join(content_blocks) if content_blocks else soup.get_text(separator=" ", strip=True)
+        return (
+            "\n\n".join(content_blocks)
+            if content_blocks
+            else soup.get_text(separator=" ", strip=True)
+        )
     except Exception as e:
         return f"Error fetching {url}: {e}"
 
@@ -116,9 +127,13 @@ def copy_to_clipboard(text):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Optimized Bing Search & Extract for LLMs.")
+    parser = argparse.ArgumentParser(
+        description="Optimized Bing Search & Extract for LLMs."
+    )
     parser.add_argument("query", help="The search query")
-    parser.add_argument("-n", type=int, default=10, help="Number of results (default: 10)")
+    parser.add_argument(
+        "-n", type=int, default=10, help="Number of results (default: 10)"
+    )
     parser.add_argument("-o", "--output", help="Save output to file")
     args = parser.parse_args()
 
@@ -132,7 +147,9 @@ def main():
 
     processed_results = []
     with ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_info = {executor.submit(extract_text_from_url, r["url"]): r for r in search_results}
+        future_to_info = {
+            executor.submit(extract_text_from_url, r["url"]): r for r in search_results
+        }
         for future in as_completed(future_to_info):
             info = future_to_info[future]
             try:

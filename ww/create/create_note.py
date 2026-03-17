@@ -52,6 +52,7 @@ def open_note_in_browser(note_path: Optional[str], repo_url: str) -> None:
 
     try:
         import subprocess as sp
+
         repo_root = sp.check_output(
             ["git", "rev-parse", "--show-toplevel"], text=True
         ).strip()
@@ -63,6 +64,7 @@ def open_note_in_browser(note_path: Optional[str], repo_url: str) -> None:
     github_url = repo_url.rstrip("/") + "/blob/main/" + rel_path.replace(os.sep, "/")
 
     import sys
+
     if sys.platform.startswith("darwin"):
         command = ["open", github_url]
     elif sys.platform.startswith("linux"):
@@ -70,6 +72,7 @@ def open_note_in_browser(note_path: Optional[str], repo_url: str) -> None:
     else:
         try:
             import webbrowser
+
             if not webbrowser.open(github_url):
                 print(f"[warn] webbrowser module could not launch {github_url}")
         except Exception as exc:
@@ -94,12 +97,26 @@ def generate_random_date():
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Create a note.")
-    parser.add_argument("--random", action="store_true", help="Use a random date within last 180 days")
-    parser.add_argument("--without-math", action="store_true", help="Skip fixing MathJax delimiters")
-    parser.add_argument("--gemini", action="store_true", help="Enable Gemini-specific MathJax fixing")
-    parser.add_argument("--open", action="store_true", help="Open the note in browser after creating")
-    parser.add_argument("--no-push", action="store_true", help="Skip the gpa git push step")
-    parser.add_argument("--repo-url", default="https://github.com/lzwjava/blog-source", help="GitHub repo URL for --open")
+    parser.add_argument(
+        "--random", action="store_true", help="Use a random date within last 180 days"
+    )
+    parser.add_argument(
+        "--without-math", action="store_true", help="Skip fixing MathJax delimiters"
+    )
+    parser.add_argument(
+        "--gemini", action="store_true", help="Enable Gemini-specific MathJax fixing"
+    )
+    parser.add_argument(
+        "--open", action="store_true", help="Open the note in browser after creating"
+    )
+    parser.add_argument(
+        "--no-push", action="store_true", help="Skip the gpa git push step"
+    )
+    parser.add_argument(
+        "--repo-url",
+        default="https://github.com/lzwjava/blog-source",
+        help="GitHub repo URL for --open",
+    )
     return parser.parse_args()
 
 

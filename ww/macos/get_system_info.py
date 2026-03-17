@@ -122,7 +122,9 @@ def get_memory_info():
             pressure_text = ""
             if pressure:
                 pressure_levels = {"0": "Normal", "1": "Warning", "2": "Critical"}
-                pressure_text = f" (Pressure: {pressure_levels.get(pressure, pressure)})"
+                pressure_text = (
+                    f" (Pressure: {pressure_levels.get(pressure, pressure)})"
+                )
 
             vm_stat = run_command("vm_stat")
             if vm_stat:
@@ -154,13 +156,20 @@ def get_memory_info():
 def get_gpu_info():
     gpu_info = []
 
-    for vendor, label in [("Intel", "Intel Integrated Graphics"), ("AMD", "AMD GPU"), ("NVIDIA", "NVIDIA GPU"), ("Apple", "Apple Silicon GPU")]:
+    for vendor, label in [
+        ("Intel", "Intel Integrated Graphics"),
+        ("AMD", "AMD GPU"),
+        ("NVIDIA", "NVIDIA GPU"),
+        ("Apple", "Apple Silicon GPU"),
+    ]:
         info = run_command(f"system_profiler SPDisplaysDataType | grep -A 5 '{vendor}'")
         if info:
             gpu_info.append(f"{label}: {info.strip()}")
 
     if not gpu_info:
-        display_info = run_command("system_profiler SPDisplaysDataType | grep -A 10 'Graphics'")
+        display_info = run_command(
+            "system_profiler SPDisplaysDataType | grep -A 10 'Graphics'"
+        )
         if display_info:
             gpu_info.append(f"Display: {display_info.strip()}")
 
@@ -182,11 +191,17 @@ def get_macos_hardware_info():
     if cpu_cores:
         hardware_info.append(f"Cores: {cpu_cores}")
 
-    serial = run_command("system_profiler SPHardwareDataType | grep 'Serial Number' | awk -F': ' '{print $2}'")
+    serial = run_command(
+        "system_profiler SPHardwareDataType | grep 'Serial Number' | awk -F': ' '{print $2}'"
+    )
     if serial:
         hardware_info.append(f"Serial: {serial}")
 
-    return "; ".join(hardware_info) if hardware_info else "Unable to retrieve hardware info"
+    return (
+        "; ".join(hardware_info)
+        if hardware_info
+        else "Unable to retrieve hardware info"
+    )
 
 
 def main():

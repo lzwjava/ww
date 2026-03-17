@@ -2,7 +2,9 @@ from jpype import startJVM, JVMNotFoundException, isJVMStarted, JClass
 
 
 class JavaAgentConnector:
-    def __init__(self, jar_path="/path/to/java-agent.jar", agent_class="com.example.Agent"):
+    def __init__(
+        self, jar_path="/path/to/java-agent.jar", agent_class="com.example.Agent"
+    ):
         self.jar_path = jar_path
         self.agent_class = agent_class
         self.agent_instance = None

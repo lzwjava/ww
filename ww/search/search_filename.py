@@ -45,7 +45,9 @@ def search_filenames(query, ignore_case=False, delete=False):
             deleted_files = []
             missing_files = []
             for match in matches:
-                path = match if os.path.isabs(match) else os.path.join(os.getcwd(), match)
+                path = (
+                    match if os.path.isabs(match) else os.path.join(os.getcwd(), match)
+                )
                 if os.path.exists(path):
                     try:
                         os.remove(path)
@@ -70,9 +72,15 @@ def search_filenames(query, ignore_case=False, delete=False):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Search markdown filenames in the repository")
+    parser = argparse.ArgumentParser(
+        description="Search markdown filenames in the repository"
+    )
     parser.add_argument("query", help="Search pattern to look for in filenames")
-    parser.add_argument("-i", "--ignore-case", action="store_true", help="Case insensitive search")
-    parser.add_argument("--del", dest="delete", action="store_true", help="Delete all files that match")
+    parser.add_argument(
+        "-i", "--ignore-case", action="store_true", help="Case insensitive search"
+    )
+    parser.add_argument(
+        "--del", dest="delete", action="store_true", help="Delete all files that match"
+    )
     args = parser.parse_args()
     search_filenames(args.query, args.ignore_case, args.delete)

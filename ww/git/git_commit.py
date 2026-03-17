@@ -4,15 +4,23 @@ import argparse
 import datetime as dt
 import subprocess
 import sys
-from typing import Optional
 
 
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(
         description="Find the latest commit on the current branch that is at least N days old."
     )
-    parser.add_argument("--days", type=int, default=365, help="Number of days to look back (default: 365).")
-    parser.add_argument("--ref", default="HEAD", help="Git ref to search backwards from (default: HEAD).")
+    parser.add_argument(
+        "--days",
+        type=int,
+        default=365,
+        help="Number of days to look back (default: 365).",
+    )
+    parser.add_argument(
+        "--ref",
+        default="HEAD",
+        help="Git ref to search backwards from (default: HEAD).",
+    )
     return parser.parse_args(argv)
 
 

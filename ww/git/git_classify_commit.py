@@ -4,15 +4,47 @@ from pathlib import Path
 from collections import Counter
 
 CODE_EXTS = {
-    "py", "js", "ts", "jsx", "tsx", "html", "css", "scss", "sass",
-    "java", "c", "cpp", "cxx", "h", "hpp", "go", "rs", "php", "rb",
-    "swift", "kt", "scala", "clj", "erl", "ex", "dart",
+    "py",
+    "js",
+    "ts",
+    "jsx",
+    "tsx",
+    "html",
+    "css",
+    "scss",
+    "sass",
+    "java",
+    "c",
+    "cpp",
+    "cxx",
+    "h",
+    "hpp",
+    "go",
+    "rs",
+    "php",
+    "rb",
+    "swift",
+    "kt",
+    "scala",
+    "clj",
+    "erl",
+    "ex",
+    "dart",
 }
 MD_EXTS = {"md", "markdown"}
 
 
 def classify_commit(repo, commit):
-    cmd = ["git", "-C", str(repo), "diff-tree", "--no-commit-id", "--name-only", "-r", commit]
+    cmd = [
+        "git",
+        "-C",
+        str(repo),
+        "diff-tree",
+        "--no-commit-id",
+        "--name-only",
+        "-r",
+        commit,
+    ]
     try:
         output = subprocess.check_output(cmd, text=True)
     except subprocess.CalledProcessError as e:
@@ -47,9 +79,16 @@ def list_commits(repo, rev_range):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Count commits by type: code vs markdown vs others.")
+    parser = argparse.ArgumentParser(
+        description="Count commits by type: code vs markdown vs others."
+    )
     parser.add_argument("repo", type=Path, help="Path to the git repository.")
-    parser.add_argument("rev_range", nargs="?", default="HEAD", help="Git revision range (default: HEAD).")
+    parser.add_argument(
+        "rev_range",
+        nargs="?",
+        default="HEAD",
+        help="Git revision range (default: HEAD).",
+    )
     args = parser.parse_args()
 
     try:
@@ -67,7 +106,9 @@ def main():
         if ctype:
             stats[ctype] += 1
         if total < 50 or idx % max(1, total // 10) == 0 or idx == total:
-            print(f"[{idx:>{len(str(total))}}/{total}] {commit[:8]} -> {ctype or 'skip'}")
+            print(
+                f"[{idx:>{len(str(total))}}/{total}] {commit[:8]} -> {ctype or 'skip'}"
+            )
 
     print("\nCommit type counts:")
     for t in ("code", "md", "others"):

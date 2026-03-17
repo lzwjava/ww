@@ -1,9 +1,9 @@
 import subprocess
-import sys
 import os
 
 try:
     import pyperclip
+
     CLIPBOARD_AVAILABLE = True
 except ImportError:
     CLIPBOARD_AVAILABLE = False
@@ -17,9 +17,13 @@ def get_last_commit_info():
         ).strip()
         commit_hash, commit_message = commit_info.split(" ", 1)
 
-        all_files = subprocess.check_output(
-            ["git", "show", "--name-only", "--format=%n", commit_hash], text=True
-        ).strip().split("\n")
+        all_files = (
+            subprocess.check_output(
+                ["git", "show", "--name-only", "--format=%n", commit_hash], text=True
+            )
+            .strip()
+            .split("\n")
+        )
         all_files = [f.strip() for f in all_files if f.strip()]
         python_files = [f for f in all_files if f.endswith(".py")]
 
@@ -48,7 +52,9 @@ def main():
 
     commit_info = get_last_commit_info()
     if not commit_info:
-        print("Could not retrieve git commit information. Make sure you're in a git repository.")
+        print(
+            "Could not retrieve git commit information. Make sure you're in a git repository."
+        )
         return 1
 
     print(f"Last commit: {commit_info['hash']}")

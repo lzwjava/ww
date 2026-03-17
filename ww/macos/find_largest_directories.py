@@ -117,7 +117,9 @@ def main():
     large_dirs = find_large_directories(resolved_path, min_size_kb)
 
     if not large_dirs:
-        print(f"No directories larger than {args.mb} MB found in the immediate subdirectory level.")
+        print(
+            f"No directories larger than {args.mb} MB found in the immediate subdirectory level."
+        )
         return
 
     print("Large directories found:")

@@ -7,7 +7,9 @@ def get_commits_with_deletions(n):
     try:
         result = subprocess.run(
             ["git", "log", "--oneline", "-n", str(n), "--format=%H"],
-            capture_output=True, text=True, cwd="."
+            capture_output=True,
+            text=True,
+            cwd=".",
         )
         if result.returncode != 0:
             print(f"Error getting commits: {result.stderr}", file=sys.stderr)
@@ -23,7 +25,9 @@ def get_changed_files_count(commit_hash):
     try:
         result = subprocess.run(
             ["git", "show", "--stat", commit_hash],
-            capture_output=True, text=True, cwd="."
+            capture_output=True,
+            text=True,
+            cwd=".",
         )
         if result.returncode != 0:
             return 0
