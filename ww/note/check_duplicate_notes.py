@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from ww.create.create_note_utils import (
+from ww.note.create_note_utils import (
     get_clipboard_content,
     clean_grok_tags,
     clean_content,

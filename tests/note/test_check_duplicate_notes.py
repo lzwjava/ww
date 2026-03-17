@@ -7,7 +7,7 @@ os.environ.setdefault("OPENROUTER_API_KEY", "test-fake-key")
 
 class TestAreNotesQuickSimilar(unittest.TestCase):
     def setUp(self):
-        from ww.create.check_duplicate_notes import _are_notes_quick_similar
+        from ww.note.check_duplicate_notes import _are_notes_quick_similar
 
         self.func = _are_notes_quick_similar
 
@@ -44,7 +44,7 @@ class TestAreNotesQuickSimilar(unittest.TestCase):
 
 class TestExtractContentWithoutFrontmatter(unittest.TestCase):
     def setUp(self):
-        from ww.create.check_duplicate_notes import _extract_content_without_frontmatter
+        from ww.note.check_duplicate_notes import _extract_content_without_frontmatter
 
         self.func = _extract_content_without_frontmatter
         self.tmpdir = tempfile.mkdtemp()

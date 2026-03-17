@@ -1,8 +1,8 @@
 import os
 import re
 
-from ww.create.create_note_utils import get_clipboard_content, generate_title
-from ww.create.gpa import gpa
+from ww.note.create_note_utils import get_clipboard_content, generate_title
+from ww.note.gpa import gpa
 
 logs_dir = "./logs"
 

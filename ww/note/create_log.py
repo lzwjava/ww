@@ -1,5 +1,5 @@
-from ww.create.create_normal_log import create_normal_log
-from ww.create.create_note_utils import get_clipboard_content, generate_title
+from ww.note.create_normal_log import create_normal_log
+from ww.note.create_note_utils import get_clipboard_content, generate_title
 
 
 def is_sensitive_content(content):

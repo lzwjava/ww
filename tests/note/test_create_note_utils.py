@@ -8,7 +8,7 @@ os.environ.setdefault("OPENROUTER_API_KEY", "test-fake-key")
 
 class TestProcessTitleForFilename(unittest.TestCase):
     def setUp(self):
-        from ww.create.create_note_utils import process_title_for_filename
+        from ww.note.create_note_utils import process_title_for_filename
 
         self.func = process_title_for_filename
 
@@ -36,27 +36,27 @@ class TestProcessTitleForFilename(unittest.TestCase):
 
 class TestCleanGrokTags(unittest.TestCase):
     def test_passthrough_when_no_grok_tags(self):
-        from ww.create.create_note_utils import clean_grok_tags
+        from ww.note.create_note_utils import clean_grok_tags
 
         content = "Normal content without grok tags"
         result = clean_grok_tags(content)
         self.assertEqual(result, content)
 
     @patch(
-        "ww.create.create_note_utils.call_openrouter_api",
+        "ww.note.create_note_utils.call_openrouter_api",
         return_value="Cleaned content",
     )
     def test_calls_api_when_grok_tags_present(self, mock_api):
-        from ww.create.create_note_utils import clean_grok_tags
+        from ww.note.create_note_utils import clean_grok_tags
 
         content = 'Text <grok:render type="markdown">data</grok:render> more'
         result = clean_grok_tags(content)
         self.assertEqual(result, "Cleaned content")
         mock_api.assert_called_once()
 
-    @patch("ww.create.create_note_utils.call_openrouter_api", return_value=None)
+    @patch("ww.note.create_note_utils.call_openrouter_api", return_value=None)
     def test_returns_original_when_api_fails(self, mock_api):
-        from ww.create.create_note_utils import clean_grok_tags
+        from ww.note.create_note_utils import clean_grok_tags
 
         content = 'Text <grok:render type="markdown">data</grok:render> more'
         result = clean_grok_tags(content)
@@ -68,7 +68,7 @@ class TestCreateFilename(unittest.TestCase):
         self.tmpdir = tempfile.mkdtemp()
 
     def test_creates_filename_with_given_date(self):
-        from ww.create.create_note_utils import create_filename
+        from ww.note.create_note_utils import create_filename
 
         fp = create_filename("my-title", notes_dir=self.tmpdir, date="2024-01-01")
         self.assertIn("2024-01-01", fp)
@@ -76,7 +76,7 @@ class TestCreateFilename(unittest.TestCase):
         self.assertTrue(fp.endswith(".md"))
 
     def test_appends_counter_when_file_exists(self):
-        from ww.create.create_note_utils import create_filename
+        from ww.note.create_note_utils import create_filename
 
         fp1 = create_filename("my-title", notes_dir=self.tmpdir, date="2024-01-01")
         with open(fp1, "w") as f:
@@ -86,7 +86,7 @@ class TestCreateFilename(unittest.TestCase):
         self.assertIn("-1-", fp2)
 
     def test_creates_notes_dir_if_missing(self):
-        from ww.create.create_note_utils import create_filename
+        from ww.note.create_note_utils import create_filename
 
         new_dir = os.path.join(self.tmpdir, "new_notes")
         create_filename("title", notes_dir=new_dir, date="2024-01-01")
@@ -94,7 +94,7 @@ class TestCreateFilename(unittest.TestCase):
 
     def test_uses_today_date_when_not_specified(self):
         import datetime
-        from ww.create.create_note_utils import create_filename
+        from ww.note.create_note_utils import create_filename
 
         fp = create_filename("title", notes_dir=self.tmpdir)
         today = datetime.date.today().strftime("%Y-%m-%d")
@@ -103,7 +103,7 @@ class TestCreateFilename(unittest.TestCase):
 
 class TestFormatFrontMatter(unittest.TestCase):
     def setUp(self):
-        from ww.create.create_note_utils import format_front_matter
+        from ww.note.create_note_utils import format_front_matter
 
         self.func = format_front_matter
 
@@ -127,7 +127,7 @@ class TestFormatFrontMatter(unittest.TestCase):
 
 class TestCleanContent(unittest.TestCase):
     def setUp(self):
-        from ww.create.create_note_utils import clean_content
+        from ww.note.create_note_utils import clean_content
 
         self.func = clean_content
 

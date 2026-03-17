@@ -5,8 +5,8 @@ import argparse
 from datetime import datetime, timedelta
 from typing import Optional
 
-from ww.create.gpa import gpa
-from ww.create.create_note_from_clipboard import create_note
+from ww.note.gpa import gpa
+from ww.note.create_note_from_clipboard import create_note
 from ww.content.fix_mathjax import fix_mathjax_in_file
 from ww.content.fix_table import process_tables_in_file
 

@@ -2,7 +2,7 @@ import re
 import sys
 from datetime import datetime
 
-from ww.create.create_note_utils import (
+from ww.note.create_note_utils import (
     get_clipboard_content,
     clean_grok_tags,
     generate_title,
@@ -12,7 +12,7 @@ from ww.create.create_note_utils import (
     clean_content,
     write_note,
 )
-from ww.create.check_duplicate_notes import check_duplicate_notes
+from ww.note.check_duplicate_notes import check_duplicate_notes
 
 
 def create_note_from_content(content, custom_title=None, directory="notes", date=None):

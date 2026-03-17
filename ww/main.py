@@ -8,9 +8,9 @@ load_dotenv()
 def _print_help():
     print("Usage: ww <group> [command] [options]")
     print("")
-    print("Create:")
-    print("  ww create note            Create a new note with git integration")
-    print("  ww create log             Create a new log entry")
+    print("Note:")
+    print("  ww note                   Create a new note with git integration")
+    print("  ww note log               Create a new log entry")
     print("")
     print("GIF:")
     print("  ww gif                    Create GIF from images")
@@ -110,18 +110,18 @@ def main():
         _print_help()
         return
 
-    if group == "create":
+    if group == "note":
         subcmd = _pop_subcmd()
-        if subcmd == "note":
-            from ww.create.create_note import main as m
+        if subcmd == "" or subcmd == "note":
+            from ww.note.create_note import main as m
 
             m()
         elif subcmd == "log":
-            from ww.create.create_log import create_log
+            from ww.note.create_log import create_log
 
             create_log()
         else:
-            print(f"Unknown create command: {subcmd}")
+            print(f"Unknown note command: {subcmd}")
             sys.exit(1)
 
     elif group == "gif":
