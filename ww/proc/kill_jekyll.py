@@ -5,6 +5,7 @@ Script to kill Jekyll server processes running on port 4000 (default Jekyll port
 
 import subprocess
 import sys
+import time
 
 
 def get_jekyll_processes():
@@ -55,9 +56,6 @@ def kill_processes(pids):
             subprocess.run(["kill", "-9", str(pid)], check=True)
         except subprocess.CalledProcessError:
             print(f"Error killing process {pid}")
-
-    # Verify processes are dead
-    import time
 
     time.sleep(0.5)
 

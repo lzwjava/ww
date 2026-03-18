@@ -3,26 +3,42 @@
 import argparse
 import platform
 
-# Import platform-specific modules
+from .kill_unix import print_process_details
+
 if platform.system().lower() == "windows":
     from . import kill_windows as platform_module
 else:
     from . import kill_unix as platform_module
 
 
-def find_processes_by_pattern(pattern):
-    """Find all process IDs matching the specified pattern."""
-    return platform_module.find_processes_by_pattern(pattern)
+def ask_confirm(count):
+    print(
+        f"Do you want to kill all {count} process(es)? (Press Enter to kill, or 'no' to exit)"
+    )
+    try:
+        response = input().strip().lower()
+        return response not in ("no", "n")
+    except KeyboardInterrupt:
+        print("\nOperation cancelled.")
+        return False
 
 
-def get_process_details(pid):
-    """Get detailed information about a process."""
-    return platform_module.get_process_details(pid)
-
-
-def kill_process(pid):
-    """Kill the process with the specified PID."""
-    return platform_module.kill_process(pid)
+def kill_all(processes):
+    killed, failed = [], []
+    for pid, _ in processes:
+        if platform_module.kill_process(pid):
+            print(f"Successfully killed process {pid}")
+            killed.append(pid)
+        else:
+            print(f"Failed to kill process {pid}")
+            failed.append(pid)
+    if failed:
+        print(f"\nFailed to kill {len(failed)} process(es): {', '.join(failed)}")
+        print(
+            "You may need administrator privileges or the processes may have already terminated."
+        )
+    else:
+        print(f"\nSuccessfully killed all {len(killed)} process(es)")
 
 
 def main():
@@ -35,7 +51,7 @@ def main():
     args = parser.parse_args()
 
     pattern = args.pattern
-    processes = find_processes_by_pattern(pattern)
+    processes = platform_module.find_processes_by_pattern(pattern)
 
     if not processes:
         print(f"No processes found matching pattern '{pattern}'")
@@ -43,66 +59,14 @@ def main():
 
     print(f"Found {len(processes)} process(es) matching pattern '{pattern}':\n")
 
-    # Show details for each process found
     for i, (pid, process_info) in enumerate(processes, 1):
         print(f"[{i}] Process:")
-        print(f"  Name: {process_info}")
-
-        # Get detailed process information
-        details = get_process_details(pid)
-
-        if details:
-            if details.get("app_info"):
-                print(f"  Application: {details['app_info']}")
-            if details.get("started"):
-                print(f"  Started: {details['started']}")
-            if details.get("elapsed"):
-                print(f"  Running for: {details['elapsed']}")
-            if details.get("ppid"):
-                print(f"  Parent PID: {details['ppid']}")
-
-            # Show full command for Java processes
-            if details.get("name") == "java" and details.get("command"):
-                print(f"  Command: {details['command']}")
-        else:
-            print("  (Unable to retrieve detailed process information)")
-
+        details = platform_module.get_process_details(pid)
+        print_process_details(process_info, details)
         print()
 
-    print(
-        f"Do you want to kill all {len(processes)} process(es)? (Press Enter to kill, or 'no' to exit)"
-    )
-
-    try:
-        response = input().strip().lower()
-        if response == "no" or response == "n":
-            print("Processes not killed. Exiting.")
-            return
-    except KeyboardInterrupt:
-        print("\nOperation cancelled.")
-        return
-
-    # Kill all found processes
-    killed_count = 0
-    failed_count = 0
-    failed_pids = []
-
-    for pid, _ in processes:
-        if kill_process(pid):
-            killed_count += 1
-            print(f"Successfully killed process {pid}")
-        else:
-            failed_count += 1
-            failed_pids.append(pid)
-            print(f"Failed to kill process {pid}")
-
-    if failed_pids:
-        print(f"\nFailed to kill {failed_count} process(es): {', '.join(failed_pids)}")
-        print(
-            "You may need administrator privileges or the processes may have already terminated."
-        )
-    else:
-        print(f"\nSuccessfully killed all {killed_count} process(es)")
+    if ask_confirm(len(processes)):
+        kill_all(processes)
 
 
 if __name__ == "__main__":
