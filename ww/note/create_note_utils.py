@@ -6,6 +6,11 @@ import pyperclip
 from ww.llm.openrouter_client import call_openrouter_api
 
 
+def get_base_path():
+    base = os.environ.get("BASE_PATH", "").strip()
+    return base if base and base != "." else "."
+
+
 def get_first_n_words(text, n=500):
     words = text.split()
     return " ".join(words[:n])
@@ -59,7 +64,9 @@ def generate_short_title(prompt):
     return title
 
 
-def create_filename(short_title, notes_dir="notes", date=None):
+def create_filename(short_title, notes_dir=None, date=None):
+    if notes_dir is None:
+        notes_dir = os.path.join(get_base_path(), "notes")
     if date is None:
         today = datetime.date.today()
         date_str = today.strftime("%Y-%m-%d")

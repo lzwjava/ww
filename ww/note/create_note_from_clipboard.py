@@ -1,8 +1,10 @@
+import os
 import re
 import sys
 from datetime import datetime
 
 from ww.note.create_note_utils import (
+    get_base_path,
     get_clipboard_content,
     clean_grok_tags,
     generate_title,
@@ -15,8 +17,10 @@ from ww.note.create_note_utils import (
 from ww.note.check_duplicate_notes import check_duplicate_notes
 
 
-def create_note_from_content(content, custom_title=None, directory="notes", date=None):
+def create_note_from_content(content, custom_title=None, directory=None, date=None):
     """Create a note from provided content instead of clipboard"""
+    if directory is None:
+        directory = os.path.join(get_base_path(), "notes")
     if not content or not content.strip():
         print("Content is empty or invalid. Aborting.")
         sys.exit(1)

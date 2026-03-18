@@ -1,6 +1,8 @@
+import os
 from pathlib import Path
 
 from ww.note.create_note_utils import (
+    get_base_path,
     get_clipboard_content,
     clean_grok_tags,
     clean_content,
@@ -44,11 +46,13 @@ def _extract_content_without_frontmatter(file_path):
         return ""
 
 
-def check_duplicate_notes(notes_dir="notes") -> bool:
+def check_duplicate_notes(notes_dir=None) -> bool:
     """Check if clipboard content already exists in the latest 200 notes.
 
     Returns True if a duplicate is found, False otherwise.
     """
+    if notes_dir is None:
+        notes_dir = os.path.join(get_base_path(), "notes")
     clipboard_content = get_clipboard_content()
     if not clipboard_content or not clipboard_content.strip():
         print("[info] No content in clipboard")

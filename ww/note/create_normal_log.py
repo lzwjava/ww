@@ -1,13 +1,16 @@
 import os
 import re
 
-from ww.note.create_note_utils import get_clipboard_content, generate_title
+from ww.note.create_note_utils import (
+    get_base_path,
+    get_clipboard_content,
+    generate_title,
+)
 from ww.github.gitmessageai import gitmessageai
-
-logs_dir = "./logs"
 
 
 def create_normal_log():
+    logs_dir = os.path.join(get_base_path(), "logs")
     content = get_clipboard_content()
 
     filename_prompt = lambda c: (
@@ -35,5 +38,5 @@ def create_normal_log():
     print(f"Log created: {file_path}")
 
     os.chdir(logs_dir)
-    gitmessageai(model="grok-fast", allow_pull_push=True)
+    gitmessageai(allow_pull_push=True)
     print(f"Changed working directory to: {os.getcwd()}")
