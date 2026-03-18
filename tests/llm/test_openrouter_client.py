@@ -43,7 +43,7 @@ class TestCallOpenrouterApiWithMessages(unittest.TestCase):
             )
 
     @patch("ww.llm.openrouter_client.requests.post")
-    def test_uses_default_max_tokens_when_not_specified(self, mock_post):
+    def test_omits_max_tokens_when_not_specified(self, mock_post):
         from ww.llm import openrouter_client
 
         mock_post.return_value = MagicMock(
@@ -53,10 +53,7 @@ class TestCallOpenrouterApiWithMessages(unittest.TestCase):
         messages = [{"role": "user", "content": "test"}]
         openrouter_client.call_openrouter_api_with_messages(messages, model="mistral")
         _, kwargs = mock_post.call_args
-        self.assertEqual(
-            kwargs["json"]["max_tokens"],
-            openrouter_client.DEFAULT_TOKENS["mistral"],
-        )
+        self.assertNotIn("max_tokens", kwargs["json"])
 
     @patch("ww.llm.openrouter_client.requests.post")
     def test_respects_custom_max_tokens(self, mock_post):

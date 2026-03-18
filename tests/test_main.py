@@ -70,7 +70,15 @@ class TestMainDispatch(unittest.TestCase):
         self._run(["ww", "macos", "install"], "ww.macos.install.main")
 
     def test_list_fonts_dispatches(self):
-        self._run(["ww", "macos", "list-fonts"], "ww.macos.list_fonts.main")
+        from unittest.mock import MagicMock
+
+        mock_module = MagicMock()
+        with patch.dict("sys.modules", {"ww.macos.list_fonts": mock_module}):
+            with patch.object(sys, "argv", ["ww", "macos", "list-fonts"]):
+                from ww.main import main
+
+                main()
+                mock_module.main.assert_called_once()
 
     def test_list_disks_dispatches(self):
         self._run(["ww", "macos", "list-disks"], "ww.macos.list_portable_disks.main")
