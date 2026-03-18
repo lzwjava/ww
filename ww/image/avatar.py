@@ -1,29 +1,10 @@
-from PIL import Image
 import os
 import sys
 
-
-def crop_center(image_path, top_percent=0):
-    img = Image.open(image_path)
-    w, h = img.size
-
-    size = w
-    top = int(h * top_percent / 100)
-
-    left = 0
-    right = w
-    bottom = top + size
-
-    if bottom > h:
-        bottom = h
-        top = h - size
-        if top < 0:
-            top = 0
-
-    return img.crop((left, top, right, bottom))
+from ww.image.image_utils import crop_center
 
 
-def process_avatar(input_path, output_dir, top_percent=0):
+def process_avatar(input_path, output_dir, top_percent: float = 0):
     cropped = crop_center(input_path, top_percent)
     os.makedirs(output_dir, exist_ok=True)
     out1 = os.path.join(output_dir, "avatar.jpg")

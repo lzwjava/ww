@@ -32,44 +32,13 @@ def text_to_pdf_from_markdown(
 
     print(f"Generating PDF from: {input_markdown_path}")
 
-    CJK_FONT = "Heiti SC"
     GEOMETRY = "left=1.4cm, top=.8cm, right=1.4cm, bottom=1.8cm, footskip=.5cm"
 
     if not os.path.exists(input_markdown_path):
         raise Exception(f"Input file does not exist: {input_markdown_path}")
 
     lang = os.path.basename(input_markdown_path).split("-")[-1].split(".")[0]
-
-    if platform.system() == "Darwin":
-        if lang == "hi":
-            CJK_FONT = "Kohinoor Devanagari"
-        elif lang == "ar":
-            CJK_FONT = "Geeza Pro"
-        elif lang in ["en", "fr", "de", "es"]:
-            CJK_FONT = "Helvetica"
-        elif lang == "zh":
-            CJK_FONT = "PingFang SC"
-        elif lang == "hant":
-            CJK_FONT = "PingFang TC"
-        elif lang == "ja":
-            CJK_FONT = "Hiragino Sans"
-        else:
-            CJK_FONT = "Arial Unicode MS"
-    else:
-        if lang == "hi":
-            CJK_FONT = "Noto Sans Devanagari"
-        elif lang == "ar":
-            CJK_FONT = "Noto Naskh Arabic"
-        elif lang in ["en", "fr", "de", "es"]:
-            CJK_FONT = "DejaVu Sans"
-        elif lang == "zh":
-            CJK_FONT = "Noto Sans CJK SC"
-        elif lang == "hant":
-            CJK_FONT = "Noto Sans CJK TC"
-        elif lang == "ja":
-            CJK_FONT = "Noto Sans CJK JP"
-        else:
-            CJK_FONT = "Noto Sans"
+    CJK_FONT = _font_for_lang(lang)
     command = [
         "pandoc",
         input_markdown_path,
