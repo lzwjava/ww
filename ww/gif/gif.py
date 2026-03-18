@@ -3,6 +3,7 @@ import time
 import argparse
 import tempfile
 import datetime
+import platform
 from PIL import Image
 
 
@@ -27,36 +28,48 @@ def images_to_gif(image_folder, output_gif, duration):
 
 
 def capture_window_screenshot(window_name, output_path):
-    import Quartz  # type: ignore
     from PIL import ImageGrab
 
-    windows = Quartz.CGWindowListCopyWindowInfo(
-        Quartz.kCGWindowListOptionOnScreenOnly, Quartz.kCGNullWindowID
-    )
+    if platform.system() == "Darwin":
+        import Quartz  # type: ignore
 
-    target_window = None
-    for window in windows:
-        owner = window.get(Quartz.kCGWindowOwnerName, "")
-        if owner == window_name:
-            target_window = window
-            title = window.get(Quartz.kCGWindowName, "")
-            print(f"Found window: {owner} - {title}")
-            break
+        windows = Quartz.CGWindowListCopyWindowInfo(
+            Quartz.kCGWindowListOptionOnScreenOnly, Quartz.kCGNullWindowID
+        )
 
-    if not target_window:
-        print(f"Window '{window_name}' not found")
+        target_window = None
+        for window in windows:
+            owner = window.get(Quartz.kCGWindowOwnerName, "")
+            if owner == window_name:
+                target_window = window
+                title = window.get(Quartz.kCGWindowName, "")
+                print(f"Found window: {owner} - {title}")
+                break
+
+        if not target_window:
+            print(f"Window '{window_name}' not found")
+            return False
+
+        bounds = target_window.get("kCGWindowBounds")
+        if not bounds:
+            print("Could not get window bounds")
+            return False
+
+        x = int(bounds.get("X", 0))
+        y = int(bounds.get("Y", 0))
+        w = int(bounds.get("Width", 0))
+        h = int(bounds.get("Height", 0))
+        img = ImageGrab.grab(bbox=(x, y, x + w, y + h))
+    elif platform.system() == "Windows":
+        # On Windows, we fall back to full screen capture as specified in the plan
+        print(
+            "Windows detected: capturing full screen (window-specific capture not supported)"
+        )
+        img = ImageGrab.grab()
+    else:
+        print(f"Unsupported platform: {platform.system()}")
         return False
 
-    bounds = target_window.get("kCGWindowBounds")
-    if not bounds:
-        print("Could not get window bounds")
-        return False
-
-    x = int(bounds.get("X", 0))
-    y = int(bounds.get("Y", 0))
-    w = int(bounds.get("Width", 0))
-    h = int(bounds.get("Height", 0))
-    img = ImageGrab.grab(bbox=(x, y, x + w, y + h))
     img.save(output_path)
     print(f"Saved {output_path} size={img.size}")
     return True
