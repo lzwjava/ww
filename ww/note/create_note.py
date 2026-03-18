@@ -1,6 +1,8 @@
 import os
+import sys
 import random
 import subprocess
+import webbrowser
 import argparse
 from datetime import datetime, timedelta
 from typing import Optional
@@ -12,11 +14,15 @@ from ww.content.fix_mathjax import fix_mathjax_in_file
 from ww.content.fix_table import process_tables_in_file
 
 
+def _git_toplevel() -> str:
+    return subprocess.check_output(
+        ["git", "rev-parse", "--show-toplevel"], text=True
+    ).strip()
+
+
 def check_uncommitted_changes() -> None:
     try:
-        toplevel = subprocess.check_output(
-            ["git", "rev-parse", "--show-toplevel"], text=True
-        ).strip()
+        toplevel = _git_toplevel()
         result = subprocess.run(
             ["git", "-C", toplevel, "status", "--porcelain"],
             capture_output=True,
@@ -35,9 +41,7 @@ def check_uncommitted_changes() -> None:
 
 def git_pull_rebase() -> None:
     try:
-        toplevel = subprocess.check_output(
-            ["git", "rev-parse", "--show-toplevel"], text=True
-        ).strip()
+        toplevel = _git_toplevel()
         print(f"[info] Running 'git pull --rebase' in {toplevel}...")
         subprocess.run(["git", "-C", toplevel, "pull", "--rebase"], check=True)
     except Exception as e:
@@ -45,47 +49,35 @@ def git_pull_rebase() -> None:
         raise
 
 
-def open_note_in_browser(note_path: Optional[str], repo_url: str) -> None:
-    if not note_path:
-        return
-
-    abs_note_path = os.path.abspath(note_path)
-
-    try:
-        import subprocess as sp
-
-        repo_root = sp.check_output(
-            ["git", "rev-parse", "--show-toplevel"], text=True
-        ).strip()
-        rel_path = os.path.relpath(abs_note_path, repo_root)
-    except Exception as exc:
-        print(f"[warn] Unable to compute relative path for {abs_note_path}: {exc}")
-        return
-
-    github_url = repo_url.rstrip("/") + "/blob/main/" + rel_path.replace(os.sep, "/")
-
-    import sys
-
+def _open_url(github_url: str) -> None:
     if sys.platform.startswith("darwin"):
         command = ["open", github_url]
     elif sys.platform.startswith("linux"):
         command = ["env", "NO_AT_BRIDGE=1", "xdg-open", github_url]
     else:
-        try:
-            import webbrowser
-
-            if not webbrowser.open(github_url):
-                print(f"[warn] webbrowser module could not launch {github_url}")
-        except Exception as exc:
-            print(f"[warn] Unable to launch browser for {github_url}: {exc}")
+        if not webbrowser.open(github_url):
+            print(f"[warn] webbrowser module could not launch {github_url}")
         return
-
     try:
         subprocess.run(command, check=False)
     except FileNotFoundError:
         print(f"[warn] Launch command not found when opening {github_url}")
     except Exception as exc:
         print(f"[warn] Failed to open browser for {github_url}: {exc}")
+
+
+def open_note_in_browser(note_path: Optional[str], repo_url: str) -> None:
+    if not note_path:
+        return
+    abs_note_path = os.path.abspath(note_path)
+    try:
+        repo_root = _git_toplevel()
+        rel_path = os.path.relpath(abs_note_path, repo_root)
+    except Exception as exc:
+        print(f"[warn] Unable to compute relative path for {abs_note_path}: {exc}")
+        return
+    github_url = repo_url.rstrip("/") + "/blob/main/" + rel_path.replace(os.sep, "/")
+    _open_url(github_url)
 
 
 def generate_random_date():

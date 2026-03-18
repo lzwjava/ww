@@ -15,9 +15,6 @@ def _are_notes_quick_similar(content1, content2):
 
     len1 = len(content1)
     len2 = len(content2)
-    if max(len1, len2) == 0:
-        return False
-
     if abs(len1 - len2) / max(len1, len2) > 0.05:
         return False
 
@@ -44,6 +41,18 @@ def _extract_content_without_frontmatter(file_path):
     except Exception as e:
         print(f"[warn] Error reading {file_path}: {e}")
         return ""
+
+
+def _is_duplicate_of_any(clipboard_content, note_files):
+    for note_file in note_files:
+        try:
+            note_content = _extract_content_without_frontmatter(note_file)
+            if _are_notes_quick_similar(clipboard_content, note_content):
+                print(f"[warn] DUPLICATE FOUND: Content similar to {note_file.name}")
+                return True
+        except Exception as e:
+            print(f"[warn] Error checking {note_file.name}: {e}")
+    return False
 
 
 def check_duplicate_notes(notes_dir=None) -> bool:
@@ -75,16 +84,4 @@ def check_duplicate_notes(notes_dir=None) -> bool:
     latest_notes = note_files[:-1]
 
     print(f"[info] Checking against latest {len(latest_notes)} notes...")
-
-    for note_file in latest_notes:
-        try:
-            note_content = _extract_content_without_frontmatter(note_file)
-            if _are_notes_quick_similar(clipboard_content, note_content):
-                print(f"[warn] DUPLICATE FOUND: Content similar to {note_file.name}")
-                return True
-        except Exception as e:
-            print(f"[warn] Error checking {note_file.name}: {e}")
-            continue
-
-    print("[info] No duplicates found")
-    return False
+    return _is_duplicate_of_any(clipboard_content, latest_notes)

@@ -17,8 +17,42 @@ from ww.note.create_note_utils import (
 from ww.note.check_duplicate_notes import check_duplicate_notes
 
 
+def _validate_and_clean_short_title(raw: str) -> str:
+    short_title = raw.lower().strip("-")
+    short_title = re.sub(r"[^a-z0-9-]", "", short_title)
+    short_title = re.sub(r"-+", "-", short_title).strip("-")
+    parts = short_title.split("-")
+    if (
+        not short_title
+        or len(short_title) > 65
+        or len(parts) > 6
+        or any(len(p) > 15 or not p.isalnum() for p in parts)
+    ):
+        raise ValueError(
+            f"Invalid short_title '{short_title}': must be only lowercase a-z0-9/-, <=65 chars, <=6 words (<=15 chars each). Regenerate."
+        )
+    return short_title
+
+
+def _generate_titles(content):
+    full_title_prompt = lambda c: (
+        f"Generate a very short title in English (maximum six words, do not have single quote) for the following text and respond with only the title: {c}"
+    )
+    full_title = generate_title(content, 6, full_title_prompt)
+    short_title_prompt = f"Generate a concise title for file naming (max 4 words, lowercase letters/numbers/hyphens only, no spaces/special chars/single quotes/underscores, use hyphens to join words) based on this title: {full_title}. Respond with just the title:"
+    short_title = _validate_and_clean_short_title(
+        generate_short_title(short_title_prompt)
+    )
+    return full_title, short_title
+
+
+def _titles_from_custom(custom_title):
+    full_title = custom_title
+    short_title = re.sub(r"[^a-z0-9-]", "", custom_title.lower().replace(" ", "-"))
+    return full_title, short_title
+
+
 def create_note_from_content(content, custom_title=None, directory=None, date=None):
-    """Create a note from provided content instead of clipboard"""
     if directory is None:
         directory = os.path.join(get_base_path(), "notes")
     if not content or not content.strip():
@@ -34,31 +68,9 @@ def create_note_from_content(content, custom_title=None, directory=None, date=No
     content = clean_grok_tags(content)
 
     if custom_title:
-        full_title = custom_title
-        short_title = custom_title.lower().replace(" ", "-")
-        short_title = re.sub(r"[^a-z0-9-]", "", short_title)
+        full_title, short_title = _titles_from_custom(custom_title)
     else:
-        full_title_prompt = lambda c: (
-            f"Generate a very short title in English (maximum six words, do not have single quote) for the following text and respond with only the title: {c}"
-        )
-        full_title = generate_title(content, 6, full_title_prompt)
-
-        short_title_prompt = f"Generate a concise title for file naming (max 4 words, lowercase letters/numbers/hyphens only, no spaces/special chars/single quotes/underscores, use hyphens to join words) based on this title: {full_title}. Respond with just the title:"
-        short_title = generate_short_title(short_title_prompt).lower()
-
-        short_title = short_title.lower().strip("-")
-        short_title = re.sub(r"[^a-z0-9-]", "", short_title)
-        short_title = re.sub(r"-+", "-", short_title).strip("-")
-        parts = short_title.split("-")
-        if (
-            not short_title
-            or len(short_title) > 65
-            or len(parts) > 6
-            or any(len(p) > 15 or not p.isalnum() for p in parts)
-        ):
-            raise ValueError(
-                f"Invalid short_title '{short_title}': must be only lowercase a-z0-9/-, <=65 chars, <=6 words (<=15 chars each). Regenerate."
-            )
+        full_title, short_title = _generate_titles(content)
 
     file_path = create_filename(short_title, directory, date)
     front_matter = format_front_matter(full_title, date)

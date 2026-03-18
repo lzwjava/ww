@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 import datetime
 import pyperclip
 
@@ -41,35 +42,31 @@ def get_clipboard_content():
     return pyperclip.paste()
 
 
-def generate_title(content, max_words, format_prompt):
-    prompt_content = get_first_n_words(content)
-    prompt = format_prompt(prompt_content)
-    title = call_openrouter_api(prompt)
-    if not title:
-        print(f"Failed to generate title with max {max_words} words. Exit.")
-        import sys
-
+def _call_llm_or_exit(prompt, error_msg):
+    result = call_openrouter_api(prompt)
+    if not result:
+        print(error_msg)
         sys.exit(1)
-    title = re.sub(r"\*", " ", title).strip()
-    return title
+    return result
+
+
+def generate_title(content, max_words, format_prompt):
+    prompt = format_prompt(get_first_n_words(content))
+    title = _call_llm_or_exit(
+        prompt, f"Failed to generate title with max {max_words} words. Exit."
+    )
+    return re.sub(r"\*", " ", title).strip()
 
 
 def generate_short_title(prompt):
-    title = call_openrouter_api(prompt)
-    if not title:
-        print("Failed to generate short title. Exit.")
-        import sys
-
-        sys.exit(1)
-    return title
+    return _call_llm_or_exit(prompt, "Failed to generate short title. Exit.")
 
 
 def create_filename(short_title, notes_dir=None, date=None):
     if notes_dir is None:
         notes_dir = os.path.join(get_base_path(), "notes")
     if date is None:
-        today = datetime.date.today()
-        date_str = today.strftime("%Y-%m-%d")
+        date_str = datetime.date.today().strftime("%Y-%m-%d")
     else:
         date_str = date
     if not os.path.exists(notes_dir):
