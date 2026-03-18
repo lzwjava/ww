@@ -129,7 +129,7 @@ def main():
     if group == "note":
         subcmd = _pop_subcmd()
         if subcmd == "" or subcmd == "note":
-            from ww.note.create_note import main as m
+            from ww.note.note_workflow import main as m
 
             m()
         elif subcmd == "log":
