@@ -138,7 +138,7 @@ def main():
             print(f"[warn] MathJax fix failed for {created_path}: {e}")
 
     if not args.no_push:
-        gitmessageai(model="grok-fast", allow_pull_push=True)
+        gitmessageai(allow_pull_push=True)
 
     if args.open:
         try:
