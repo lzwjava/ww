@@ -48,21 +48,15 @@ def _poll_for_access_token(device_code, interval=5):
 
 
 def _save_token_to_env(token, env_path=".env"):
-    """Write or update GITHUB_TOKEN in .env file."""
-    lines = []
-    found = False
-    if os.path.exists(env_path):
-        with open(env_path) as f:
-            for line in f:
-                if line.startswith("GITHUB_TOKEN="):
-                    lines.append(f"GITHUB_TOKEN={token}\n")
-                    found = True
-                else:
-                    lines.append(line)
-    if not found:
-        lines.append(f"GITHUB_TOKEN={token}\n")
+    existing = open(env_path).readlines() if os.path.exists(env_path) else []
+    token_line = f"GITHUB_TOKEN={token}\n"
+    updated = [
+        token_line if line.startswith("GITHUB_TOKEN=") else line for line in existing
+    ]
+    if token_line not in updated:
+        updated.append(token_line)
     with open(env_path, "w") as f:
-        f.writelines(lines)
+        f.writelines(updated)
 
 
 def main():

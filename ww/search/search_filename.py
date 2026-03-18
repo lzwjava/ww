@@ -1,32 +1,17 @@
 import subprocess
 import argparse
-import sys
 import os
-import shutil
 
-
-def check_ack():
-    if not shutil.which("ack"):
-        print("Error: ack is not installed.")
-        print("Please install it first:")
-        print("  macOS: brew install ack")
-        print("  Ubuntu/Debian: sudo apt-get install ack")
-        print("  Windows: scoop install ack")
-        sys.exit(1)
+from .common import check_ack
 
 
 def search_filenames(query, ignore_case=False, delete=False):
     try:
-        check_ack()
-
-        cmd = [shutil.which("ack")]
+        ack = check_ack()
+        cmd = [ack]
         if ignore_case:
             cmd.append("-i")
-        cmd.append("-g")
-        cmd.append("--type-add=md=.md,.markdown")
-        cmd.append("--md")
-        cmd.append(query)
-        cmd.append("notes")
+        cmd.extend(["-g", "--type-add=md=.md,.markdown", "--md", query, "notes"])
 
         result = subprocess.run(cmd, capture_output=True, text=True)
 
@@ -35,33 +20,13 @@ def search_filenames(query, ignore_case=False, delete=False):
             print(result.stderr)
             return
 
-        if not result.stdout.strip():
+        matches = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+        if not matches:
             print("No matching filenames found")
             return
 
-        matches = [line.strip() for line in result.stdout.splitlines() if line.strip()]
-
         if delete:
-            deleted_files = []
-            missing_files = []
-            for match in matches:
-                path = (
-                    match if os.path.isabs(match) else os.path.join(os.getcwd(), match)
-                )
-                if os.path.exists(path):
-                    try:
-                        os.remove(path)
-                        deleted_files.append(match)
-                    except OSError as exc:
-                        print(f"Failed to delete {match}: {exc}")
-                else:
-                    missing_files.append(match)
-            if deleted_files:
-                print("Deleted files:")
-                print("\n".join(deleted_files))
-            if missing_files:
-                print("Files not found (skipped):")
-                print("\n".join(missing_files))
+            _delete_matches(matches)
         else:
             print("\n".join(matches))
 
@@ -69,6 +34,26 @@ def search_filenames(query, ignore_case=False, delete=False):
         print(f"Error executing search: {e}")
     except Exception as e:
         print(f"An error occurred: {e}")
+
+
+def _delete_matches(matches):
+    deleted, missing = [], []
+    for match in matches:
+        path = match if os.path.isabs(match) else os.path.join(os.getcwd(), match)
+        if os.path.exists(path):
+            try:
+                os.remove(path)
+                deleted.append(match)
+            except OSError as exc:
+                print(f"Failed to delete {match}: {exc}")
+        else:
+            missing.append(match)
+    if deleted:
+        print("Deleted files:")
+        print("\n".join(deleted))
+    if missing:
+        print("Files not found (skipped):")
+        print("\n".join(missing))
 
 
 def main():

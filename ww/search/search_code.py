@@ -1,38 +1,32 @@
 import subprocess
 import argparse
-import sys
 import os
-import shutil
 
+from .common import check_ack, print_ack_output
 
-def check_ack():
-    if not shutil.which("ack"):
-        print("Error: ack is not installed.")
-        print("Please install it first:")
-        print("  macOS: brew install ack")
-        print("  Ubuntu/Debian: sudo apt-get install ack")
-        print("  Windows: scoop install ack")
-        sys.exit(1)
+CODE_TYPES = (
+    ".py,.js,.ts,.rs,.c,.cpp,.cc,.h,.hpp,.java,.go,.rb,.php,.sh,.kt,.swift,.scala"
+)
 
 
 def search_code(query, ignore_case=False):
     try:
-        check_ack()
-
-        cmd = [shutil.which("ack")]
+        ack = check_ack()
+        cmd = [ack]
         if ignore_case:
             cmd.append("-i")
-        cmd.append(
-            "--type-add=code=.py,.js,.ts,.rs,.c,.cpp,.cc,.h,.hpp,.java,.go,.rb,.php,.sh,.kt,.swift,.scala"
+        cmd.extend(
+            [
+                f"--type-add=code={CODE_TYPES}",
+                "--code",
+                "--color",
+                "--color-match=red",
+                query,
+                ".",
+            ]
         )
-        cmd.append("--code")
-        cmd.append("--color")
-        cmd.append("--color-match=red")
-        cmd.append(query)
-        cmd.append(".")
 
-        env = os.environ.copy()
-        env["CLICOLOR_FORCE"] = "1"
+        env = {**os.environ, "CLICOLOR_FORCE": "1"}
         result = subprocess.run(cmd, capture_output=True, text=True, env=env)
 
         if result.returncode not in [0, 1]:
@@ -40,40 +34,7 @@ def search_code(query, ignore_case=False):
             print(result.stderr)
             return
 
-        if result.stdout:
-            lines = result.stdout.strip().split("\n")
-            for line in lines:
-                print()
-                if line.startswith("--"):
-                    print()
-                    continue
-                if ":" in line:
-                    parts = line.split(":", 1)
-                    if len(parts) >= 2:
-                        file_part = parts[0]
-                        content = parts[1]
-                        if "-" in file_part and file_part.split("-")[-1].isdigit():
-                            file_name = "-".join(file_part.split("-")[:-1])
-                            line_num = file_part.split("-")[-1]
-                            print(f"{file_name}:{line_num}:{content}")
-                        else:
-                            print(line)
-                    else:
-                        print(line)
-                elif "-" in line and not line.startswith("-"):
-                    parts = line.split("-")
-                    if len(parts) >= 3 and parts[-2].isdigit():
-                        file_name = "-".join(parts[:-2])
-                        line_num = parts[-2]
-                        content = parts[-1]
-                        print(f"{file_name}:{line_num}:{content}")
-                    else:
-                        print(line)
-                else:
-                    print(line)
-            print()
-        else:
-            print("No matches found")
+        print_ack_output(result.stdout)
 
     except subprocess.CalledProcessError as e:
         print(f"Error executing search: {e}")
