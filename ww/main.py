@@ -81,6 +81,8 @@ def _print_help():
     print("  ww git force-push         Force push to remote")
     print("  ww git show               Show git commit details")
     print("  ww git squash             Squash git commits")
+    print("  ww git gca                AI commit, no push (gemini-flash)")
+    print("  ww git gpa                AI commit with pull+push (gemini-flash)")
     print("")
     print("Search:")
     print("  ww search                 Web search (multi-engine)")
@@ -411,6 +413,14 @@ def main():
             from ww.git.git_squash import main as m
 
             m()
+        elif subcmd == "gca":
+            from ww.github.gitmessageai import gitmessageai
+
+            gitmessageai(push=False, model="gemini-flash")
+        elif subcmd == "gpa":
+            from ww.github.gitmessageai import gitmessageai
+
+            gitmessageai(allow_pull_push=True, model="gemini-flash")
         else:
             print(f"Unknown git command: {subcmd}")
             sys.exit(1)

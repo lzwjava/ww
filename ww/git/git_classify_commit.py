@@ -64,8 +64,6 @@ def classify_commit(repo, commit):
         else:
             counts["others"] += 1
 
-    if not counts:
-        return None
     return counts.most_common(1)[0][0]
 
 

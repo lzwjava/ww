@@ -7,7 +7,6 @@ try:
     CLIPBOARD_AVAILABLE = True
 except ImportError:
     CLIPBOARD_AVAILABLE = False
-    print("Note: pyperclip not found. To install: pip3 install pyperclip")
 
 
 def get_last_commit_info():
@@ -41,10 +40,8 @@ def get_last_commit_info():
 def format_file_list(files, title):
     if not files:
         return f"  {title}: None"
-    result = f"  {title}:"
-    for i, file in enumerate(files, 1):
-        result += f"\n    {i}. {file}"
-    return result
+    items = "\n".join(f"    {i}. {f}" for i, f in enumerate(files, 1))
+    return f"  {title}:\n{items}"
 
 
 def main():
@@ -70,11 +67,13 @@ def main():
         python_cmd = f"python {first_py}"
         print(f"First Python file: {first_py}")
 
-        if CLIPBOARD_AVAILABLE:
+        if not CLIPBOARD_AVAILABLE:
+            print("Note: pyperclip not found. To install: pip3 install pyperclip")
+        else:
             try:
                 pyperclip.copy(python_cmd)
                 print("Command copied to clipboard!")
-            except Exception as e:
+            except OSError as e:
                 print(f"Could not copy to clipboard: {e}")
 
         print(f"Command to try: {python_cmd}")

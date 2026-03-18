@@ -73,7 +73,12 @@ def _push_with_fallback(git, allow_pull_push):
 
 
 def gitmessageai(
-    push=True, only_message=False, allow_pull_push=False, type="file", directory=None
+    push=True,
+    only_message=False,
+    allow_pull_push=False,
+    type="file",
+    directory=None,
+    model=None,
 ):
     git = ["git", "-C", directory] if directory else ["git"]
 
@@ -115,7 +120,7 @@ def gitmessageai(
         print("No changes to commit.")
         return
 
-    commit_message = call_llm(prompt)
+    commit_message = call_llm(prompt, model=model)
     if not commit_message:
         print("Error: No response from LLM.")
         return

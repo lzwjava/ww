@@ -10,18 +10,23 @@ def check_git_status():
         ["git", "status", "--porcelain"], capture_output=True, text=True
     )
     if result.stdout.strip():
-        raise Exception(
+        raise RuntimeError(
             "Cannot rebase: You have unstaged changes. Please commit or stash them first."
         )
 
 
+def collect_commits(rebase_todo):
+    action_lines = [
+        line
+        for line in rebase_todo.split("\n")
+        if line.startswith("pick") or line.startswith("squash")
+    ]
+    parts_list = [line.split(" ", 3) for line in action_lines]
+    return [parts[2] for parts in parts_list if len(parts) > 2]
+
+
 def generate_squash_message(rebase_todo):
-    commits = []
-    for line in rebase_todo.split("\n"):
-        if line.startswith("pick") or line.startswith("squash"):
-            parts = line.split(" ", 3)
-            if len(parts) > 2:
-                commits.append(parts[2])
+    commits = collect_commits(rebase_todo)
 
     prompt = f"""Here are the commits to be squashed:
 
@@ -44,7 +49,11 @@ def main():
     parser.add_argument("n", type=int, help="Number of commits to squash")
     args = parser.parse_args()
 
-    check_git_status()
+    try:
+        check_git_status()
+    except RuntimeError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
 
     print("\nRun this command to start the interactive rebase:")
     print(f"git rebase -i HEAD~{args.n}")

@@ -16,7 +16,7 @@ def get_commits_with_deletions(n):
             return []
         commits = result.stdout.strip().split("\n")
         return [c for c in commits if c]
-    except Exception as e:
+    except OSError as e:
         print(f"Error: {e}", file=sys.stderr)
         return []
 
@@ -37,7 +37,7 @@ def get_changed_files_count(commit_hash):
                 if match:
                     return int(match.group(1))
         return 0
-    except Exception as e:
+    except OSError as e:
         print(f"Error getting deletion count for {commit_hash}: {e}", file=sys.stderr)
         return 0
 
