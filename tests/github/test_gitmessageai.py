@@ -1,72 +1,78 @@
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import os
 
 os.environ.setdefault("OPENROUTER_API_KEY", "test-fake-key")
 
 
-class TestCallOpenrouterApi(unittest.TestCase):
-    def setUp(self):
-        from ww.github import gitmessageai
+class TestGitmessageai(unittest.TestCase):
+    @patch("ww.github.gitmessageai.call_llm", return_value="feat: add feature")
+    @patch(
+        "ww.github.gitmessageai.subprocess.run",
+        side_effect=[
+            None,  # git add -A
+            type(
+                "R", (), {"stdout": "diff --git a/foo.py b/foo.py\n--- a\n+++ b\n"}
+            )(),  # git diff --staged --unified=0
+            type(
+                "R", (), {"stdout": "diff --git a/foo.py b/foo.py\n"}
+            )(),  # git diff --staged
+            None,  # git commit
+            None,  # git push
+        ],
+    )
+    def test_generates_commit_message(self, mock_run, mock_llm):
+        from ww.github.gitmessageai import gitmessageai
 
-        self._orig_key = gitmessageai.OPENROUTER_API_KEY
-        gitmessageai.OPENROUTER_API_KEY = "test-key"
+        # Should not raise
+        gitmessageai(push=False, only_message=False, type="file")
+        mock_llm.assert_called_once()
 
-    def tearDown(self):
-        from ww.github import gitmessageai
+    @patch("ww.github.gitmessageai.call_llm", return_value="feat: add feature")
+    @patch(
+        "ww.github.gitmessageai.subprocess.run",
+        side_effect=[
+            None,
+            type("R", (), {"stdout": "diff --git a/foo.py b/foo.py\n"})(),
+            type("R", (), {"stdout": "diff --git a/foo.py b/foo.py\n"})(),
+        ],
+    )
+    def test_only_message_does_not_commit(self, mock_run, mock_llm):
+        from ww.github.gitmessageai import gitmessageai
 
-        gitmessageai.OPENROUTER_API_KEY = self._orig_key
+        gitmessageai(push=False, only_message=True, type="file")
+        # git commit should not be called (only add + diff + llm)
+        self.assertEqual(mock_run.call_count, 2)
 
-    @patch("ww.github.gitmessageai.requests.post")
-    def test_returns_content_on_200(self, mock_post):
-        from ww.github.gitmessageai import call_openrouter_api
+    @patch(
+        "ww.github.gitmessageai.subprocess.run",
+        side_effect=[
+            None,
+            type("R", (), {"stdout": ""})(),
+        ],
+    )
+    def test_no_changes_exits_early(self, mock_run):
+        from ww.github.gitmessageai import gitmessageai
 
-        mock_post.return_value = MagicMock(
-            status_code=200,
-            json=lambda: {"choices": [{"message": {"content": "feat: add feature"}}]},
-        )
-        result = call_openrouter_api("Generate commit message")
-        self.assertEqual(result, "feat: add feature")
+        # Should return early without committing
+        gitmessageai(push=False, only_message=False, type="file")
+        # Only git add and git diff should have been called
+        self.assertEqual(mock_run.call_count, 2)
 
-    def test_returns_none_when_api_key_missing(self):
-        from ww.github import gitmessageai
+    @patch("ww.github.gitmessageai.call_llm", return_value=None)
+    @patch(
+        "ww.github.gitmessageai.subprocess.run",
+        side_effect=[
+            None,
+            type("R", (), {"stdout": "diff --git a/foo.py b/foo.py\n"})(),
+        ],
+    )
+    def test_no_llm_response_exits_gracefully(self, mock_run, mock_llm):
+        from ww.github.gitmessageai import gitmessageai
 
-        gitmessageai.OPENROUTER_API_KEY = None
-        result = gitmessageai.call_openrouter_api("prompt")
-        self.assertIsNone(result)
-
-    def test_returns_none_for_unknown_model(self):
-        from ww.github.gitmessageai import call_openrouter_api
-
-        result = call_openrouter_api("prompt", model="nonexistent-model")
-        self.assertIsNone(result)
-
-    @patch("ww.github.gitmessageai.requests.post")
-    def test_returns_none_on_non_200_status(self, mock_post):
-        from ww.github.gitmessageai import call_openrouter_api
-
-        mock_post.return_value = MagicMock(status_code=401, text="Unauthorized")
-        result = call_openrouter_api("prompt")
-        self.assertIsNone(result)
-
-    @patch("ww.github.gitmessageai.requests.post", side_effect=Exception("timeout"))
-    def test_returns_none_on_request_exception(self, mock_post):
-        from ww.github.gitmessageai import call_openrouter_api
-
-        result = call_openrouter_api("prompt")
-        self.assertIsNone(result)
-
-    @patch("ww.github.gitmessageai.requests.post")
-    def test_returns_none_on_invalid_response_format(self, mock_post):
-        from ww.github.gitmessageai import call_openrouter_api
-
-        mock_post.return_value = MagicMock(
-            status_code=200,
-            json=lambda: {"choices": []},
-        )
-        result = call_openrouter_api("prompt")
-        self.assertIsNone(result)
+        # Should not raise even when LLM returns None
+        gitmessageai(push=False, only_message=False, type="file")
 
 
 if __name__ == "__main__":

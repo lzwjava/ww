@@ -14,7 +14,14 @@ class TestMainNoArgs(unittest.TestCase):
         with patch.object(sys, "argv", ["ww"]):
             with patch("builtins.print") as mock_print:
                 main()
-                mock_print.assert_called_with("hello world")
+                mock_print.assert_any_call("hello world")
+
+    def test_help_flag(self):
+        from ww.main import main
+
+        with patch.object(sys, "argv", ["ww", "--help"]):
+            with patch("builtins.print"):
+                main()
 
 
 class TestMainUnknownCommand(unittest.TestCase):
@@ -29,9 +36,7 @@ class TestMainUnknownCommand(unittest.TestCase):
 class TestMainDispatch(unittest.TestCase):
     """Test that each command dispatches to the correct sub-main function."""
 
-    def _run_cmd(self, args, mock_target, extra_argv=None):
-        """Patch mock_target, set sys.argv to args, call main(), assert called."""
-        argv = args if extra_argv is None else args + extra_argv
+    def _run(self, argv, mock_target):
         with patch.object(sys, "argv", argv):
             with patch(mock_target) as mock_fn:
                 from ww.main import main
@@ -39,6 +44,7 @@ class TestMainDispatch(unittest.TestCase):
                 main()
                 mock_fn.assert_called_once()
 
+    # note
     def test_create_log_dispatches(self):
         with patch.object(sys, "argv", ["ww", "note", "log"]):
             with patch("ww.note.create_log.create_log") as mock_fn:
@@ -47,314 +53,127 @@ class TestMainDispatch(unittest.TestCase):
                 main()
                 mock_fn.assert_called_once()
 
-    def test_find_large_dirs_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "find-large-dirs"]):
-            with patch("ww.macos.find_largest_directories.main") as mock_fn:
-                from ww.main import main
+    # gif
+    def test_gif_dispatches(self):
+        self._run(["ww", "gif"], "ww.gif.gif.main")
 
-                main()
-                mock_fn.assert_called_once()
+    # macos
+    def test_find_large_dirs_dispatches(self):
+        self._run(
+            ["ww", "macos", "find-large-dirs"], "ww.macos.find_largest_directories.main"
+        )
 
     def test_system_info_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "system-info"]):
-            with patch("ww.macos.get_system_info.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "macos", "system-info"], "ww.macos.get_system_info.main")
 
     def test_mac_install_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "mac-install"]):
-            with patch("ww.macos.install.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "macos", "install"], "ww.macos.install.main")
 
     def test_list_fonts_dispatches(self):
-        from unittest.mock import MagicMock
-
-        mock_module = MagicMock()
-        with patch.dict("sys.modules", {"ww.macos.list_fonts": mock_module}):
-            with patch.object(sys, "argv", ["ww", "list-fonts"]):
-                from ww.main import main
-
-                main()
-                mock_module.main.assert_called_once()
+        self._run(["ww", "macos", "list-fonts"], "ww.macos.list_fonts.main")
 
     def test_list_disks_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "list-disks"]):
-            with patch("ww.macos.list_portable_disks.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "macos", "list-disks"], "ww.macos.list_portable_disks.main")
 
     def test_open_terminal_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "open-terminal"]):
-            with patch("ww.macos.open_terminal.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "macos", "open-terminal"], "ww.macos.open_terminal.main")
 
     def test_toast_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "toast"]):
-            with patch("ww.macos.toast.main") as mock_fn:
-                from ww.main import main
+        self._run(["ww", "macos", "toast"], "ww.macos.toast.main")
 
-                main()
-                mock_fn.assert_called_once()
-
+    # image
     def test_avatar_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "avatar"]):
-            with patch("ww.image.avatar.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "image", "avatar"], "ww.image.avatar.main")
 
     def test_crop_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "crop"]):
-            with patch("ww.image.crop.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "image", "crop"], "ww.image.crop.main")
 
     def test_remove_bg_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "remove-bg"]):
-            with patch("ww.image.remove_bg.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "image", "remove-bg"], "ww.image.remove_bg.main")
 
     def test_screenshot_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "screenshot"]):
-            with patch("ww.image.screenshot.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "image", "screenshot"], "ww.image.screenshot.main")
 
     def test_screenshot_linux_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "screenshot-linux"]):
-            with patch("ww.image.screenshot_linux.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "image", "screenshot-linux"], "ww.image.screenshot_linux.main")
 
     def test_image_compress_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "image-compress"]):
-            with patch("ww.image.image_compress.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "image", "compress"], "ww.image.image_compress.main")
 
     def test_photo_compress_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "photo-compress"]):
-            with patch("ww.image.photo_compress.main") as mock_fn:
-                from ww.main import main
+        self._run(["ww", "image", "photo-compress"], "ww.image.photo_compress.main")
 
-                main()
-                mock_fn.assert_called_once()
-
+    # proc
     def test_kill_by_pattern_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "kill-by-pattern"]):
-            with patch("ww.proc.kill_by_pattern.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "proc", "kill-pattern"], "ww.proc.kill_by_pattern.main")
 
     def test_kill_by_port_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "kill-by-port"]):
-            with patch("ww.proc.kill_by_port.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "proc", "kill-port"], "ww.proc.kill_by_port.main")
 
     def test_kill_jekyll_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "kill-jekyll"]):
-            with patch("ww.proc.kill_jekyll.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "proc", "kill-jekyll"], "ww.proc.kill_jekyll.main")
 
     def test_kill_macos_proxy_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "kill-macos-proxy"]):
-            with patch("ww.proc.kill_macos_proxy.main") as mock_fn:
-                from ww.main import main
+        self._run(["ww", "proc", "kill-proxy"], "ww.proc.kill_macos_proxy.main")
 
-                main()
-                mock_fn.assert_called_once()
-
+    # utils
     def test_base64_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "base64"]):
-            with patch("ww.utils.base64utils.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "utils", "base64"], "ww.utils.base64utils.main")
 
     def test_ccr_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "ccr"]):
-            with patch("ww.utils.ccr.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "utils", "ccr"], "ww.utils.ccr.main")
 
     def test_clean_zip_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "clean-zip"]):
-            with patch("ww.utils.clean_zip.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "utils", "clean-zip"], "ww.utils.clean_zip.main")
 
     def test_decode_jwt_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "decode-jwt"]):
-            with patch("ww.utils.decode_jwt.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "utils", "decode-jwt"], "ww.utils.decode_jwt.main")
 
     def test_py2txt_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "py2txt"]):
-            with patch("ww.utils.py2txt.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "utils", "py2txt"], "ww.utils.py2txt.main")
 
     def test_request_proxy_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "request-proxy"]):
-            with patch("ww.utils.request_with_proxy.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "utils", "request-proxy"], "ww.utils.request_with_proxy.main")
 
     def test_smart_unzip_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "smart-unzip"]):
-            with patch("ww.utils.smart_unzip.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "utils", "smart-unzip"], "ww.utils.smart_unzip.main")
 
     def test_unzip_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "unzip"]):
-            with patch("ww.utils.unzip.main") as mock_fn:
-                from ww.main import main
+        self._run(["ww", "utils", "unzip"], "ww.utils.unzip.main")
 
-                main()
-                mock_fn.assert_called_once()
-
+    # java
     def test_mvn_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "mvn"]):
-            with patch("ww.java.mvn.main") as mock_fn:
-                from ww.main import main
+        self._run(["ww", "java", "mvn"], "ww.java.mvn.main")
 
-                main()
-                mock_fn.assert_called_once()
-
+    # network
     def test_get_wifi_list_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "get-wifi-list"]):
-            with patch("ww.network.get_wifi_list.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "network", "get-wifi-list"], "ww.network.get_wifi_list.main")
 
     def test_save_wifi_list_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "save-wifi-list"]):
-            with patch("ww.network.save_wifi_list.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "network", "save-wifi-list"], "ww.network.save_wifi_list.main")
 
     def test_hack_wifi_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "hack-wifi"]):
-            with patch("ww.network.hack_wifi.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "network", "hack-wifi"], "ww.network.hack_wifi.main")
 
     def test_wifi_gen_password_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "wifi-gen-password"]):
-            with patch("ww.network.generate_password.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(
+            ["ww", "network", "wifi-gen-password"], "ww.network.generate_password.main"
+        )
 
     def test_ip_scan_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "ip-scan"]):
-            with patch("ww.network.ip_scan.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "network", "ip-scan"], "ww.network.ip_scan.main")
 
     def test_port_scan_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "port-scan"]):
-            with patch("ww.network.port_scan.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "network", "port-scan"], "ww.network.port_scan.main")
 
     def test_wifi_scan_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "wifi-scan"]):
-            with patch("ww.network.wifi_scan.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "network", "wifi-scan"], "ww.network.wifi_scan.main")
 
     def test_wifi_util_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "wifi-util"]):
-            with patch("ww.network.wifi_util.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
+        self._run(["ww", "network", "wifi-util"], "ww.network.wifi_util.main")
 
     def test_network_plot_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "network-plot"]):
-            with patch("ww.network.network_plot.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
-
-    def test_gif_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "gif"]):
-            with patch("ww.gif.gif.main") as mock_fn:
-                from ww.main import main
-
-                main()
-                mock_fn.assert_called_once()
-
-    def test_github_readme_dispatches(self):
-        with patch.object(sys, "argv", ["ww", "github-readme"]):
-            with patch(
-                "ww.github.readme.format_projects_to_markdown", return_value="md"
-            ):
-                with patch("builtins.print"):
-                    from ww.main import main
-
-                    main()
+        self._run(["ww", "network", "network-plot"], "ww.network.network_plot.main")
 
 
 if __name__ == "__main__":

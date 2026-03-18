@@ -19,7 +19,7 @@ class TestImageCompressCommand(unittest.TestCase):
             input_path = os.path.join(tmpdir, "test.png")
             self._create_test_png(input_path)
             returncode, stdout, stderr = run_ww(
-                "image-compress", input_path, "--compression_factor", "0.5"
+                "image", "compress", input_path, "--compression_factor", "0.5"
             )
             self.assertEqual(returncode, 0, stderr)
             self.assertIn("Compressed image saved as:", stdout)
@@ -30,7 +30,7 @@ class TestImageCompressCommand(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             input_path = os.path.join(tmpdir, "img.png")
             self._create_test_png(input_path)
-            returncode, stdout, stderr = run_ww("image-compress", input_path)
+            returncode, stdout, stderr = run_ww("image", "compress", input_path)
             self.assertEqual(returncode, 0, stderr)
             self.assertIn("Compressed image saved as:", stdout)
 
