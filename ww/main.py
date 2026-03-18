@@ -426,32 +426,26 @@ def main():
             sys.exit(1)
 
     elif group == "search":
-        _search_subcmds = {"bing", "code", "ddg", "ecosia", "filename", "startpage"}
+        _search_subcmds = {"bing", "code", "ddg", "filename", "startpage", "web"}
         subcmd = sys.argv[1] if len(sys.argv) > 1 else ""
         if subcmd in _search_subcmds:
             sys.argv.pop(1)
-            if subcmd == "bing":
-                from ww.search.search_bing import main as m
+            if subcmd in {"bing", "ddg", "startpage"}:
+                from ww.search.search_web import main as m
+
+                sys.argv.insert(1, "--type")
+                sys.argv.insert(2, subcmd)
+                m()
+            elif subcmd == "web":
+                from ww.search.search_web import main as m
 
                 m()
             elif subcmd == "code":
                 from ww.search.search_code import main as m
 
                 m()
-            elif subcmd == "ddg":
-                from ww.search.search_duckduckgo import main as m
-
-                m()
-            elif subcmd == "ecosia":
-                from ww.search.search_ecosia import main as m
-
-                m()
             elif subcmd == "filename":
                 from ww.search.search_filename import main as m
-
-                m()
-            elif subcmd == "startpage":
-                from ww.search.search_startpage import main as m
 
                 m()
         else:
