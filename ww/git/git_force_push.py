@@ -1,10 +1,15 @@
 import subprocess
 import sys
 
+from ww.note.create_note_utils import get_base_path
+
 
 def check_git_status():
     result = subprocess.run(
-        ["git", "status", "--porcelain"], capture_output=True, text=True
+        ["git", "status", "--porcelain"],
+        capture_output=True,
+        text=True,
+        cwd=get_base_path(),
     )
     if result.stdout.strip():
         raise RuntimeError(
@@ -14,7 +19,11 @@ def check_git_status():
 
 def get_current_branch():
     result = subprocess.run(
-        ["git", "branch", "--show-current"], capture_output=True, text=True, check=True
+        ["git", "branch", "--show-current"],
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=get_base_path(),
     )
     return result.stdout.strip()
 
@@ -27,5 +36,7 @@ def main():
         sys.exit(1)
     current_branch = get_current_branch()
     subprocess.run(
-        ["git", "push", "--force-with-lease", "origin", current_branch], check=True
+        ["git", "push", "--force-with-lease", "origin", current_branch],
+        check=True,
+        cwd=get_base_path(),
     )

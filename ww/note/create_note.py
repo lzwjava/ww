@@ -15,9 +15,11 @@ from ww.content.fix_table import process_tables_in_file
 
 
 def _git_toplevel() -> str:
-    return subprocess.check_output(
-        ["git", "rev-parse", "--show-toplevel"], text=True
-    ).strip()
+    base = get_base_path()
+    cmd = ["git", "rev-parse", "--show-toplevel"]
+    if base != ".":
+        cmd = ["git", "-C", base, "rev-parse", "--show-toplevel"]
+    return subprocess.check_output(cmd, text=True).strip()
 
 
 def check_uncommitted_changes() -> None:

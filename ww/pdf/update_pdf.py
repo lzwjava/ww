@@ -2,6 +2,7 @@ import os
 import argparse
 import subprocess
 from ww.pdf.pdf_base import text_to_pdf_from_markdown
+from ww.note.create_note_utils import get_base_path
 
 OUTPUT_DIRECTORY = "assets/pdfs"
 INPUT_DIRECTORY = "_posts"
@@ -44,6 +45,7 @@ def get_changed_files():
             capture_output=True,
             text=True,
             check=True,
+            cwd=get_base_path(),
         )
         changed_files = result.stdout.strip().split("\n")
         return [

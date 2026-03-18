@@ -5,6 +5,8 @@ import datetime as dt
 import subprocess
 import sys
 
+from ww.note.create_note_utils import get_base_path
+
 
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(
@@ -39,6 +41,7 @@ def find_commit(before, ref):
             check=True,
             capture_output=True,
             text=True,
+            cwd=get_base_path(),
         )
     except subprocess.CalledProcessError as exc:
         raise RuntimeError(exc.stderr.strip() or "git rev-list failed") from exc

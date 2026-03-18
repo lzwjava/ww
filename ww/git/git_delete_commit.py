@@ -2,6 +2,8 @@ import subprocess
 import sys
 import re
 
+from ww.note.create_note_utils import get_base_path
+
 
 def get_commits_with_deletions(n):
     try:
@@ -9,7 +11,7 @@ def get_commits_with_deletions(n):
             ["git", "log", "--oneline", "-n", str(n), "--format=%H"],
             capture_output=True,
             text=True,
-            cwd=".",
+            cwd=get_base_path(),
         )
         if result.returncode != 0:
             print(f"Error getting commits: {result.stderr}", file=sys.stderr)
@@ -27,7 +29,7 @@ def get_changed_files_count(commit_hash):
             ["git", "show", "--stat", commit_hash],
             capture_output=True,
             text=True,
-            cwd=".",
+            cwd=get_base_path(),
         )
         if result.returncode != 0:
             return 0

@@ -3,11 +3,15 @@ import argparse
 import sys
 
 from ww.llm.openrouter_client import call_openrouter_api
+from ww.note.create_note_utils import get_base_path
 
 
 def check_git_status():
     result = subprocess.run(
-        ["git", "status", "--porcelain"], capture_output=True, text=True
+        ["git", "status", "--porcelain"],
+        capture_output=True,
+        text=True,
+        cwd=get_base_path(),
     )
     if result.stdout.strip():
         raise RuntimeError(

@@ -2,11 +2,17 @@ import subprocess
 import re
 import sys
 
+from ww.note.create_note_utils import get_base_path
+
 
 def check_git_filenames():
     try:
         result = subprocess.run(
-            ["git", "ls-files"], capture_output=True, text=True, check=True
+            ["git", "ls-files"],
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd=get_base_path(),
         )
         filenames = [f for f in result.stdout.strip().split("\n") if f]
 

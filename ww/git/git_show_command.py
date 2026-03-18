@@ -1,6 +1,8 @@
 import subprocess
 import os
 
+from ww.note.create_note_utils import get_base_path
+
 try:
     import pyperclip
 
@@ -11,14 +13,17 @@ except ImportError:
 
 def get_last_commit_info():
     try:
+        base = get_base_path()
         commit_info = subprocess.check_output(
-            ["git", "log", "-1", "--pretty=format:%H %s"], text=True
+            ["git", "log", "-1", "--pretty=format:%H %s"], text=True, cwd=base
         ).strip()
         commit_hash, commit_message = commit_info.split(" ", 1)
 
         all_files = (
             subprocess.check_output(
-                ["git", "show", "--name-only", "--format=%n", commit_hash], text=True
+                ["git", "show", "--name-only", "--format=%n", commit_hash],
+                text=True,
+                cwd=base,
             )
             .strip()
             .split("\n")
