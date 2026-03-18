@@ -91,6 +91,14 @@ def _print_help():
     print("  ww search filename        Search by filename")
     print("  ww search startpage       Search with StartPage")
     print("")
+    print("PDF:")
+    print("  ww pdf markdown-pdf       Convert a markdown file to PDF")
+    print("  ww pdf pdf-pipeline       Batch convert markdown posts to PDFs")
+    print("  ww pdf update-pdf         Convert markdown files changed in last commit")
+    print("  ww pdf code2pdf           Convert code files in a directory to PDF")
+    print("  ww pdf scale-pdf          Scale a PDF using pdfjam")
+    print("  ww pdf test-latex         Test LaTeX/pandoc PDF generation")
+    print("")
     print("Copilot:")
     print("  ww copilot auth           Authenticate via GitHub OAuth device flow")
     print("  ww copilot models         List available Copilot models")
@@ -440,6 +448,36 @@ def main():
             from ww.search.search import main as m
 
             m()
+
+    elif group == "pdf":
+        subcmd = _pop_subcmd()
+        if subcmd == "markdown-pdf":
+            from ww.pdf.markdown_pdf import main as m
+
+            m()
+        elif subcmd == "pdf-pipeline":
+            from ww.pdf.pdf_pipeline import main as m
+
+            m()
+        elif subcmd == "update-pdf":
+            from ww.pdf.update_pdf import main as m
+
+            m()
+        elif subcmd == "code2pdf":
+            from ww.pdf.code2pdf import main as m
+
+            m()
+        elif subcmd == "scale-pdf":
+            from ww.pdf.scale_pdf import main as m
+
+            m()
+        elif subcmd == "test-latex":
+            from ww.pdf.test_latex import main as m
+
+            m()
+        else:
+            print(f"Unknown pdf command: {subcmd}")
+            sys.exit(1)
 
     elif group == "copilot":
         subcmd = _pop_subcmd()
