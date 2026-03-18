@@ -7,11 +7,15 @@ COPILOT_API_BASE = os.environ.get(
     "ICLAW_COPILOT_API_BASE", "https://api.githubcopilot.com"
 )
 
-_COPILOT_HEADERS = {
-    "Content-Type": "application/json",
+_BASE_HEADERS = {
     "Editor-Version": "vscode/1.85.0",
     "Editor-Plugin-Version": "copilot/1.155.0",
     "User-Agent": "GithubCopilot/1.155.0",
+}
+
+_COPILOT_HEADERS = {
+    **_BASE_HEADERS,
+    "Content-Type": "application/json",
     "Copilot-Integration-Id": "vscode-chat",
 }
 
@@ -19,12 +23,7 @@ _COPILOT_HEADERS = {
 def _get_copilot_token(github_token):
     resp = requests.get(
         f"{GITHUB_API_BASE}/copilot_internal/v2/token",
-        headers={
-            "Authorization": f"Bearer {github_token}",
-            "Editor-Version": "vscode/1.85.0",
-            "Editor-Plugin-Version": "copilot/1.155.0",
-            "User-Agent": "GithubCopilot/1.155.0",
-        },
+        headers={"Authorization": f"Bearer {github_token}", **_BASE_HEADERS},
     )
     if not resp.ok:
         raise RuntimeError(

@@ -7,36 +7,34 @@ import argparse
 MAX_THREADS = 50  # Maximum number of threads to use
 
 
+def is_host_up_by_port(host, port):
+    """Check if host is reachable by attempting a TCP connection to port."""
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(1)
+        result = sock.connect_ex((host, port))
+        return result == 0
+    except socket.error:
+        return False
+    finally:
+        sock.close()
+
+
+def is_host_up_by_ping(host):
+    """Check if host is reachable via ICMP ping."""
+    try:
+        subprocess.check_output(["ping", "-c", "1", "-W", "1", host], timeout=1)
+        return True
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        return False
+
+
 def is_host_up(host, port=None):
-    """
-    Checks if a host is up using ping or telnet.
-    If port is specified, uses telnet to check if the port is open.
-    Otherwise, uses ping.
-    Returns True if the host is up, False otherwise.
-    """
+    """Check if a host is up using TCP (if port given) or ping."""
     if port:
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(1)
-            result = sock.connect_ex((host, port))
-            if result == 0:
-                return True
-            else:
-                return False
-        except socket.error:
-            return False
-        finally:
-            sock.close()
+        return is_host_up_by_port(host, port)
     else:
-        try:
-            # -c 1: Send only 1 packet
-            # -W 1: Wait 1 second for a response
-            subprocess.check_output(["ping", "-c", "1", "-W", "1", host], timeout=1)
-            return True
-        except subprocess.CalledProcessError:
-            return False
-        except subprocess.TimeoutExpired:
-            return False
+        return is_host_up_by_ping(host)
 
 
 def scan_ip(ip_str, up_ips, port=None):
@@ -62,11 +60,8 @@ def scan_network(network, port=None):
     up_ips = []
 
     def scan_ip_with_semaphore(ip_str):
-        semaphore.acquire()
-        try:
+        with semaphore:
             scan_ip(ip_str, up_ips, port)
-        finally:
-            semaphore.release()
 
     for ip in ipaddress.IPv4Network(network):
         ip_str = str(ip)

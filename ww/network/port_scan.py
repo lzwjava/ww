@@ -6,18 +6,12 @@ MAX_THREADS = 50  # Maximum number of threads to use
 
 
 def is_port_open(host, port):
-    """
-    Checks if a port is open on the given host.
-    Returns True if the port is open, False otherwise.
-    """
+    """Check if a port is open on the given host."""
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(1)
         result = sock.connect_ex((host, port))
-        if result == 0:
-            return True
-        else:
-            return False
+        return result == 0
     except socket.error:
         return False
     finally:
@@ -45,11 +39,8 @@ def scan_ports(host, start_port, end_port):
     open_ports = []
 
     def scan_port_with_semaphore(port):
-        semaphore.acquire()
-        try:
+        with semaphore:
             scan_port(host, port, open_ports)
-        finally:
-            semaphore.release()
 
     for port in range(start_port, end_port + 1):
         thread = threading.Thread(target=scan_port_with_semaphore, args=(port,))

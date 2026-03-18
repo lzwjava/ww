@@ -34,10 +34,9 @@ def call_openrouter_api_with_messages(
         print(f"Response Status: {response.status_code}")
         print(f"Response: {response.text}")
 
-    if response.status_code == 200:
-        return response.json()["choices"][0]["message"]["content"]
-    else:
+    if not response.ok:
         raise Exception(f"Error: {response.status_code} - {response.text}")
+    return response.json()["choices"][0]["message"]["content"]
 
 
 def call_openrouter_api(prompt, model=None, max_tokens=None, debug=False):

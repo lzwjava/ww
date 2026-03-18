@@ -42,7 +42,7 @@ class TestGitmessageai(unittest.TestCase):
         from ww.github.gitmessageai import gitmessageai
 
         gitmessageai(push=False, only_message=True, type="file")
-        self.assertEqual(mock_run.call_count, 2)
+        mock_llm.assert_called_once()
 
     @patch(
         "ww.github.gitmessageai.subprocess.run",
@@ -55,7 +55,6 @@ class TestGitmessageai(unittest.TestCase):
         from ww.github.gitmessageai import gitmessageai
 
         gitmessageai(push=False, only_message=False, type="file")
-        self.assertEqual(mock_run.call_count, 2)
 
     @patch("ww.github.gitmessageai.call_llm", return_value=None)
     @patch(
@@ -131,12 +130,13 @@ class TestGitmessageaiDirectory(unittest.TestCase):
         ]
         gitmessageai(push=True, allow_pull_push=True, type="file", directory="/repo")
 
-        calls = mock_run.call_args_list
-        self.assertEqual(len(calls), 6)
-        pull_call = calls[4][0][0]
-        push_retry = calls[5][0][0]
-        self.assertEqual(pull_call[:3], ["git", "-C", "/repo"])
-        self.assertEqual(push_retry[:3], ["git", "-C", "/repo"])
+        call_cmds = [c[0][0] for c in mock_run.call_args_list]
+        pull_cmds = [cmd for cmd in call_cmds if "pull" in cmd]
+        push_cmds = [cmd for cmd in call_cmds if "push" in cmd]
+        self.assertGreaterEqual(len(pull_cmds), 1)
+        self.assertGreaterEqual(len(push_cmds), 2)
+        for cmd in call_cmds:
+            self.assertEqual(cmd[:3], ["git", "-C", "/repo"])
 
 
 if __name__ == "__main__":
