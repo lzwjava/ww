@@ -1,4 +1,4 @@
-import Quartz
+import Quartz  # type: ignore
 from PIL import ImageGrab
 import datetime
 
