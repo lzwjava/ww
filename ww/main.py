@@ -1,8 +1,8 @@
 import sys
 
-from dotenv import load_dotenv
+from ww.env import load_env
 
-load_dotenv()
+load_env()
 
 
 def _print_help():

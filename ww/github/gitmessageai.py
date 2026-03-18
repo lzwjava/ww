@@ -1,10 +1,10 @@
 import subprocess
 import argparse
 
-from dotenv import load_dotenv
+from ww.env import load_env
 from ww.llm.llm_client import call_llm
 
-load_dotenv()
+load_env()
 
 
 def gitmessageai(push=True, only_message=False, allow_pull_push=False, type="file"):
