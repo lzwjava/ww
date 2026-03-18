@@ -63,9 +63,48 @@ class TestCleanGrokTags(unittest.TestCase):
         self.assertEqual(result, content)
 
 
+class TestGetBasePath(unittest.TestCase):
+    def tearDown(self):
+        os.environ.pop("BASE_PATH", None)
+
+    def test_returns_dot_when_unset(self):
+        os.environ.pop("BASE_PATH", None)
+        from ww.note.create_note_utils import get_base_path
+
+        self.assertEqual(get_base_path(), ".")
+
+    def test_returns_dot_when_empty(self):
+        os.environ["BASE_PATH"] = ""
+        from ww.note.create_note_utils import get_base_path
+
+        self.assertEqual(get_base_path(), ".")
+
+    def test_returns_dot_when_explicit_dot(self):
+        os.environ["BASE_PATH"] = "."
+        from ww.note.create_note_utils import get_base_path
+
+        self.assertEqual(get_base_path(), ".")
+
+    def test_returns_absolute_path(self):
+        os.environ["BASE_PATH"] = "/some/project"
+        from ww.note.create_note_utils import get_base_path
+
+        self.assertEqual(get_base_path(), "/some/project")
+
+    def test_strips_whitespace(self):
+        os.environ["BASE_PATH"] = "  /some/project  "
+        from ww.note.create_note_utils import get_base_path
+
+        self.assertEqual(get_base_path(), "/some/project")
+
+
 class TestCreateFilename(unittest.TestCase):
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
+        os.environ.pop("BASE_PATH", None)
+
+    def tearDown(self):
+        os.environ.pop("BASE_PATH", None)
 
     def test_creates_filename_with_given_date(self):
         from ww.note.create_note_utils import create_filename
@@ -99,6 +138,22 @@ class TestCreateFilename(unittest.TestCase):
         fp = create_filename("title", notes_dir=self.tmpdir)
         today = datetime.date.today().strftime("%Y-%m-%d")
         self.assertIn(today, fp)
+
+    def test_default_notes_dir_uses_base_path(self):
+        os.environ["BASE_PATH"] = self.tmpdir
+        from ww.note.create_note_utils import create_filename
+
+        fp = create_filename("title", date="2024-01-01")
+        self.assertTrue(fp.startswith(self.tmpdir))
+        self.assertIn("notes", fp)
+
+    def test_explicit_notes_dir_overrides_base_path(self):
+        os.environ["BASE_PATH"] = "/should/not/be/used"
+        explicit = os.path.join(self.tmpdir, "explicit")
+        from ww.note.create_note_utils import create_filename
+
+        fp = create_filename("title", notes_dir=explicit, date="2024-01-01")
+        self.assertTrue(fp.startswith(explicit))
 
 
 class TestFormatFrontMatter(unittest.TestCase):

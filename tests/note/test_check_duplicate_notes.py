@@ -1,6 +1,7 @@
 import os
 import tempfile
 import unittest
+from unittest.mock import patch
 
 os.environ.setdefault("OPENROUTER_API_KEY", "test-fake-key")
 
@@ -73,6 +74,48 @@ class TestExtractContentWithoutFrontmatter(unittest.TestCase):
             f.write("---\ntitle: T\n---\n\n  Trimmed  ")
         result = self.func(fp)
         self.assertEqual(result, "Trimmed")
+
+
+class TestCheckDuplicateNotesDefaultDir(unittest.TestCase):
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        os.environ.pop("BASE_PATH", None)
+
+    def tearDown(self):
+        os.environ.pop("BASE_PATH", None)
+
+    @patch("ww.note.check_duplicate_notes.get_clipboard_content", return_value="")
+    def test_returns_false_when_notes_dir_missing_no_base_path(self, _mock):
+        from ww.note.check_duplicate_notes import check_duplicate_notes
+
+        # No BASE_PATH → notes_dir defaults to ./notes which won't exist in tmpdir
+        result = check_duplicate_notes(
+            notes_dir=os.path.join(self.tmpdir, "nonexistent")
+        )
+        self.assertFalse(result)
+
+    @patch("ww.note.check_duplicate_notes.get_clipboard_content", return_value="hello")
+    def test_uses_base_path_for_notes_dir(self, _mock):
+        os.environ["BASE_PATH"] = self.tmpdir
+        notes_dir = os.path.join(self.tmpdir, "notes")
+        os.makedirs(notes_dir)
+        from ww.note.check_duplicate_notes import check_duplicate_notes
+
+        # notes dir exists but is empty → no duplicates
+        result = check_duplicate_notes()
+        self.assertFalse(result)
+        self.assertTrue(notes_dir.startswith(self.tmpdir))
+
+    @patch("ww.note.check_duplicate_notes.get_clipboard_content", return_value="hello")
+    def test_explicit_notes_dir_overrides_base_path(self, _mock):
+        os.environ["BASE_PATH"] = "/should/not/be/used"
+        explicit = os.path.join(self.tmpdir, "explicit_notes")
+        os.makedirs(explicit)
+        from ww.note.check_duplicate_notes import check_duplicate_notes
+
+        # Should use explicit dir, not BASE_PATH/notes
+        result = check_duplicate_notes(notes_dir=explicit)
+        self.assertFalse(result)
 
 
 if __name__ == "__main__":
