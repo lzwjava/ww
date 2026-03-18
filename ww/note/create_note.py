@@ -7,6 +7,7 @@ from typing import Optional
 
 from ww.github.gitmessageai import gitmessageai
 from ww.note.create_note_from_clipboard import create_note
+from ww.note.create_note_utils import get_base_path
 from ww.content.fix_mathjax import fix_mathjax_in_file
 from ww.content.fix_table import process_tables_in_file
 
@@ -138,7 +139,8 @@ def main():
             print(f"[warn] MathJax fix failed for {created_path}: {e}")
 
     if not args.no_push:
-        gitmessageai(allow_pull_push=True)
+        base = get_base_path()
+        gitmessageai(allow_pull_push=True, directory=None if base == "." else base)
 
     if args.open:
         try:

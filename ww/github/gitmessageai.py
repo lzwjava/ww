@@ -7,13 +7,17 @@ from ww.llm.llm_client import call_llm
 load_env()
 
 
-def gitmessageai(push=True, only_message=False, allow_pull_push=False, type="file"):
+def gitmessageai(
+    push=True, only_message=False, allow_pull_push=False, type="file", directory=None
+):
+    git = ["git", "-C", directory] if directory else ["git"]
+
     # Stage all changes
-    subprocess.run(["git", "add", "-A"], check=True)
+    subprocess.run([*git, "add", "-A"], check=True)
 
     # Get a detailed summary of the changes
     diff_process = subprocess.run(
-        ["git", "diff", "--staged", "--unified=0"],
+        [*git, "diff", "--staged", "--unified=0"],
         capture_output=True,
         text=True,
         check=True,
@@ -72,7 +76,7 @@ Changed files:
 """
     elif type == "content":
         diff_process = subprocess.run(
-            ["git", "diff", "--staged"],
+            [*git, "diff", "--staged"],
             capture_output=True,
             text=True,
             check=True,
@@ -118,16 +122,16 @@ Code changes:
         print(f"Suggested commit message: {commit_message}")
         return
 
-    subprocess.run(["git", "commit", "-m", commit_message], check=True)
+    subprocess.run([*git, "commit", "-m", commit_message], check=True)
 
     if push:
         try:
-            subprocess.run(["git", "push"], check=True)
+            subprocess.run([*git, "push"], check=True)
         except subprocess.CalledProcessError as e:
             if allow_pull_push:
                 print("Push failed, attempting pull and push...")
-                subprocess.run(["git", "pull", "--rebase"], check=True)
-                subprocess.run(["git", "push"], check=True)
+                subprocess.run([*git, "pull", "--rebase"], check=True)
+                subprocess.run([*git, "push"], check=True)
             else:
                 print("Push failed.")
                 raise e

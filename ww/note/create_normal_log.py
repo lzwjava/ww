@@ -37,6 +37,5 @@ def create_normal_log():
 
     print(f"Log created: {file_path}")
 
-    os.chdir(logs_dir)
-    gitmessageai(allow_pull_push=True)
-    print(f"Changed working directory to: {os.getcwd()}")
+    gitmessageai(allow_pull_push=True, directory=logs_dir)
+    print(f"Git operations ran in: {logs_dir}")
