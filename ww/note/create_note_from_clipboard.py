@@ -24,12 +24,12 @@ def _validate_and_clean_short_title(raw: str) -> str:
     parts = short_title.split("-")
     if (
         not short_title
-        or len(short_title) > 65
-        or len(parts) > 6
-        or any(len(p) > 15 or not p.isalnum() for p in parts)
+        or len(short_title) > 80
+        or len(parts) > 8
+        or any(len(p) > 20 or not p.isalnum() for p in parts)
     ):
         raise ValueError(
-            f"Invalid short_title '{short_title}': must be only lowercase a-z0-9/-, <=65 chars, <=6 words (<=15 chars each). Regenerate."
+            f"Invalid short_title '{short_title}': must be only lowercase a-z0-9/-, <=80 chars, <=8 words (<=20 chars each). Regenerate."
         )
     return short_title
 
