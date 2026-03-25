@@ -42,5 +42,8 @@ htmlcov/
 # Logs
 *.log
 
+# Project specific
+ww/config/*-sanitized.json
+
 # Jupyter
 .ipynb_checkpoints/
