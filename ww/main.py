@@ -105,6 +105,10 @@ def _print_help():
     print("  ww copilot auth           Authenticate via GitHub OAuth device flow")
     print("  ww copilot models         List available Copilot models")
     print("  ww copilot chat           Chat with a Copilot model")
+    print("")
+    print("Sync:")
+    print("  ww sync claude            Sync Claude Code settings (sanitized)")
+    print("")
 
 
 def _pop_subcmd():
@@ -514,6 +518,16 @@ def main():
             print(result)
         else:
             print(f"Unknown copilot command: {subcmd}")
+            sys.exit(1)
+
+    elif group == "sync":
+        subcmd = _pop_subcmd()
+        if subcmd == "claude":
+            from ww.sync.claude import main as m
+
+            m()
+        else:
+            print(f"Unknown sync command: {subcmd}")
             sys.exit(1)
 
     else:
