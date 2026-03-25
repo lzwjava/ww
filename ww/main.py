@@ -108,6 +108,9 @@ def _print_help():
     print("")
     print("Sync:")
     print("  ww sync claude            Sync Claude Code settings (sanitized)")
+    print("  ww sync bashrc [back|forth] Sync .bashrc file")
+    print("  ww sync zprofile [back|forth] Sync .zprofile file")
+    print("  ww sync ssh [back|forth]    Sync .ssh directory")
     print("")
 
 
@@ -522,10 +525,23 @@ def main():
 
     elif group == "sync":
         subcmd = _pop_subcmd()
+        direction = _pop_subcmd() or "forth"
         if subcmd == "claude":
             from ww.sync.claude import main as m
 
             m()
+        elif subcmd == "bashrc":
+            from ww.sync.remote import sync_bashrc
+
+            sync_bashrc(direction)
+        elif subcmd == "zprofile":
+            from ww.sync.remote import sync_zprofile
+
+            sync_zprofile(direction)
+        elif subcmd == "ssh":
+            from ww.sync.remote import sync_ssh
+
+            sync_ssh(direction)
         else:
             print(f"Unknown sync command: {subcmd}")
             sys.exit(1)
