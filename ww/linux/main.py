@@ -15,6 +15,7 @@ def _print_help():
     print("  disk         Show disk usage")
     print("  battery      Show battery status")
     print("  proxy-setup  Interactively configure APT proxy")
+    print("  setup        Run general Linux setup tasks")
     print("  wol          Send a Wake-on-LAN packet")
     print("  terminal     Open a fullscreen terminal")
 
@@ -45,6 +46,10 @@ def main():
         from ww.linux.setup import run_proxy_setup
 
         run_proxy_setup()
+    elif subcmd == "setup":
+        from ww.linux.setup import run_linux_setup
+
+        run_linux_setup()
     elif subcmd == "wol":
         from ww.linux.net import run_wol
 
