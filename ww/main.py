@@ -11,6 +11,7 @@ def _print_help():
     print("Note:")
     print("  ww note                   Create a new note with git integration")
     print("  ww note log               Create a new log entry")
+    print("  ww note obfuscate <file>  Obfuscate sensitive data in a file")
     print("")
     print("GIF:")
     print("  ww gif                    Create GIF from images")
@@ -152,6 +153,10 @@ def main():
             from ww.note.create_log import create_log
 
             create_log()
+        elif subcmd == "obfuscate":
+            from ww.note.obfuscate_log import obfuscate_log
+
+            obfuscate_log()
         else:
             print(f"Unknown note command: {subcmd}")
             sys.exit(1)
