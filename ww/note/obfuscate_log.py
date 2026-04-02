@@ -62,8 +62,6 @@ def obfuscate_log():
     if not has_changes:
         return
 
-    input("\nPress Enter to apply changes, or Ctrl+C to cancel...")
-
     with open(args.input_file, "w", encoding="utf-8") as f:
         f.write(obfuscated)
     print(f"Obfuscated: {args.input_file}")
