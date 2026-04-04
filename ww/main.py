@@ -437,11 +437,11 @@ def main():
         elif subcmd == "gca":
             from ww.github.gitmessageai import gitmessageai
 
-            gitmessageai(push=False, model="gemini-flash")
+            gitmessageai(push=False)
         elif subcmd == "gpa":
             from ww.github.gitmessageai import gitmessageai
 
-            gitmessageai(allow_pull_push=True, model="gemini-flash")
+            gitmessageai(allow_pull_push=True)
         else:
             print(f"Unknown git command: {subcmd}")
             sys.exit(1)
