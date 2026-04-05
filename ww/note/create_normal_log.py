@@ -10,6 +10,25 @@ from ww.note.create_note_utils import (
 from ww.github.gitmessageai import gitmessageai
 
 
+def generate_filename_with_ext(content, ext):
+    snippet = get_first_n_words(content)
+    prompt = f"Generate a short filename WITHOUT extension (maximum 4 words, all lowercase, use ONLY letters a-z, numbers 0-9, and hyphens - for separation). NO underscores, single quotes, backticks, or markdown syntax. Respond with only the name: {snippet}"
+    result = call_openrouter_api(prompt)
+    if not result:
+        raise RuntimeError("Failed to generate filename from LLM.")
+    name = (
+        result.strip()
+        .lower()
+        .replace("_", "-")
+        .replace("`", "")
+        .replace("*", "")
+        .strip()
+        .rstrip(".")
+    )
+    name = re.sub(r"\.[a-z0-9]+$", "", name)
+    return f"{name}.{ext}"
+
+
 def generate_filename(content):
     snippet = get_first_n_words(content)
     prompt = f"Generate a short filename with extension (maximum 4 words before the extension, all lowercase, use ONLY letters a-z, numbers 0-9, and hyphens - for separation, then a dot and appropriate file extension based on the content type). Extension rules: if content has markdown formatting (headers, bold, lists, links) use .md, shell scripts use .sh, Python use .py, JavaScript use .js, TypeScript use .ts, JSON use .json, YAML use .yaml, HTML use .html, CSS use .css, SQL use .sql, XML use .xml, plain logs use .log, config files use their native extension, otherwise use .txt. Examples: my-config.yaml, server-error.log, build-script.sh, api-notes.md. NO underscores, single quotes, backticks, or markdown syntax in your response. Respond with only the filename in the format filename.ext: {snippet}"
@@ -26,12 +45,15 @@ def generate_filename(content):
     )
 
 
-def create_normal_log(content=None):
+def create_normal_log(content=None, ext=None):
     logs_dir = os.path.join(get_base_path(), "logs")
     if content is None:
         content = get_clipboard_content()
 
-    ai_filename = generate_filename(content)
+    if ext:
+        ai_filename = generate_filename_with_ext(content, ext)
+    else:
+        ai_filename = generate_filename(content)
 
     match = re.match(r"^([a-z0-9-]+)\.([a-z0-9]+)$", ai_filename)
     if not match:
