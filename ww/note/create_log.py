@@ -33,9 +33,6 @@ def create_log():
         if not obfuscated:
             print("Error: Obfuscation failed.")
             return
-        import pyperclip
-
-        pyperclip.copy(obfuscated)
-        print("Clipboard updated with obfuscated content.")
-
-    create_normal_log()
+        create_normal_log(obfuscated)
+    else:
+        create_normal_log()
