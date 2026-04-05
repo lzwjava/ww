@@ -15,7 +15,7 @@ def create_normal_log(content=None):
         content = get_clipboard_content()
 
     filename_prompt = lambda c: (
-        f"Generate a short filename with extension (maximum 4 words before the extension, all lowercase, use ONLY letters a-z, numbers 0-9, and hyphens - for separation, then a dot and appropriate file extension based on the content type, e.g. my-config.yaml, server-error.log, build-script.sh). NO underscores, single quotes, backticks, or markdown syntax. Respond with only the filename in the format filename.ext: {c}"
+        f"Generate a short filename with extension (maximum 4 words before the extension, all lowercase, use ONLY letters a-z, numbers 0-9, and hyphens - for separation, then a dot and appropriate file extension based on the content type). Extension rules: markdown content use .md, shell scripts use .sh, Python use .py, JavaScript use .js, TypeScript use .ts, JSON use .json, YAML use .yaml, HTML use .html, CSS use .css, SQL use .sql, XML use .xml, plain logs use .log, config files use their native extension, otherwise use .txt. Examples: my-config.yaml, server-error.log, build-script.sh, api-notes.md. NO underscores, single quotes, backticks, or markdown syntax. Respond with only the filename in the format filename.ext: {c}"
     )
     ai_filename = (
         generate_title(content, 4, filename_prompt)
