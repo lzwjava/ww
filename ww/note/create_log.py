@@ -1,3 +1,5 @@
+import sys
+
 from ww.llm.openrouter_client import call_openrouter_api
 from ww.note.create_normal_log import create_normal_log
 from ww.note.create_note_utils import get_clipboard_content, generate_title
@@ -21,10 +23,15 @@ def obfuscate_content(content):
 
 
 def create_log():
+    direct = "--direct" in sys.argv
     content = get_clipboard_content()
 
     if len(content) > 1048576:
         print("Error: Content exceeds 1MB. Please shorten the log and try again.")
+        return
+
+    if direct:
+        create_normal_log(content)
         return
 
     if is_sensitive_content(content):
