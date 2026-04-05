@@ -14,6 +14,7 @@ OBFUSCATE_PROMPT = """Obfuscate all sensitive information in the following text.
 - Hostnames/domains that look internal → host.example.com
 - AWS account IDs → 123456789012
 - Private file paths containing usernames → /home/user/...
+- Phone numbers → +1-555-000-0000
 - MAC addresses → 00:00:00:00:00:00
 - Any other credentials or secrets → [REDACTED]
 
