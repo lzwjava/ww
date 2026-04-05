@@ -23,20 +23,12 @@ def obfuscate_content(content):
     return obfuscated
 
 
-def create_log():
-    parser = argparse.ArgumentParser(description="Create a log entry from clipboard")
-    parser.add_argument(
-        "--direct", action="store_true", help="Skip sensitivity check and obfuscation"
-    )
-    args = parser.parse_args(sys.argv[1:])
-
-    content = get_clipboard_content()
-
+def _create_log_with_content(content, direct=False):
     if len(content) > 1048576:
         print("Error: Content exceeds 1MB. Please shorten the log and try again.")
         return
 
-    if args.direct:
+    if direct:
         create_normal_log(content)
         return
 
@@ -48,4 +40,28 @@ def create_log():
             return
         create_normal_log(obfuscated)
     else:
-        create_normal_log()
+        create_normal_log(content)
+
+
+def create_log():
+    parser = argparse.ArgumentParser(description="Create a log entry from clipboard")
+    parser.add_argument(
+        "--direct", action="store_true", help="Skip sensitivity check and obfuscation"
+    )
+    args = parser.parse_args(sys.argv[1:])
+
+    content = get_clipboard_content()
+    _create_log_with_content(content, args.direct)
+
+
+def create_log_from_file():
+    parser = argparse.ArgumentParser(description="Create a log entry from a file")
+    parser.add_argument("file", help="Path to the file to read content from")
+    parser.add_argument(
+        "--direct", action="store_true", help="Skip sensitivity check and obfuscation"
+    )
+    args = parser.parse_args(sys.argv[1:])
+
+    with open(args.file, "r", encoding="utf-8") as f:
+        content = f.read()
+    _create_log_with_content(content, args.direct)

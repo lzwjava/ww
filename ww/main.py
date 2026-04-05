@@ -153,6 +153,10 @@ def main():
             from ww.note.create_log import create_log
 
             create_log()
+        elif subcmd == "log-file":
+            from ww.note.create_log import create_log_from_file
+
+            create_log_from_file()
         elif subcmd == "obfuscate":
             from ww.note.obfuscate_log import obfuscate_log
 
