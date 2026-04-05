@@ -1,5 +1,7 @@
+from ww.llm.openrouter_client import call_openrouter_api
 from ww.note.create_normal_log import create_normal_log
 from ww.note.create_note_utils import get_clipboard_content, generate_title
+from ww.note.obfuscate_log import OBFUSCATE_PROMPT
 
 
 def is_sensitive_content(content):
@@ -10,6 +12,14 @@ def is_sensitive_content(content):
     return response == "yes"
 
 
+def obfuscate_content(content):
+    prompt = OBFUSCATE_PROMPT.format(content=content)
+    obfuscated = call_openrouter_api(prompt)
+    if not obfuscated:
+        return None
+    return obfuscated
+
+
 def create_log():
     content = get_clipboard_content()
 
@@ -18,9 +28,14 @@ def create_log():
         return
 
     if is_sensitive_content(content):
-        print(
-            "Error: Sensitive content detected. Please remove passwords, keys, or personal data and try again."
-        )
-        return
+        print("Sensitive content detected. Obfuscating...")
+        obfuscated = obfuscate_content(content)
+        if not obfuscated:
+            print("Error: Obfuscation failed.")
+            return
+        import pyperclip
+
+        pyperclip.copy(obfuscated)
+        print("Clipboard updated with obfuscated content.")
 
     create_normal_log()
