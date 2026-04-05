@@ -1,12 +1,12 @@
 {
   "meta": {
-    "lastTouchedVersion": "2026.3.13",
-    "lastTouchedAt": "2026-03-21T22:11:22.122Z"
+    "lastTouchedVersion": "2026.4.2",
+    "lastTouchedAt": "2026-04-04T20:31:13.172Z"
   },
   "wizard": {
-    "lastRunAt": "2026-03-13T15:32:49.005Z",
-    "lastRunVersion": "2026.3.12",
-    "lastRunCommand": "onboard",
+    "lastRunAt": "2026-04-03T13:49:24.784Z",
+    "lastRunVersion": "2026.4.2",
+    "lastRunCommand": "doctor",
     "lastRunMode": "local"
   },
   "browser": {
@@ -64,14 +64,17 @@
             "maxTokens": 8192
           }
         ]
+      },
+      "google": {
+        "apiKey": "REDACTED",
+        "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
+        "models": []
       }
     }
   },
   "agents": {
     "defaults": {
-      "model": {
-        "primary": "openrouter/xiaomi/mimo-v2-pro"
-      },
+      "model": "openrouter/qwen/qwen3.6-plus:free",
       "models": {
         "openrouter/auto": {
           "alias": "OpenRouter"
@@ -80,11 +83,18 @@
         "openrouter/google/gemini-3-flash-preview": {},
         "openrouter/stepfun/step-3.5-flash:free": {},
         "openrouter/deepseek/deepseek-v3.2": {},
-        "openrouter/xiaomi/mimo-v2-pro": {}
+        "openrouter/xiaomi/mimo-v2-pro": {},
+        "openrouter/minimax/minimax-m2.7": {}
       },
       "workspace": "/home/lzw/.openclaw/workspace",
       "compaction": {
         "mode": "safeguard"
+      },
+      "imageGenerationModel": {
+        "primary": "google/gemini-3-pro-image-preview"
+      },
+      "imageModel": {
+        "primary": "openrouter/google/gemini-3-flash-preview"
       }
     }
   },
@@ -93,10 +103,7 @@
     "web": {
       "search": {
         "enabled": true,
-        "provider": "gemini",
-        "gemini": {
-          "apiKey": ""
-        }
+        "provider": "gemini"
       }
     },
     "elevated": {
@@ -128,29 +135,69 @@
     "telegram": {
       "enabled": true,
       "dmPolicy": "pairing",
-      "botToken": "",
+      "botToken": "REDACTED",
       "groupPolicy": "allowlist",
+      "groupAllowFrom": [],
+      "groups": {
+        "-4714712674": {
+          "requireMention": true
+        }
+      },
       "streaming": "partial"
+    },
+    "openclaw-weixin": {
+      "channelConfigUpdatedAt": "2026-04-04T13:00:56.172Z"
+    },
+    "whatsapp": {
+      "enabled": true,
+      "dmPolicy": "pairing",
+      "allowFrom": [
+        "REDACTED"
+      ],
+      "groupPolicy": "allowlist",
+      "groupAllowFrom": []
+    },
+    "signal": {
+      "enabled": true
     },
     "nextcloud-talk": {
       "enabled": true,
       "baseUrl": "http://localhost:8080",
-      "botSecret": "",
-      "groupPolicy": "open",
+      "botSecret": "REDACTED",
+      "dmPolicy": "allowlist",
+      "allowFrom": [
+        "*"
+      ],
       "rooms": {
         "eu42ecdy": {
           "requireMention": false
         }
-      }
+      },
+      "webhookPublicUrl": "http://172.17.0.1:8788",
+      "allowPrivateNetwork": true
+    },
+    "slack": {
+      "botToken": "REDACTED",
+      "enabled": true,
+      "appToken": "REDACTED"
     }
   },
   "gateway": {
     "port": 18789,
     "mode": "local",
-    "bind": "loopback",
+    "bind": "auto",
+    "controlUi": {
+      "enabled": true,
+      "allowedOrigins": [
+        "*"
+      ],
+      "allowInsecureAuth": true,
+      "dangerouslyDisableDeviceAuth": true
+    },
     "auth": {
-      "mode": "token",
-      "token": ""
+      "mode": "password",
+      "token": "REDACTED",
+      "password": "REDACTED"
     },
     "tailscale": {
       "mode": "off",
@@ -171,31 +218,20 @@
   "skills": {
     "entries": {
       "goplaces": {
-        "apiKey": ""
-      },
-      "nano-banana-pro": {
-        "apiKey": ""
+        "apiKey": "REDACTED"
       },
       "openai-image-gen": {
-        "apiKey": ""
+        "apiKey": "REDACTED"
       },
       "openai-whisper-api": {
-        "apiKey": ""
+        "apiKey": "REDACTED"
       },
       "sag": {
-        "apiKey": ""
+        "apiKey": "REDACTED"
       }
     }
   },
   "plugins": {
-    "entries": {
-      "telegram": {
-        "enabled": true
-      },
-      "nextcloud-talk": {
-        "enabled": true
-      }
-    },
     "installs": {
       "nextcloud-talk": {
         "source": "npm",
@@ -207,8 +243,44 @@
         "resolvedSpec": "@openclaw/nextcloud-talk@2026.3.13",
         "integrity": "sha512-zw5uy5FZd6PFp2LqrAR9R9Pn610DHHHbk1p5ZlIadCyW5ECuXDYsEpUzJpcL0P7MN5vCMOkVL+5QDbKGB6R4gQ==",
         "shasum": "099c005615dd37a9f84996e0893d4ea8ba729779",
-        "resolvedAt": "2026-03-21T21:52:54.747Z",
-        "installedAt": "2026-03-21T21:52:56.803Z"
+        "resolvedAt": "2026-03-22T13:47:05.942Z",
+        "installedAt": "2026-03-22T13:47:07.796Z"
+      },
+      "openclaw-weixin": {
+        "source": "npm",
+        "spec": "@tencent-weixin/openclaw-weixin@compat-host-gte2026.3.0-lt2026.3.22",
+        "installPath": "/home/lzw/.openclaw/extensions/openclaw-weixin",
+        "version": "1.0.3",
+        "resolvedName": "@tencent-weixin/openclaw-weixin",
+        "resolvedVersion": "1.0.3",
+        "resolvedSpec": "@tencent-weixin/openclaw-weixin@1.0.3",
+        "integrity": "sha512-TOo9rb5gt3ce3lJEulFT5Ta4/8ocWkR40wzM7lZ8OM3/fjTk3UHYeNjHmDcZlLeg93XYJKdVUFUEiujrf8zMYw==",
+        "shasum": "19f65f26d4af26a25f05cdd5f1dd3c687590f91c",
+        "resolvedAt": "2026-03-29T04:28:50.455Z",
+        "installedAt": "2026-03-29T04:29:13.531Z"
+      },
+      "whatsapp": {
+        "source": "path",
+        "spec": "@openclaw/whatsapp",
+        "sourcePath": "/home/lzw/.npm-global/lib/node_modules/openclaw/dist/extensions/whatsapp",
+        "installPath": "/home/lzw/.npm-global/lib/node_modules/openclaw/dist/extensions/whatsapp",
+        "installedAt": "2026-04-04T15:10:08.630Z"
+      }
+    },
+    "load": {
+      "paths": [
+        "/home/lzw/.npm-global/lib/node_modules/openclaw/dist/extensions/whatsapp"
+      ]
+    },
+    "entries": {
+      "openclaw-weixin": {
+        "enabled": true
+      },
+      "nextcloud-talk": {
+        "enabled": true
+      },
+      "browser": {
+        "enabled": true
       }
     }
   }

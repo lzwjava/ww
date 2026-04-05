@@ -556,6 +556,10 @@ def main():
             from ww.sync.remote import sync_ssh
 
             sync_ssh(direction)
+        elif subcmd == "openclaw":
+            from ww.sync.openclaw import main as m
+
+            m()
         else:
             print(f"Unknown sync command: {subcmd}")
             sys.exit(1)

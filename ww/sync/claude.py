@@ -1,5 +1,12 @@
 import json
+import re
 from pathlib import Path
+
+PHONE_PATTERN = re.compile(r"^\+?\d[\d\s\-]{7,}$")
+
+
+def _is_phone_number(value: str) -> bool:
+    return bool(PHONE_PATTERN.match(value.strip()))
 
 
 def sanitize_dict(d: dict) -> dict:
@@ -12,12 +19,25 @@ def sanitize_dict(d: dict) -> dict:
 
         if isinstance(v, dict):
             sanitized[k] = sanitize_dict(v)
+        elif isinstance(v, list):
+            sanitized[k] = [sanitize_value(item) for item in v]
         elif is_sensitive and isinstance(v, str):
+            sanitized[k] = "REDACTED"
+        elif isinstance(v, str) and _is_phone_number(v):
             sanitized[k] = "REDACTED"
         else:
             sanitized[k] = v
 
     return sanitized
+
+
+def sanitize_value(value):
+    if isinstance(value, dict):
+        return sanitize_dict(value)
+    elif isinstance(value, str) and _is_phone_number(value):
+        return "REDACTED"
+    else:
+        return value
 
 
 def sync_claude_settings():
