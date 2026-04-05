@@ -1,3 +1,4 @@
+import argparse
 import sys
 
 from ww.llm.openrouter_client import call_openrouter_api
@@ -23,14 +24,19 @@ def obfuscate_content(content):
 
 
 def create_log():
-    direct = "--direct" in sys.argv
+    parser = argparse.ArgumentParser(description="Create a log entry from clipboard")
+    parser.add_argument(
+        "--direct", action="store_true", help="Skip sensitivity check and obfuscation"
+    )
+    args = parser.parse_args(sys.argv[1:])
+
     content = get_clipboard_content()
 
     if len(content) > 1048576:
         print("Error: Content exceeds 1MB. Please shorten the log and try again.")
         return
 
-    if direct:
+    if args.direct:
         create_normal_log(content)
         return
 
