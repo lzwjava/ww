@@ -93,9 +93,28 @@ def create_log():
     _create_log_with_content(content, args.direct, ext=args.ext)
 
 
+def _get_latest_markdown_in_downloads():
+    downloads = Path.home() / "Downloads"
+    if not downloads.exists():
+        print("Error: ~/Downloads directory not found.")
+        sys.exit(1)
+    md_files = list(downloads.glob("*.md"))
+    if not md_files:
+        print("Error: No markdown files found in ~/Downloads.")
+        sys.exit(1)
+    latest = max(md_files, key=lambda f: f.stat().st_mtime)
+    print(f"Using latest markdown file: {latest}")
+    return str(latest)
+
+
 def create_log_from_file():
     parser = argparse.ArgumentParser(description="Create a log entry from a file")
-    parser.add_argument("file", help="Path to the file to read content from")
+    parser.add_argument(
+        "file",
+        nargs="?",
+        default=None,
+        help="Path to the file to read content from (defaults to latest .md in ~/Downloads)",
+    )
     parser.add_argument(
         "--direct", action="store_true", help="Skip sensitivity check and obfuscation"
     )
@@ -105,6 +124,8 @@ def create_log_from_file():
     )
     args = parser.parse_args(sys.argv[1:])
 
-    with open(args.file, "r", encoding="utf-8") as f:
+    file_path = args.file if args.file else _get_latest_markdown_in_downloads()
+
+    with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
     _create_log_with_content(content, args.direct, ext=args.ext)
