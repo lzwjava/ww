@@ -93,6 +93,8 @@ def _print_help():
     print("  ww search ecosia          Search with Ecosia")
     print("  ww search filename        Search by filename")
     print("  ww search startpage       Search with StartPage")
+    print("  ww search tavily          Search with Tavily API")
+    print("  ww search web --json      JSON output for LLM tool use")
     print("")
     print("PDF:")
     print("  ww pdf markdown-pdf       Convert a markdown file to PDF")
@@ -451,11 +453,19 @@ def main():
             sys.exit(1)
 
     elif group == "search":
-        _search_subcmds = {"bing", "code", "ddg", "filename", "startpage", "web"}
+        _search_subcmds = {
+            "bing",
+            "code",
+            "ddg",
+            "filename",
+            "startpage",
+            "tavily",
+            "web",
+        }
         subcmd = sys.argv[1] if len(sys.argv) > 1 else ""
         if subcmd in _search_subcmds:
             sys.argv.pop(1)
-            if subcmd in {"bing", "ddg", "startpage"}:
+            if subcmd in {"bing", "ddg", "startpage", "tavily"}:
                 from ww.search.search_web import main as m
 
                 sys.argv.insert(1, "--type")

@@ -74,9 +74,10 @@ def extract_text_from_url(url):
 
         blocks = [t.get_text(separator=" ", strip=True) for t in targets if t]
         blocks = [b for b in blocks if b]
-        return (
+        text = (
             "\n\n".join(blocks) if blocks else soup.get_text(separator=" ", strip=True)
         )
+        return text[:3000]
     except Exception as e:
         return f"Error fetching {url}: {e}"
 
