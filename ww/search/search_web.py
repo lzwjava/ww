@@ -2,7 +2,7 @@ import argparse
 import json
 import os
 import warnings
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs, quote_plus
 
 import requests
 from bs4 import BeautifulSoup
@@ -22,7 +22,7 @@ warnings.filterwarnings(
 
 
 def search_bing(query, num_results=20):
-    url = f"https://www.bing.com/search?q={query}&setmkt=en-US&setlang=en-US&cc=US"
+    url = f"https://www.bing.com/search?q={quote_plus(query)}&setmkt=en-US&setlang=en-US&cc=US"
     try:
         session = requests.Session()
         session.cookies.set("SRCHHPGUSR", "SRCHLANG=EN&WLS=2", domain=".bing.com")
@@ -47,12 +47,18 @@ def search_bing(query, num_results=20):
 
 
 def search_ddg(query, num_results=20):
-    url = f"https://html.duckduckgo.com/html/?q={query}"
+    url = f"https://html.duckduckgo.com/html/?q={quote_plus(query)}"
     try:
         res = requests.get(url, headers=HEADERS, proxies=PROXY, timeout=10)
         res.raise_for_status()
     except Exception as e:
         print(f"Error searching DDG: {e}")
+        return []
+
+    if res.status_code == 202 or "anomaly-modal" in res.text:
+        print(
+            "DDG blocked the request (CAPTCHA/bot detection). Try another engine with --type bing or --type tavily."
+        )
         return []
 
     soup = BeautifulSoup(res.text, "html.parser")
