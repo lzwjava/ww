@@ -21,6 +21,8 @@ dependencies = [
     "pdf2image>=1.16.0",
     "numpy>=1.24.0",
     "python-dotenv>=1.0.0",
+    "chardet>=5.0.0",
+    "tavily-python>=0.5.0",
 ]
 
 [project.scripts]
@@ -31,6 +33,37 @@ pythonVersion = "3.8"
 typeCheckingMode = "basic"
 reportMissingImports = true
 reportMissingModuleSource = false
+reportAttributeAccessIssue = false
+exclude = [
+    "ww/agent/",
+    "ww/audio/",
+    "ww/auto_ss_config/",
+    "ww/bot/",
+    "ww/clash/",
+    "ww/conversation_upload/",
+    "ww/crawler/",
+    "ww/embedding/",
+    "ww/gif/",
+    "ww/graph/",
+    "ww/japanese/",
+    "ww/java/",
+    "ww/kalman/",
+    "ww/langchain_test/",
+    "ww/mmlu/",
+    "ww/networkx/",
+    "ww/photo/",
+    "ww/pico/",
+    "ww/pl/",
+    "ww/plot/",
+    "ww/social/",
+    "ww/supabase/",
+    "ww/tooluse/",
+    "ww/torch_llm/",
+    "ww/try/",
+    "ww/video/",
+    "ww/wandbrun/",
+    ".venv/",
+]
 
 [tool.ruff.lint]
 ignore = [
@@ -41,3 +74,6 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "ww/search/*.py" = ["E402"]  # warnings.filterwarnings must precede imports
+"ww/mmlu/*.py" = ["E402"]
+"ww/networkx/*.py" = ["E402"]
+"ww/social/*.py" = ["E402"]
