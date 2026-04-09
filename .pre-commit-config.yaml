@@ -20,15 +20,20 @@ repos:
     rev: v1.1.408
     hooks:
       - id: pyright
-        additional_dependencies: ["python-dotenv", "Pillow", "beautifulsoup4", "readability-lxml", "requests"]
-        exclude: >-
-          (?x)^ww/(
-            agent/|audio/|auto_ss_config/|bot/|clash/|cloudflare/|
-            conversation_upload/|crawler/|embedding/|gif/|graph/|
-            image/(screenshot|remove_bg|image_compress)\.py|
-            japanese/|java/|kalman/|langchain_test/|linear/|
-            macos/(list_fonts|toast)\.py|mmlu/|network/|networkx/|
-            photo/|pico/|pl/|plot/|selenium/|social/|supabase/|
-            tooluse/|torch_llm/|trading/|try/|utils/decode_jwt\.py|
-            video/|wandbrun/
-          )
+        additional_dependencies:
+          - "python-dotenv"
+          - "Pillow"
+          - "beautifulsoup4"
+          - "readability-lxml"
+          - "requests"
+          - "numpy"
+          - "pypdf"
+          - "matplotlib"
+          - "PyJWT"
+          - "selenium"
+          - "tigeropen"
+          - "pyobjc-framework-CoreText; sys_platform == 'darwin'"
+          - "pyobjc-framework-UserNotifications; sys_platform == 'darwin'"
+          - "dnspython"
+          - "speedtest-cli"
+          - "wandb"

@@ -39,11 +39,9 @@ exclude = [
     "ww/audio/",
     "ww/auto_ss_config/",
     "ww/bot/",
-    "ww/clash/",
     "ww/conversation_upload/",
     "ww/crawler/",
     "ww/embedding/",
-    "ww/gif/",
     "ww/graph/",
     "ww/japanese/",
     "ww/java/",
@@ -61,7 +59,6 @@ exclude = [
     "ww/torch_llm/",
     "ww/try/",
     "ww/video/",
-    "ww/wandbrun/",
     ".venv/",
 ]
 
