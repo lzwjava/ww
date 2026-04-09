@@ -6,8 +6,8 @@ Demonstrates various ways to use Intel GPU acceleration
 # ============================================
 # Example 1: Intel Extension for PyTorch
 # ============================================
-import torch
-import intel_extension_for_pytorch as ipex
+import torch  # type: ignore[reportMissingImports]
+import intel_extension_for_pytorch as ipex  # type: ignore[reportMissingImports]
 
 
 def pytorch_gpu_example():
@@ -39,10 +39,10 @@ def pytorch_gpu_example():
 # Example 2: NumPy with dpctl (Data Parallel Control)
 # ============================================
 try:
-    import dpctl
-    import dpctl.tensor as dpt
+    import dpctl  # type: ignore[reportMissingImports]
+    import dpctl.tensor as dpt  # type: ignore[reportMissingImports]
 
-    def dpctl_example():
+    def dpctl_example():  # type: ignore[reportRedeclaration]
         """Use Intel GPU with dpctl"""
         print("\n=== dpctl GPU Computing ===")
 
@@ -73,7 +73,7 @@ try:
 
 except ImportError:
 
-    def dpctl_example():
+    def dpctl_example():  # type: ignore[reportRedeclaration]
         print("\n=== dpctl not installed ===")
         print("Install with: pip install dpctl")
 
@@ -82,14 +82,14 @@ except ImportError:
 # Example 3: Intel Extension for Scikit-learn
 # ============================================
 try:
-    from sklearnex import patch_sklearn
+    from sklearnex import patch_sklearn  # type: ignore[reportMissingImports]
 
     patch_sklearn()
 
-    from sklearn.cluster import KMeans
+    from sklearn.cluster import KMeans  # type: ignore[reportMissingImports]
     import numpy as np
 
-    def sklearn_gpu_example():
+    def sklearn_gpu_example():  # type: ignore[reportRedeclaration]
         """Use Intel GPU acceleration for scikit-learn"""
         print("\n=== Scikit-learn with Intel GPU Acceleration ===")
 
@@ -107,7 +107,7 @@ try:
 
 except ImportError:
 
-    def sklearn_gpu_example():
+    def sklearn_gpu_example():  # type: ignore[reportRedeclaration]
         print("\n=== scikit-learn-intelex not installed ===")
         print("Install with: pip install scikit-learn-intelex")
 
@@ -121,7 +121,7 @@ def check_intel_gpu():
 
     # Check PyTorch XPU
     try:
-        import torch
+        import torch  # type: ignore[reportMissingImports]
 
         if hasattr(torch, "xpu") and torch.xpu.is_available():
             print("✓ PyTorch XPU available")
@@ -134,7 +134,7 @@ def check_intel_gpu():
 
     # Check dpctl
     try:
-        import dpctl
+        import dpctl  # type: ignore[reportMissingImports]
 
         devices = dpctl.get_devices()
         gpu_devices = [d for d in devices if d.is_gpu]
@@ -155,8 +155,8 @@ def train_model_on_gpu():
     """Train a simple neural network on Intel GPU"""
     print("\n=== Training Neural Network on Intel GPU ===")
 
-    import torch
-    import torch.nn as nn
+    import torch  # type: ignore[reportMissingImports]
+    import torch.nn as nn  # type: ignore[reportMissingImports]
 
     # Determine device
     if hasattr(torch, "xpu") and torch.xpu.is_available():

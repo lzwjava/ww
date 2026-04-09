@@ -1,4 +1,4 @@
-import torch
+import torch  # type: ignore[reportMissingImports]
 
 b, t, n_embd = 2, 3, 4  # Example dimensions
 tok_emb = torch.ones(b, t, n_embd)  # All 1s

@@ -81,12 +81,12 @@ def main():
                     if re.search(r"\s*@GetMapping", line):
                         paths = extract_paths(line, "GetMapping")
                         for base in base_paths:
-                            for path in paths:
+                            for path in paths or []:
                                 get_paths.append(base + path)
                     elif re.search(r"\s*@PostMapping", line):
                         paths = extract_paths(line, "PostMapping")
                         for base in base_paths:
-                            for path in paths:
+                            for path in paths or []:
                                 post_paths.append(base + path)
 
                 get_paths = sorted(set(get_paths))

@@ -14,7 +14,7 @@ print("Edges in MST:", T.edges())
 # Community detection (requires python-louvain package)
 # pip install python-louvain
 try:
-    import community as community_louvain
+    import community as community_louvain  # type: ignore[reportMissingImports]
 
     partition = community_louvain.best_partition(G)
     print("Community partition:", partition)

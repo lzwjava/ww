@@ -19,19 +19,16 @@ import argparse
 import json
 import os
 import subprocess
-import sys
 import time
 import random
 from datetime import datetime
 
 from dotenv import load_dotenv
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright  # type: ignore[reportMissingImports]
 
 load_dotenv()
 
-# Add llm dir to path for openrouter_client
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "llm"))
-from openrouter_client import call_openrouter_api_with_messages
+from ww.llm.openrouter_client import call_openrouter_api_with_messages
 
 FOLLOWING_URL_TEMPLATE = "https://x.com/{username}/following"
 DEFAULT_DELAY = 2

@@ -1,7 +1,7 @@
 import os
 import json
-from langchain_core.prompts import PromptTemplate
-from langchain_openai import ChatOpenAI
+from langchain_core.prompts import PromptTemplate  # type: ignore[reportMissingImports]
+from langchain_openai import ChatOpenAI  # type: ignore[reportMissingImports]
 
 # 1. (Optionally) set your OpenRouter key in env
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")

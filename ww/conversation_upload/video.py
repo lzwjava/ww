@@ -69,6 +69,9 @@ def run_ffmpeg_with_progress(ffmpeg_cmd, mp3_file):
     time_re = re.compile(r"out_time_ms=(\d+)")
 
     # Use select to read stdout and stderr non-blocking
+    if process.stdout is None or process.stderr is None:
+        print("Error: Could not capture FFmpeg output.")
+        sys.exit(1)
     outputs = [process.stdout, process.stderr]
     while process.poll() is None:
         readable, _, _ = select.select(outputs, [], [], 1.0)

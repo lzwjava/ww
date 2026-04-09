@@ -1,14 +1,11 @@
 import os
-import sys
 import re
 import argparse
 from dotenv import load_dotenv
 import concurrent.futures
 import random
 
-# Add the scripts directory to the path to import openrouter_client
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "llm"))
-from openrouter_client import call_openrouter_api_with_messages, MODEL_MAPPING
+from ww.llm.openrouter_client import call_openrouter_api_with_messages, MODEL_MAPPING
 
 load_dotenv()
 

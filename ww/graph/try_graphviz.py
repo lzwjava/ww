@@ -1,4 +1,4 @@
-import graphviz
+import graphviz  # type: ignore[reportMissingImports]
 
 # Create a new directed graph with attributes
 dot = graphviz.Digraph(comment="Advanced Example Graph", format="png")
@@ -21,11 +21,13 @@ dot.edge("C", "B", label="No", style="dashed", color="red")
 dot.edge("D", "E", label="Finish")
 
 # Create a subgraph (cluster)
-with dot.subgraph(name="cluster_subprocess") as sub:
-    sub.attr(label="Subprocess", style="filled", color="lightgrey")
-    sub.node("F", "Sub Step 1")
-    sub.node("G", "Sub Step 2")
-    sub.edge("F", "G", label="Next")
+sub = dot.subgraph(name="cluster_subprocess")
+if sub is not None:
+    with sub as s:
+        s.attr(label="Subprocess", style="filled", color="lightgrey")
+        s.node("F", "Sub Step 1")
+        s.node("G", "Sub Step 2")
+        s.edge("F", "G", label="Next")
 
 # Connect main graph to subgraph
 dot.edge("D", "F")

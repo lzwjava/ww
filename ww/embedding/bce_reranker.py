@@ -1,4 +1,4 @@
-from BCEmbedding import RerankerModel
+from BCEmbedding import RerankerModel  # type: ignore[reportMissingImports]
 import logging
 
 logging.basicConfig(level=logging.INFO)

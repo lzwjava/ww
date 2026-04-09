@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from google.cloud import storage
-from ruamel.yaml import YAML
+from ruamel.yaml import YAML  # type: ignore[reportMissingImports]
 import base64
 import re
 import logging
@@ -164,7 +164,7 @@ def generate_clash_config(proxy_urls):
         for i, proxy in enumerate(proxies)
         if create_proxy_config(proxy, i) is not None
     ]
-    proxy_names = [proxy["name"] for proxy in proxy_configs]
+    proxy_names = [proxy["name"] for proxy in proxy_configs if proxy is not None]
 
     # Update config
     config["proxies"] = proxy_configs

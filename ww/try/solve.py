@@ -12,15 +12,11 @@ Usage:
     python solve.py --ai claude   # Specify preferred AI
 """
 
-import sys
 import json
 from pathlib import Path
 
-# Add the llm module to path for importing openrouter_client
-sys.path.append(str(Path(__file__).parent.parent / "llm"))
-
 try:
-    from openrouter_client import call_openrouter_api
+    from ww.llm.openrouter_client import call_openrouter_api
 
     AI_AVAILABLE = True
 except ImportError:

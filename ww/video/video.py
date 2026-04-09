@@ -1,7 +1,7 @@
 import os
-from openai import OpenAI
+from openai import OpenAI  # type: ignore[reportMissingImports]
 from google.cloud import texttospeech
-from moviepy import (
+from moviepy import (  # type: ignore[reportMissingImports]
     TextClip,
     CompositeVideoClip,
     ColorClip,
@@ -31,7 +31,10 @@ def refine_script_with_deepseek(script):
         messages=[{"role": "user", "content": prompt}],
         stream=False,
     )
-    refined_script = eval(response.choices[0].message.content)
+    content = response.choices[0].message.content
+    if content is None:
+        return []
+    refined_script = eval(content)
     return refined_script
 
 

@@ -1,4 +1,4 @@
-from FlagEmbedding import FlagReranker
+from FlagEmbedding import FlagReranker  # type: ignore[reportMissingImports]
 import logging
 import os
 

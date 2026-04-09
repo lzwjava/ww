@@ -1,5 +1,5 @@
-import torch
-import intel_extension_for_pytorch as ipex
+import torch  # type: ignore[reportMissingImports]
+import intel_extension_for_pytorch as ipex  # type: ignore[reportMissingImports]
 
 print(f"PyTorch version: {torch.__version__}")
 print(f"IPEX version: {ipex.__version__}")

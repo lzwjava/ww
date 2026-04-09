@@ -3,15 +3,15 @@
 import logging
 import os
 import sys
-from typing import List
+from typing import List, Optional
 import argparse
 import json
 
-from alibabacloud_vpc20160428.client import Client as Vpc20160428Client
-from alibabacloud_tea_openapi import models as open_api_models
-from alibabacloud_vpc20160428 import models as vpc_20160428_models
-from alibabacloud_tea_util import models as util_models
-from alibabacloud_tea_util.client import Client as UtilClient
+from alibabacloud_vpc20160428.client import Client as Vpc20160428Client  # type: ignore[reportMissingImports]
+from alibabacloud_tea_openapi import models as open_api_models  # type: ignore[reportMissingImports]
+from alibabacloud_vpc20160428 import models as vpc_20160428_models  # type: ignore[reportMissingImports]
+from alibabacloud_tea_util import models as util_models  # type: ignore[reportMissingImports]
+from alibabacloud_tea_util.client import Client as UtilClient  # type: ignore[reportMissingImports]
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -41,10 +41,11 @@ class Sample:
         associate_eip_address_request = vpc_20160428_models.AssociateEipAddressRequest(
             region_id=region_id, allocation_id=allocation_id, instance_id=instance_id
         )
-        runtime = util_models.RuntimeOptions(read_timeout=60000, connect_timeout=60000)
+        runtime = util_models.RuntimeOptions(read_timeout=60000, connect_timeout=60000)  # type: ignore[reportArgumentType]
         try:
             result = client.associate_eip_address_with_options(
-                associate_eip_address_request, runtime
+                associate_eip_address_request,
+                runtime,  # type: ignore[reportArgumentType]
             )
             logging.info(
                 f"Successfully bound EIP {allocation_id} to instance {instance_id}. Result: {result}"
@@ -75,10 +76,11 @@ class Sample:
                 instance_id=instance_id,
             )
         )
-        runtime = util_models.RuntimeOptions(read_timeout=60000, connect_timeout=60000)
+        runtime = util_models.RuntimeOptions(read_timeout=60000, connect_timeout=60000)  # type: ignore[reportArgumentType]
         try:
             result = client.unassociate_eip_address_with_options(
-                unassociate_eip_address_request, runtime
+                unassociate_eip_address_request,
+                runtime,  # type: ignore[reportArgumentType]
             )
             logging.info(
                 f"Successfully unbound EIP {allocation_id} from instance {instance_id}. Result: {result}"
@@ -98,7 +100,7 @@ class Sample:
     @staticmethod
     def create_eip(
         region_id: str,
-    ) -> str | None:
+    ) -> Optional[str]:
         client = Sample.create_client()
         allocate_eip_address_request = vpc_20160428_models.AllocateEipAddressRequest(
             region_id=region_id,
@@ -106,10 +108,11 @@ class Sample:
             internet_charge_type="PayByTraffic",
             bandwidth="200",
         )
-        runtime = util_models.RuntimeOptions(read_timeout=60000, connect_timeout=60000)
+        runtime = util_models.RuntimeOptions(read_timeout=60000, connect_timeout=60000)  # type: ignore[reportArgumentType]
         try:
             result = client.allocate_eip_address_with_options(
-                allocate_eip_address_request, runtime
+                allocate_eip_address_request,
+                runtime,  # type: ignore[reportArgumentType]
             )
             print(result.body)
             allocation_id = result.body.allocation_id
@@ -132,10 +135,11 @@ class Sample:
         release_eip_address_request = vpc_20160428_models.ReleaseEipAddressRequest(
             allocation_id=allocation_id
         )
-        runtime = util_models.RuntimeOptions(read_timeout=60000, connect_timeout=60000)
+        runtime = util_models.RuntimeOptions(read_timeout=60000, connect_timeout=60000)  # type: ignore[reportArgumentType]
         try:
             result = client.release_eip_address_with_options(
-                release_eip_address_request, runtime
+                release_eip_address_request,
+                runtime,  # type: ignore[reportArgumentType]
             )
             logging.info(f"Successfully released EIP {allocation_id}. Result: {result}")
             return True
@@ -152,15 +156,16 @@ class Sample:
     def describe_eip(
         region_id: str,
         instance_id: str,
-    ) -> str | None:
+    ) -> Optional[str]:
         client = Sample.create_client()
         describe_eip_addresses_request = (
             vpc_20160428_models.DescribeEipAddressesRequest(region_id=region_id)
         )
-        runtime = util_models.RuntimeOptions(read_timeout=60000, connect_timeout=60000)
+        runtime = util_models.RuntimeOptions(read_timeout=60000, connect_timeout=60000)  # type: ignore[reportArgumentType]
         try:
             result = client.describe_eip_addresses_with_options(
-                describe_eip_addresses_request, runtime
+                describe_eip_addresses_request,
+                runtime,  # type: ignore[reportArgumentType]
             )
             logging.info("Successfully described EIP.")
             print(json.dumps(result.body.to_map(), indent=4))
@@ -341,7 +346,8 @@ class Sample:
         runtime = util_models.RuntimeOptions()
         try:
             await client.associate_eip_address_with_options_async(
-                associate_eip_address_request, runtime
+                associate_eip_address_request,
+                runtime,  # type: ignore[reportArgumentType]
             )
         except Exception as error:
             print(error)

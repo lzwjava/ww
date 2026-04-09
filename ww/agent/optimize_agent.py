@@ -1,6 +1,6 @@
 import sys
 import ast
-import astroid
+import astroid  # type: ignore[reportMissingImports]
 
 
 def extract_file_operations(content):

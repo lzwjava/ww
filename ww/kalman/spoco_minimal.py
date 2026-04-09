@@ -1,9 +1,9 @@
 # spoco_minimal.py
 # Python 3.10+, PyTorch 2.x
 from typing import Dict, Tuple
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+import torch  # type: ignore[reportMissingImports]
+import torch.nn as nn  # type: ignore[reportMissingImports]
+import torch.nn.functional as F  # type: ignore[reportMissingImports]
 
 
 # ----------------------------
@@ -130,7 +130,7 @@ def sparse_instance_contrastive_loss(
         y = idx[:, 1]
         x = idx[:, 2]
         vecs = emb[b, :, y, x]  # [N,D]
-        inst_means[key] = vecs.mean(0)  # [D]
+        inst_means[key] = vecs.mean(0)  # type: ignore[reportArgumentType]  # [D]
 
     # Pull: L2 to own mean
     pull_losses = []
@@ -139,7 +139,7 @@ def sparse_instance_contrastive_loss(
         y = idx[:, 1]
         x = idx[:, 2]
         vecs = emb[b, :, y, x]  # [N,D]
-        mean = inst_means[key].unsqueeze(0)  # [1,D]
+        mean = inst_means[key].unsqueeze(0)  # type: ignore[reportArgumentType]  # [1,D]
         pull_losses.append(((vecs - mean) ** 2).sum(dim=1).mean())
     pull = torch.stack(pull_losses).mean()
 
@@ -237,7 +237,7 @@ def embeddings_to_instances(
     """
     emb: [1,D,H,W] (normalized). Returns an instance map [H,W] with {0,1,2,...}
     """
-    from sklearn.cluster import MeanShift
+    from sklearn.cluster import MeanShift  # type: ignore[reportMissingImports]
 
     emb = emb[0].permute(1, 2, 0).contiguous()  # [H,W,D]
     H, W, D = emb.shape

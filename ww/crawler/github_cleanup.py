@@ -4,7 +4,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
-from webdriver_manager.chrome import ChromeDriverManager
 
 
 def main():
@@ -17,7 +16,7 @@ def main():
     # Set up Selenium with headless Chrome
     options = webdriver.ChromeOptions()
     options.add_argument("--headless")  # Run without opening a browser window
-    driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+    driver = webdriver.Chrome(options=options)
 
     try:
         # Navigate to the user's public repositories page
@@ -42,6 +41,8 @@ def main():
                         # Extract the repository path (e.g., username/repo-name)
                         repo_link = repo.find_element(By.CSS_SELECTOR, "h3 a")
                         href = repo_link.get_attribute("href")
+                        if href is None:
+                            continue
                         repo_path = href.replace("https://github.com/", "")
                         fork_repos.append(repo_path)
                 except NoSuchElementException:

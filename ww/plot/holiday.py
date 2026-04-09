@@ -45,13 +45,15 @@ sizes_hk = [holiday["duration"] for holiday in holidays_hk]
 
 # Create the pie chart for Hong Kong
 fig1, ax1 = plt.subplots(figsize=(10, 10))
-wedges, texts, autotexts = ax1.pie(
+pie_result = ax1.pie(
     sizes_hk,
     labels=labels_hk,
     autopct="%1.1f%%",
     startangle=90,
     textprops={"color": "black"},
 )
+wedges, texts = pie_result[0], pie_result[1]
+autotexts = pie_result[2] if len(pie_result) > 2 else texts  # type: ignore[reportGeneralTypeIssues]
 ax1.axis("equal")  # Equal aspect ratio ensures that pie is drawn as a circle.
 ax1.set_title(f"2025 Holiday Schedule (Hong Kong) - Total Days: {total_days_hk}")
 plt.setp(autotexts, size=8, weight="bold")
@@ -74,13 +76,15 @@ sizes_cn = [holiday["duration"] for holiday in holidays_cn]
 
 # Create the pie chart for China
 fig2, ax2 = plt.subplots(figsize=(10, 10))
-wedges, texts, autotexts = ax2.pie(
+pie_result2 = ax2.pie(
     sizes_cn,
     labels=labels_cn,
     autopct="%1.1f%%",
     startangle=90,
     textprops={"color": "black"},
 )
+wedges, texts = pie_result2[0], pie_result2[1]
+autotexts = pie_result2[2] if len(pie_result2) > 2 else texts  # type: ignore[reportGeneralTypeIssues]
 ax2.axis("equal")  # Equal aspect ratio ensures that pie is drawn as a circle.
 ax2.set_title(f"2025 Holiday Schedule (China) - Total Days: {total_days_cn}")
 plt.setp(autotexts, size=8, weight="bold")

@@ -105,7 +105,7 @@ def explore_photos_database(photos_library_path):
                                 description[0] for description in cursor.description
                             ]
                             print(f"Column names: {col_names}")
-                            df = pd.DataFrame(rows, columns=col_names)
+                            df = pd.DataFrame(rows, columns=col_names)  # type: ignore[reportArgumentType]
                             print("\nLargest items:")
                             print(df.head())
                     except sqlite3.Error as e:
@@ -160,7 +160,7 @@ def explore_photos_database(photos_library_path):
                                     ]
                                     print(f"\nFound {len(rows)} large files in {table}")
                                     print(f"Using size column: {size_col}")
-                                    df = pd.DataFrame(rows, columns=col_names)
+                                    df = pd.DataFrame(rows, columns=col_names)  # type: ignore[reportArgumentType]
                                     print(
                                         df[
                                             [size_col, type_col]

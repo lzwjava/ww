@@ -149,16 +149,12 @@ def scrape_weibo(url, end_time=None):
                     for img in post.select("img.weibo-image")
                     if img.get("src")
                 ]
-                video = (
-                    post.select_one("video source")["src"]
-                    if post.select_one("video source")
-                    else None
-                )
+                video_source = post.select_one("video source")
+                video = video_source["src"] if video_source else None
 
+                from_link = post.find("a", class_="from")
                 timestamp = (
-                    post.find("a", class_="from").get_text(strip=True)
-                    if post.find("a", class_="from")
-                    else "Unknown time"
+                    from_link.get_text(strip=True) if from_link else "Unknown time"
                 )
 
                 weibo_data.append(
@@ -187,7 +183,9 @@ def scrape_weibo(url, end_time=None):
                 time.sleep(3)  # Allow time for AJAX load
                 # Wait for new content
                 WebDriverWait(driver, 15).until(
-                    EC.staleness_of(posts[0])  # Wait until old posts are removed
+                    EC.staleness_of(
+                        posts[0]  # type: ignore[reportArgumentType]
+                    )  # Wait until old posts are removed
                 )
             except Exception as e:
                 print(f"Error navigating: {e}")

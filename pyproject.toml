@@ -35,30 +35,6 @@ reportMissingImports = true
 reportMissingModuleSource = false
 reportAttributeAccessIssue = false
 exclude = [
-    "ww/agent/",
-    "ww/audio/",
-    "ww/auto_ss_config/",
-    "ww/bot/",
-    "ww/conversation_upload/",
-    "ww/crawler/",
-    "ww/embedding/",
-    "ww/graph/",
-    "ww/japanese/",
-    "ww/java/",
-    "ww/kalman/",
-    "ww/langchain_test/",
-    "ww/mmlu/",
-    "ww/networkx/",
-    "ww/photo/",
-    "ww/pico/",
-    "ww/pl/",
-    "ww/plot/",
-    "ww/social/",
-    "ww/supabase/",
-    "ww/tooluse/",
-    "ww/torch_llm/",
-    "ww/try/",
-    "ww/video/",
     ".venv/",
 ]
 

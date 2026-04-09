@@ -1,4 +1,4 @@
-from hcloud import Client
+from hcloud import Client  # type: ignore[reportMissingImports]
 import os
 import time
 import argparse
@@ -145,10 +145,26 @@ for server in servers:
     print(f"Server ID: {server.id}")
     print(f"Server Name: {server.name}")
     print(f"Server Status: {server.status}")
-    print(f"Server IPv4: {server.public_net.ipv4.ip}")
-    print(f"Server IPv6: {server.public_net.ipv6.ip}")
-    print(f"Server Type: {server.server_type.name}")
-    print(f"Server Location: {server.datacenter.location.name}")
+    ipv4 = (
+        server.public_net.ipv4.ip
+        if server.public_net and server.public_net.ipv4
+        else "N/A"
+    )
+    ipv6 = (
+        server.public_net.ipv6.ip
+        if server.public_net and server.public_net.ipv6
+        else "N/A"
+    )
+    server_type_name = server.server_type.name if server.server_type else "N/A"
+    location_name = (
+        server.datacenter.location.name
+        if server.datacenter and server.datacenter.location
+        else "N/A"
+    )
+    print(f"Server IPv4: {ipv4}")
+    print(f"Server IPv6: {ipv6}")
+    print(f"Server Type: {server_type_name}")
+    print(f"Server Location: {location_name}")
     print("----------------------------------")
 
 # Create snapshots if requested

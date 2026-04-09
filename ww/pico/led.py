@@ -1,4 +1,4 @@
-from machine import Pin
+from machine import Pin  # type: ignore[reportMissingImports]
 import time
 
 led = Pin(25, Pin.OUT)  # Use "LED" for Pico W

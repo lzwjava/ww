@@ -11,7 +11,7 @@ import sys
 import time
 import uuid
 
-from azure.identity import DefaultAzureCredential
+from azure.identity import DefaultAzureCredential  # type: ignore[reportMissingImports]
 import requests
 
 logging.basicConfig(
@@ -34,7 +34,7 @@ API_VERSION = "2024-04-15-preview"
 def _create_job_id():
     # the job ID must be unique in current speech resource
     # you can use a GUID or a self-increasing number
-    return uuid.uuid4()
+    return str(uuid.uuid4())
 
 
 def _authenticate():

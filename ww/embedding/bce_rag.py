@@ -1,13 +1,13 @@
 # We provide the advanced preproc tokenization for reranking.
-from BCEmbedding.tools.langchain import BCERerank
+from BCEmbedding.tools.langchain import BCERerank  # type: ignore[reportMissingImports]
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.vectorstores import FAISS
+from langchain.text_splitter import RecursiveCharacterTextSplitter  # type: ignore[reportMissingImports]
+from langchain_community.document_loaders import PyPDFLoader  # type: ignore[reportMissingImports]
+from langchain_community.vectorstores import FAISS  # type: ignore[reportMissingImports]
 
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores.utils import DistanceStrategy
-from langchain.retrievers import ContextualCompressionRetriever
+from langchain.embeddings import HuggingFaceEmbeddings  # type: ignore[reportMissingImports]
+from langchain_community.vectorstores.utils import DistanceStrategy  # type: ignore[reportMissingImports]
+from langchain.retrievers import ContextualCompressionRetriever  # type: ignore[reportMissingImports]
 
 # init embedding model
 embedding_model_name = "maidalun1020/bce-embedding-base_v1"

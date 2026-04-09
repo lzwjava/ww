@@ -1,14 +1,11 @@
 import os
-import sys
 import requests
 import argparse
 import re
 from dotenv import load_dotenv
 import random
 
-# Add the scripts directory to the path to import openrouter_client
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "llm"))
-from openrouter_client import call_openrouter_api, MODEL_MAPPING
+from ww.llm.openrouter_client import call_openrouter_api, MODEL_MAPPING
 
 # Load environment variables from .env file
 load_dotenv()

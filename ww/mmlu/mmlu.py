@@ -1,10 +1,10 @@
-from datasets import load_dataset
+from datasets import load_dataset  # type: ignore[reportMissingImports]
 import requests
 import json
 from tqdm import tqdm
 import argparse
 import os
-from openai import OpenAI
+from openai import OpenAI  # type: ignore[reportMissingImports]
 from dotenv import load_dotenv
 import time
 import random
@@ -384,7 +384,11 @@ def evaluate_model(args, dataset):
 
         answer_map = {0: "A", 1: "B", 2: "C", 3: "D"}
         ground_truth_answer = answer_map.get(example["answer"], "")
-        is_correct = predicted_answer.upper() == ground_truth_answer
+        is_correct = (
+            predicted_answer.upper() == ground_truth_answer
+            if predicted_answer
+            else False
+        )
         if is_correct:
             correct += 1
         total += 1

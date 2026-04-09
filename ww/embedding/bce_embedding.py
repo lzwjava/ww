@@ -1,4 +1,4 @@
-from BCEmbedding import EmbeddingModel
+from BCEmbedding import EmbeddingModel  # type: ignore[reportMissingImports]
 
 # list of sentences
 sentences = ["sentence_0", "sentence_1"]

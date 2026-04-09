@@ -14,7 +14,7 @@ def get_group_id(pom_path, pom_map):
     root = tree.getroot()
     group_id_elem = root.find(NS + "groupId")
 
-    if group_id_elem is not None:
+    if group_id_elem is not None and group_id_elem.text is not None:
         group_id = group_id_elem.text.strip()
     else:
         parent = root.find(NS + "parent")
@@ -48,6 +48,8 @@ def get_artifact_id(pom_path):
     artifact_id_elem = root.find(NS + "artifactId")
     if artifact_id_elem is None:
         raise ValueError(f"pom.xml must specify artifactId: {pom_path}")
+    if artifact_id_elem.text is None:
+        raise ValueError(f"artifactId has no text content: {pom_path}")
     return artifact_id_elem.text.strip()
 
 
@@ -59,9 +61,13 @@ def get_dependencies(pom_path):
         dep_group_id_elem = dep.find(NS + "groupId")
         dep_artifact_id_elem = dep.find(NS + "artifactId")
         if dep_group_id_elem is not None and dep_artifact_id_elem is not None:
-            dependencies.append(
-                (dep_group_id_elem.text.strip(), dep_artifact_id_elem.text.strip())
-            )
+            if (
+                dep_group_id_elem.text is not None
+                and dep_artifact_id_elem.text is not None
+            ):
+                dependencies.append(
+                    (dep_group_id_elem.text.strip(), dep_artifact_id_elem.text.strip())
+                )
     return dependencies
 
 

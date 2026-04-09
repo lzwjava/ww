@@ -10,6 +10,8 @@ supabase_url = os.getenv("SUPABASE_URL")
 supabase_key = os.getenv("SUPABASE_KEY")
 
 # Initialize Supabase client
+assert supabase_url is not None, "SUPABASE_URL environment variable is not set"
+assert supabase_key is not None, "SUPABASE_KEY environment variable is not set"
 supabase: Client = create_client(supabase_url, supabase_key)
 
 

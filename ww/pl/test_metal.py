@@ -1,4 +1,4 @@
-import torch
+import torch  # type: ignore[reportMissingImports]
 import argparse
 import time
 

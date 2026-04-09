@@ -1,7 +1,7 @@
 import sys
 import argparse
 from pathlib import Path
-from scripts.llm.openrouter_client import call_openrouter_api
+from ww.llm.openrouter_client import call_openrouter_api
 
 #!/usr/bin/env python3
 """
@@ -44,7 +44,7 @@ def process_file(file_path, output_only=False):
         toc = generate_toc_with_ai(content)
 
         if toc is None:
-            return None
+            return None, None
 
         if output_only:
             print(toc)

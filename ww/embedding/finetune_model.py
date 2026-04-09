@@ -1,14 +1,14 @@
 import os
 import glob
 from dotenv import load_dotenv
-from transformers import (
+from transformers import (  # type: ignore[reportMissingImports]
     AutoModelForCausalLM,
     Trainer,
     TrainingArguments,
     DataCollatorForLanguageModeling,
     LlamaTokenizerFast,
 )
-from datasets import Dataset
+from datasets import Dataset  # type: ignore[reportMissingImports]
 
 load_dotenv()
 

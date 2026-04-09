@@ -69,7 +69,7 @@ def explore_photos_database(photos_library_path):
 
             if rows:
                 col_names = [description[0] for description in cursor.description]
-                df = pd.DataFrame(rows, columns=col_names)
+                df = pd.DataFrame(rows, columns=col_names)  # type: ignore[reportArgumentType]
                 print("\nLargest video files with creation time:")
                 print(df)
             else:
