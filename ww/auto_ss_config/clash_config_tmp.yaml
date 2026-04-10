@@ -95,25 +95,39 @@ rule-providers:
     path: ./Rules/LAN.yaml
     url: https://cdn.jsdmirror.cn/gh/tututo/RuleFiles@main/Clash/Provider/LAN.yaml
     interval: 86400
-  AIRule:
-    type: http
-    behavior: classical
-    path: ./Rules/AI.yaml
-    url: https://raw.githubusercontent.com/lzwjava/blog-source/refs/heads/main/scripts/auto_ss_config/AI.yaml
-    interval: 1440
+
 
 rules:
-  - IP-CIDR,192.168.0.0/16,DIRECT
-  - IP-CIDR,10.0.0.0/8,DIRECT
-  - IP-CIDR,172.16.0.0/12,DIRECT
-  - IP-CIDR,127.0.0.0/8,DIRECT
-  - IP-CIDR,100.64.0.0/10,DIRECT
-  - IP-CIDR,224.0.0.0/4,DIRECT
   - DOMAIN-SUFFIX,linkedin.com,Proxy
   - DOMAIN-SUFFIX,deepseek.com,Proxy
+  - DOMAIN-SUFFIX,quora.com,Proxy
+  - DOMAIN-SUFFIX,binance.com,Proxy
+  - DOMAIN-SUFFIX,scholar.google.com,Proxy
+  - DOMAIN-SUFFIX,gemini.google.com,Proxy
+  - DOMAIN-SUFFIX,aistudio.google.com,Proxy
+  - DOMAIN-SUFFIX,googleapis.com,Proxy
+  - DOMAIN-SUFFIX,tiktokv.com,Proxy
+  - DOMAIN-SUFFIX,claude.ai,Proxy
+  - DOMAIN-SUFFIX,chatgpt.com,Proxy
+  - DOMAIN-SUFFIX,openrouter.ai,Proxy
+  - DOMAIN-SUFFIX,chatboxai.app,Proxy
+  - DOMAIN-SUFFIX,x.ai,Proxy
+  - DOMAIN-SUFFIX,openai.com,Proxy
+  - DOMAIN-SUFFIX,anthropic.com,Proxy
+  - DOMAIN-SUFFIX,grok.com,Proxy
+  - DOMAIN-SUFFIX,cdn.grok.com,Proxy
+  - DOMAIN-SUFFIX,x.com,Proxy
   - RULE-SET,Global,Proxy
   - RULE-SET,China,DIRECT
   - RULE-SET,ChinaIP,DIRECT
-  - RULE-SET,LAN,DIRECT
+  - DOMAIN-SUFFIX,local,DIRECT
+  - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,17.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,100.64.0.0/10,DIRECT,no-resolve
+  - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
+  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
+  - IP-CIDR,224.0.0.0/4,DIRECT,no-resolve
+  - IP-CIDR6,fe80::/10,DIRECT,no-resolve
   - GEOIP,CN,DIRECT
   - MATCH,Proxy
