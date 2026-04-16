@@ -1,5 +1,6 @@
 import os
 import re
+from datetime import datetime
 
 from ww.llm.openrouter_client import call_openrouter_api
 from ww.note.create_note_utils import (
@@ -45,20 +46,42 @@ def generate_filename(content):
     )
 
 
-def create_normal_log(content=None, ext=None):
+def detect_extension(content):
+    snippet = get_first_n_words(content)
+    prompt = f"Detect the file extension for the following content. Extension rules: if content has markdown formatting (headers, bold, lists, links) use md, shell scripts use sh, Python use py, JavaScript use js, TypeScript use ts, JSON use json, YAML use yaml, HTML use html, CSS use css, SQL use sql, XML use xml, plain logs use log, config files use their native extension, otherwise use txt. Respond with ONLY the extension (no dot), e.g. md or txt: {snippet}"
+    result = call_openrouter_api(prompt)
+    if not result:
+        return "txt"
+    ext = result.strip().lower().replace(".", "").replace("`", "")
+    if re.match(r"^[a-z0-9]+$", ext):
+        return ext
+    return "txt"
+
+
+def generate_timestamp_filename(content, ext=None):
+    if not ext:
+        ext = detect_extension(content)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return f"{timestamp}.{ext}"
+
+
+def create_normal_log(content=None, ext=None, friendly_name=False):
     logs_dir = os.path.join(get_base_path(), "logs")
     if content is None:
         content = get_clipboard_content()
 
-    if ext:
-        ai_filename = generate_filename_with_ext(content, ext)
+    if friendly_name:
+        if ext:
+            ai_filename = generate_filename_with_ext(content, ext)
+        else:
+            ai_filename = generate_filename(content)
     else:
-        ai_filename = generate_filename(content)
+        ai_filename = generate_timestamp_filename(content, ext=ext)
 
-    match = re.match(r"^([a-z0-9-]+)\.([a-z0-9]+)$", ai_filename)
+    match = re.match(r"^[a-z0-9_-]+\.[a-z0-9]+$", ai_filename)
     if not match:
         raise ValueError(
-            f"Invalid filename '{ai_filename}': expected format like 'name.ext' with lowercase letters, numbers, and hyphens"
+            f"Invalid filename '{ai_filename}': expected format like 'name.ext' with lowercase letters, numbers, hyphens, and underscores"
         )
 
     os.makedirs(logs_dir, exist_ok=True)

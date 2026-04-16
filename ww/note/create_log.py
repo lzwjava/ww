@@ -54,7 +54,7 @@ def _check_duplicate_logs(content):
     return False
 
 
-def _create_log_with_content(content, direct=False, ext=None):
+def _create_log_with_content(content, direct=False, ext=None, friendly_name=False):
     if len(content) > 1048576:
         print("Error: Content exceeds 1MB. Please shorten the log and try again.")
         return
@@ -64,7 +64,7 @@ def _create_log_with_content(content, direct=False, ext=None):
         return
 
     if direct:
-        create_normal_log(content, ext=ext)
+        create_normal_log(content, ext=ext, friendly_name=friendly_name)
         return
 
     if is_sensitive_content(content):
@@ -73,9 +73,9 @@ def _create_log_with_content(content, direct=False, ext=None):
         if not obfuscated:
             print("Error: Obfuscation failed.")
             return
-        create_normal_log(obfuscated, ext=ext)
+        create_normal_log(obfuscated, ext=ext, friendly_name=friendly_name)
     else:
-        create_normal_log(content, ext=ext)
+        create_normal_log(content, ext=ext, friendly_name=friendly_name)
 
 
 def create_log():
@@ -87,10 +87,17 @@ def create_log():
         "--ext",
         help="File extension to use (e.g. md, txt), skips AI extension detection",
     )
+    parser.add_argument(
+        "--friendly-name",
+        action="store_true",
+        help="Use LLM to generate a friendly filename instead of timestamp",
+    )
     args = parser.parse_args(sys.argv[1:])
 
     content = get_clipboard_content()
-    _create_log_with_content(content, args.direct, ext=args.ext)
+    _create_log_with_content(
+        content, args.direct, ext=args.ext, friendly_name=args.friendly_name
+    )
 
 
 def _get_latest_markdown_in_downloads():
@@ -122,10 +129,17 @@ def create_log_from_file():
         "--ext",
         help="File extension to use (e.g. md, txt), skips AI extension detection",
     )
+    parser.add_argument(
+        "--friendly-name",
+        action="store_true",
+        help="Use LLM to generate a friendly filename instead of timestamp",
+    )
     args = parser.parse_args(sys.argv[1:])
 
     file_path = args.file if args.file else _get_latest_markdown_in_downloads()
 
     with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
-    _create_log_with_content(content, args.direct, ext=args.ext)
+    _create_log_with_content(
+        content, args.direct, ext=args.ext, friendly_name=args.friendly_name
+    )
