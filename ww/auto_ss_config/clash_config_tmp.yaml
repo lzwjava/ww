@@ -111,6 +111,7 @@ rules:
   - DOMAIN-SUFFIX,chatgpt.com,Proxy
   - DOMAIN-SUFFIX,openrouter.ai,Proxy
   - DOMAIN-SUFFIX,chatboxai.app,Proxy
+  - DOMAIN-SUFFIX,kimi.com,Proxy
   - DOMAIN-SUFFIX,x.ai,Proxy
   - DOMAIN-SUFFIX,openai.com,Proxy
   - DOMAIN-SUFFIX,anthropic.com,Proxy
