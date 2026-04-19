@@ -114,15 +114,14 @@ class TestCreateFilename(unittest.TestCase):
         self.assertIn("my-title", fp)
         self.assertTrue(fp.endswith(".md"))
 
-    def test_appends_counter_when_file_exists(self):
+    def test_raises_when_file_exists(self):
         from ww.note.create_note_utils import create_filename
 
         fp1 = create_filename("my-title", notes_dir=self.tmpdir, date="2024-01-01")
         with open(fp1, "w") as f:
             f.write("content")
-        fp2 = create_filename("my-title", notes_dir=self.tmpdir, date="2024-01-01")
-        self.assertNotEqual(fp1, fp2)
-        self.assertIn("-1-", fp2)
+        with self.assertRaises(FileExistsError):
+            create_filename("my-title", notes_dir=self.tmpdir, date="2024-01-01")
 
     def test_creates_notes_dir_if_missing(self):
         from ww.note.create_note_utils import create_filename

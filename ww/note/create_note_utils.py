@@ -73,10 +73,11 @@ def create_filename(short_title, notes_dir=None, date=None):
         os.makedirs(notes_dir)
     base_file_name = f"{date_str}-{short_title}-en.md"
     file_path = os.path.join(notes_dir, base_file_name)
-    counter = 1
-    while os.path.exists(file_path):
-        file_path = os.path.join(notes_dir, f"{date_str}-{short_title}-{counter}-en.md")
-        counter += 1
+    if os.path.exists(file_path):
+        raise FileExistsError(
+            f"Note already exists: {file_path}. Refusing to create a duplicate "
+            f"with a counter suffix. Remove the existing note or pick a different title."
+        )
     return file_path
 
 
