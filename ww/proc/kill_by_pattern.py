@@ -33,7 +33,9 @@ def kill_all(processes):
             print(f"Failed to kill process {pid}")
             failed.append(pid)
     if failed:
-        print(f"\nFailed to kill {len(failed)} process(es): {', '.join(failed)}")
+        print(
+            f"\nFailed to kill {len(failed)} process(es): {', '.join(str(f) for f in failed)}"
+        )
         print(
             "You may need administrator privileges or the processes may have already terminated."
         )

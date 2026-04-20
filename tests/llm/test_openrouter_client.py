@@ -35,7 +35,9 @@ class TestCallOpenrouterApiWithMessages(unittest.TestCase):
     def test_raises_on_non_200_response(self, mock_post):
         from ww.llm import openrouter_client
 
-        mock_post.return_value = MagicMock(status_code=401, text="Unauthorized")
+        mock_response = MagicMock(status_code=401, text="Unauthorized")
+        mock_response.ok = False
+        mock_post.return_value = mock_response
         messages = [{"role": "user", "content": "hello"}]
         with self.assertRaises(Exception):
             openrouter_client.call_openrouter_api_with_messages(

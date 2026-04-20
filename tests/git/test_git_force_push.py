@@ -64,7 +64,7 @@ class TestMain(unittest.TestCase):
         from ww.git.git_force_push import main
 
         mock_run.return_value = MagicMock(stdout="M dirty.py\n")
-        with self.assertRaises(Exception):
+        with self.assertRaises(SystemExit):
             main()
 
 

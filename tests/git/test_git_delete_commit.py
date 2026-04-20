@@ -31,7 +31,7 @@ class TestGetCommitsWithDeletions(unittest.TestCase):
         result = get_commits_with_deletions(5)
         self.assertEqual(result, ["abc123", "def456"])
 
-    @patch("subprocess.run", side_effect=Exception("git not found"))
+    @patch("subprocess.run", side_effect=OSError("git not found"))
     def test_returns_empty_on_exception(self, mock_run):
         from ww.git.git_delete_commit import get_commits_with_deletions
 
@@ -74,7 +74,7 @@ class TestGetChangedFilesCount(unittest.TestCase):
         mock_run.return_value = MagicMock(returncode=0, stdout="commit abc123\n\n")
         self.assertEqual(get_changed_files_count("abc123"), 0)
 
-    @patch("subprocess.run", side_effect=Exception("fail"))
+    @patch("subprocess.run", side_effect=OSError("fail"))
     def test_returns_zero_on_exception(self, mock_run):
         from ww.git.git_delete_commit import get_changed_files_count
 
