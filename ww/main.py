@@ -115,6 +115,11 @@ def _print_help():
     print("  ww sync zprofile [back|forth] Sync .zprofile file")
     print("  ww sync ssh [back|forth]    Sync .ssh directory")
     print("")
+    print("Marp:")
+    print(
+        "  ww marp <file.md>         Watch a markdown file and regenerate PDF via marp"
+    )
+    print("")
     print("Linux:")
     print("  ww linux gpu          Show GPU and CUDA details")
     print("  ww linux system       Comprehensive system overview")
@@ -580,6 +585,11 @@ def main():
 
     elif group == "linux":
         from ww.linux.main import main as m
+
+        m()
+
+    elif group == "marp":
+        from ww.marp.marp_watch import main as m
 
         m()
 
