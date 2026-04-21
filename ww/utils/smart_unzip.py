@@ -30,7 +30,7 @@ def smart_unzip(zip_path):
                 arcname = os.path.relpath(full_path, extract_dir)
 
                 if full_path in renamed_files:
-                    arcname = os.path.relpath(renamed_files[full_path], extract_dir)
+                    arcname = os.path.relpath(full_path, extract_dir)
 
                 new_zip.write(full_path, arcname)
 

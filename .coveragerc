@@ -1,4 +1,0 @@
-[run]
-source = ww
-parallel = true
-concurrency = multiprocessing
