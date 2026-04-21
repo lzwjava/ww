@@ -131,6 +131,18 @@ def _print_help():
     print("  ww linux wol          Send a Wake-on-LAN packet")
     print("  ww linux terminal     Open a fullscreen terminal")
     print("")
+    print("Clash:")
+    print("  ww clash select-provider    Select best proxy provider")
+    print("  ww clash speed              Run speed test and select best proxy")
+    print("  ww clash run                Full clash management with iterations")
+    print("  ww clash top-proxies        Print top 5 fastest proxies (single-URL)")
+    print("  ww clash top-proxies-multi  Print top 10 fastest proxies (multi-URL)")
+    print("  ww clash speed-tiktok       Run speedtest + TikTok load time")
+    print("  ww clash query-dns [host]   Test AliDNS DoH resolution")
+    print("  ww clash gnome-proxy <set|unset>   Toggle GNOME proxy (Linux)")
+    print("  ww clash macos-proxy <set|unset>   Toggle macOS proxy (networksetup)")
+    print("  ww clash wifi <on|off>      Toggle macOS Wi-Fi")
+    print("")
 
 
 def _pop_subcmd():
@@ -589,6 +601,52 @@ def main():
         from ww.linux.main import main as m
 
         m()
+
+    elif group == "clash":
+        subcmd = _pop_subcmd()
+        if subcmd == "select-provider":
+            from ww.clash.clash_select_provider import main as m
+
+            m()
+        elif subcmd == "speed":
+            from ww.clash.clash_speed import main as m
+
+            m()
+        elif subcmd == "run":
+            from ww.clash.clash import main as m
+
+            m()
+        elif subcmd == "top-proxies":
+            from ww.clash.speed import main as m
+
+            m()
+        elif subcmd == "top-proxies-multi":
+            from ww.clash.speed_plus import main as m
+
+            m()
+        elif subcmd == "speed-tiktok":
+            from ww.clash.speed_tiktok import main as m
+
+            m()
+        elif subcmd == "query-dns":
+            from ww.clash.query_dns import main as m
+
+            m()
+        elif subcmd == "gnome-proxy":
+            from ww.clash.gnome_proxy import main as m
+
+            m()
+        elif subcmd == "macos-proxy":
+            from ww.clash.networksetup import main as m
+
+            m()
+        elif subcmd == "wifi":
+            from ww.clash.wifi_toggle import main as m
+
+            m()
+        else:
+            print(f"Unknown clash command: {subcmd}")
+            sys.exit(1)
 
     elif group == "marp":
         from ww.marp.marp_watch import main as m

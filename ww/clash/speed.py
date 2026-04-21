@@ -191,8 +191,15 @@ def get_top_proxies(num_results=5, name_filter=None):
     return top_proxies_list
 
 
+def main():
+    top_proxies = get_top_proxies(num_results=5)
+    print("\n--- Top 5 Fastest Proxies ---")
+    if not top_proxies:
+        print("No proxies were successfully tested.")
+    else:
+        for i, proxy in enumerate(top_proxies):
+            print(f"  {i + 1}. {proxy['name']}: {proxy['latency']}ms")
+
+
 if __name__ == "__main__":
-    # When speed.py is run directly, it will still output to speed.log
-    # and print to console (if console_handler is uncommented).
-    top_5_proxies = get_top_proxies(num_results=5)
-    print("\nTop 5 proxies returned by function:", top_5_proxies)
+    main()

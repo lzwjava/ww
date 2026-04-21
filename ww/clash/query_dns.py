@@ -48,8 +48,7 @@ def test_alidns_doh(hostname="example.com", qtype="A"):
         return False
 
 
-# Test it
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Test AliDNS DoH")
     parser.add_argument(
         "hostname",
@@ -62,3 +61,7 @@ if __name__ == "__main__":
 
     success = test_alidns_doh(args.hostname, args.qtype)
     print(f"\nSuccess: {success}")
+
+
+if __name__ == "__main__":
+    main()

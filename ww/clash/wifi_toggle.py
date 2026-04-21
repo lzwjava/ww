@@ -40,13 +40,18 @@ def turn_on_wifi():
         print(f"An unexpected error occurred: {e}")
 
 
+def main():
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Toggle Wi-Fi on macOS")
+    parser.add_argument("action", choices=["on", "off"], help="Turn Wi-Fi on or off")
+    args = parser.parse_args()
+
+    if args.action == "on":
+        turn_on_wifi()
+    else:
+        turn_off_wifi()
+
+
 if __name__ == "__main__":
-    print("Attempting to turn off Wi-Fi...")
-    turn_off_wifi()
-
-    # You can add a delay here if you want to see the effect before turning it back on
-    # import time
-    # time.sleep(5)
-
-    # print("\nAttempting to turn on Wi-Fi...")
-    # turn_on_wifi()
+    main()

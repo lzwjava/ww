@@ -173,6 +173,10 @@ def generate_report(top_proxies):
     print("--- End of Report ---")
 
 
-if __name__ == "__main__":
+def main():
     top_proxies = get_top_proxies(num_results=10)
     generate_report(top_proxies)
+
+
+if __name__ == "__main__":
+    main()
