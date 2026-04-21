@@ -85,7 +85,9 @@ def _print_help():
     print("  ww git gca                AI commit, no push (gemini-flash)")
     print("  ww git gpa                AI commit with pull+push (gemini-flash)")
     print("")
-    print("Search:")
+    print("Update:")
+    print("  ww update [name...]        Update git repos (default: updated_repos)")
+    print("")
     print("  ww search                 Web search (multi-engine)")
     print("  ww search bing            Search with Bing")
     print("  ww search code            Search code")
@@ -590,6 +592,11 @@ def main():
 
     elif group == "marp":
         from ww.marp.marp_watch import main as m
+
+        m()
+
+    elif group == "update":
+        from ww.git.git_update import main as m
 
         m()
 
