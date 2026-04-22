@@ -7,15 +7,20 @@ import sys
 import time
 
 
-def _run_marp(md_path):
-    cmd = ["marp", md_path, "--pdf", "--allow-local-files"]
+def _run_marp_once(md_path, format_flag, ext):
+    cmd = ["marp", md_path, format_flag, "--allow-local-files"]
     print(f"[marp] {' '.join(cmd)}")
     result = subprocess.run(cmd)
     if result.returncode == 0:
-        pdf_path = os.path.splitext(md_path)[0] + ".pdf"
-        print(f"[marp] generated: {pdf_path}")
+        out_path = os.path.splitext(md_path)[0] + ext
+        print(f"[marp] generated: {out_path}")
     else:
         print(f"[marp] failed with exit code {result.returncode}")
+
+
+def _run_marp(md_path, formats):
+    for format_flag, ext in formats:
+        _run_marp_once(md_path, format_flag, ext)
 
 
 def _mtime(path):
@@ -27,7 +32,7 @@ def _mtime(path):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Watch a markdown file and regenerate PDF via marp on change."
+        description="Watch a markdown file and regenerate via marp on change."
     )
     parser.add_argument("markdown_file", help="Path to the markdown file to watch")
     parser.add_argument(
@@ -36,7 +41,17 @@ def main():
         default=1.0,
         help="Polling interval in seconds (default: 1.0)",
     )
+    parser.add_argument("--pdf", action="store_true", help="Generate PDF output")
+    parser.add_argument("--html", action="store_true", help="Generate HTML output")
     args = parser.parse_args()
+
+    formats = []
+    if args.pdf:
+        formats.append(("--pdf", ".pdf"))
+    if args.html:
+        formats.append(("--html", ".html"))
+    if not formats:
+        formats = [("--pdf", ".pdf")]
 
     md_path = os.path.abspath(args.markdown_file)
 
@@ -49,7 +64,7 @@ def main():
         sys.exit(1)
 
     print(f"[marp] watching {md_path} (interval={args.interval}s). Ctrl-C to stop.")
-    _run_marp(md_path)
+    _run_marp(md_path, formats)
     last = _mtime(md_path)
 
     try:
@@ -61,6 +76,6 @@ def main():
                 continue
             if current != last:
                 last = current
-                _run_marp(md_path)
+                _run_marp(md_path, formats)
     except KeyboardInterrupt:
         print("\n[marp] stopped.")
