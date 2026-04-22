@@ -6,7 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-updated_repos = ["jdk", "pytorch"]
+updated_repos = ["pytorch"]
 
 REPOS_BASE = Path.home() / "projects"
 
@@ -14,20 +14,14 @@ REPOS_BASE = Path.home() / "projects"
 def update_repo(repo_path):
     print(f"[pulling] {repo_path} ...", flush=True)
     result = subprocess.run(
-        ["git", "pull"],
-        capture_output=True,
-        text=True,
+        ["git", "pull", "--verbose"],
         cwd=repo_path,
     )
     if result.returncode == 0:
-        out = result.stdout.strip()
-        print(f"[updated] {repo_path}" + (f"\n          {out}" if out else ""))
+        print(f"[updated] {repo_path}")
         return True
     else:
         print(f"[failed]  {repo_path}")
-        for line in (result.stderr.strip() + "\n" + result.stdout.strip()).splitlines():
-            if line.strip():
-                print(f"          {line}")
         return False
 
 
