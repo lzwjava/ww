@@ -6,7 +6,18 @@ import subprocess
 import sys
 from pathlib import Path
 
-updated_repos = ["pytorch"]
+updated_repos = [
+    "pytorch",
+    "llama.cpp",
+    "nanoGPT",
+    "modded-nanogpt",
+    "llm.c",
+    "open-webui",
+    "dify",
+    "ComfyUI",
+    "stable-diffusion-webui",
+    "clash-core",
+]
 
 REPOS_BASE = Path.home() / "projects"
 
