@@ -8,7 +8,7 @@ from pathlib import Path
 
 updated_repos = ["jdk", "pytorch"]
 
-REPOS_BASE = Path.home() / "repos"
+REPOS_BASE = Path.home() / "projects"
 
 
 def update_repo(repo_path):
