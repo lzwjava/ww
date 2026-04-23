@@ -105,6 +105,7 @@ def _print_help():
     print("  ww pdf code2pdf           Convert code files in a directory to PDF")
     print("  ww pdf scale-pdf          Scale a PDF using pdfjam")
     print("  ww pdf test-latex         Test LaTeX/pandoc PDF generation")
+    print("  ww pdf md2png             Convert markdown to PNG via HTML+PDF (Chrome)")
     print("")
     print("Copilot:")
     print("  ww copilot auth           Authenticate via GitHub OAuth device flow")
@@ -531,6 +532,10 @@ def main():
             m()
         elif subcmd == "test-latex":
             from ww.pdf.test_latex import main as m
+
+            m()
+        elif subcmd == "md2png":
+            from ww.pdf.md2png import main as m
 
             m()
         else:
