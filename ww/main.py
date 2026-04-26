@@ -118,6 +118,11 @@ def _print_help():
     print("  ww sync zprofile [back|forth] Sync .zprofile file")
     print("  ww sync ssh [back|forth]    Sync .ssh directory")
     print("")
+    print("Read (RAG):")
+    print("  ww read index <dir>       Index documents in a directory (BGE + FAISS)")
+    print("  ww read query <question>  Ask a question over indexed documents")
+    print("  ww read query <q> --top-k N  Use N retrieved chunks (default 5)")
+    print("")
     print("Marp:")
     print(
         "  ww marp <file.md>         Watch a markdown file and regenerate PDF via marp"
@@ -652,6 +657,11 @@ def main():
         else:
             print(f"Unknown clash command: {subcmd}")
             sys.exit(1)
+
+    elif group == "read":
+        from ww.read.read_assistant import main as m
+
+        m()
 
     elif group == "marp":
         from ww.marp.marp_watch import main as m
