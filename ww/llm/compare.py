@@ -6,14 +6,14 @@ from ww.llm.openrouter_client import call_openrouter_api
 
 MODELS = [
     ("gpt-4o", "openai/gpt-4o"),
-    ("gpt-4o-mini", "openai/gpt-4o-mini"),
+    ("gpt-4.1", "openai/gpt-4.1"),
     ("gemini-2-flash", "google/gemini-2.0-flash-001"),
-    ("gemini-1.5-pro", "google/gemini-pro-1.5"),
-    ("claude-3.5-sonnet", "anthropic/claude-3.5-sonnet"),
+    ("gemini-2.5-pro", "google/gemini-2.5-pro"),
+    ("claude-3.7-sonnet", "anthropic/claude-3.7-sonnet"),
     ("claude-3-haiku", "anthropic/claude-3-haiku"),
 ]
 
-JUDGE_MODEL = "anthropic/claude-3.5-sonnet"
+JUDGE_MODEL = "anthropic/claude-3.7-sonnet"
 
 
 def read_clipboard():
