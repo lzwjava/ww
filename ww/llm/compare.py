@@ -5,15 +5,15 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from ww.llm.openrouter_client import call_openrouter_api
 
 MODELS = [
-    ("gpt-4o", "openai/gpt-4o"),
+    ("gpt-5.5", "openai/gpt-5.5"),
     ("gpt-4.1", "openai/gpt-4.1"),
-    ("gemini-2-flash", "google/gemini-2.0-flash-001"),
     ("gemini-2.5-pro", "google/gemini-2.5-pro"),
-    ("claude-3.7-sonnet", "anthropic/claude-3.7-sonnet"),
-    ("claude-3-haiku", "anthropic/claude-3-haiku"),
+    ("gemini-2.5-flash", "google/gemini-2.5-flash"),
+    ("claude-sonnet-4.5", "anthropic/claude-sonnet-4.5"),
+    ("deepseek-v4-flash", "deepseek/deepseek-v4-flash"),
 ]
 
-JUDGE_MODEL = "anthropic/claude-3.7-sonnet"
+JUDGE_MODEL = "anthropic/claude-opus-4.6"
 
 
 def read_clipboard():
