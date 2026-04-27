@@ -126,6 +126,11 @@ def _print_help():
     print("  ww read query <question>  Ask a question over indexed documents")
     print("  ww read query <q> --top-k N  Use N retrieved chunks (default 5)")
     print("")
+    print("LLM:")
+    print(
+        "  ww llm compare            Compare 6 models on clipboard prompt, judge winner"
+    )
+    print("")
     print("Marp:")
     print(
         "  ww marp <file.md>         Watch a markdown file and regenerate PDF via marp"
@@ -663,6 +668,16 @@ def main():
             m()
         else:
             print(f"Unknown clash command: {subcmd}")
+            sys.exit(1)
+
+    elif group == "llm":
+        subcmd = _pop_subcmd()
+        if subcmd == "compare":
+            from ww.llm.compare import main as m
+
+            m()
+        else:
+            print(f"Unknown llm command: {subcmd}")
             sys.exit(1)
 
     elif group == "read":
