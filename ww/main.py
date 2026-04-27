@@ -27,6 +27,9 @@ def _print_help():
     print("  ww macos list-disks       List portable disks")
     print("  ww macos open-terminal    Open a new terminal window")
     print("  ww macos toast            Show macOS notification toast")
+    print(
+        "  ww macos charge-watch     Alert when charger is plugged in but not charging"
+    )
     print("")
     print("Image:")
     print("  ww image avatar           Process avatar image")
@@ -255,6 +258,10 @@ def main():
             m()
         elif subcmd == "toast":
             from ww.macos.toast import main as m
+
+            m()
+        elif subcmd == "charge-watch":
+            from ww.macos.charge_watcher import main as m
 
             m()
         else:
