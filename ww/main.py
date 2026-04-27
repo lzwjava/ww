@@ -131,6 +131,9 @@ def _print_help():
         "  ww llm compare            Compare 6 models on clipboard prompt, judge winner"
     )
     print("")
+    print("Action:")
+    print("  ww action <workflow.yml>  Trigger a GitHub Actions workflow via gh CLI")
+    print("")
     print("Marp:")
     print(
         "  ww marp <file.md>         Watch a markdown file and regenerate PDF via marp"
@@ -669,6 +672,11 @@ def main():
         else:
             print(f"Unknown clash command: {subcmd}")
             sys.exit(1)
+
+    elif group == "action":
+        from ww.action.action import main as m
+
+        m()
 
     elif group == "llm":
         subcmd = _pop_subcmd()
