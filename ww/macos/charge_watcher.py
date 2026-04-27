@@ -4,6 +4,7 @@ import time
 
 
 CHECK_INTERVAL = 10
+NOT_CHARGING_CONFIRM_TICKS = 3  # require 3 consecutive checks (~30s) before alerting
 
 
 def _pmset_output():
@@ -62,7 +63,8 @@ def _alert_state(status):
 
 def main():
     print(f"Charge watcher started. Checking every {CHECK_INTERVAL}s. Ctrl+C to stop.")
-    last_state = None
+    last_alerted_state = None
+    not_charging_ticks = 0
 
     while True:
         try:
@@ -75,15 +77,23 @@ def main():
                 f"{pct}% | {status['charging_state']}"
             )
 
-            if state == "not_charging" and last_state != "not_charging":
-                _notify(
-                    "Charger connected but NOT charging",
-                    f"Battery at {pct}%. Check your power socket.",
-                )
-            elif state == "charging" and last_state == "not_charging":
-                _notify("Charging resumed", f"Battery at {pct}%.")
+            if state == "not_charging":
+                not_charging_ticks = not_charging_ticks + 1
+                if (
+                    not_charging_ticks >= NOT_CHARGING_CONFIRM_TICKS
+                    and last_alerted_state != "not_charging"
+                ):
+                    _notify(
+                        "Charger connected but NOT charging",
+                        f"Battery at {pct}%. Check your power socket.",
+                    )
+                    last_alerted_state = "not_charging"
+            else:
+                if state == "charging" and last_alerted_state == "not_charging":
+                    _notify("Charging resumed", f"Battery at {pct}%.")
+                not_charging_ticks = 0
+                last_alerted_state = state
 
-            last_state = state
             time.sleep(CHECK_INTERVAL)
 
         except KeyboardInterrupt:
