@@ -131,6 +131,11 @@ def _print_help():
         "  ww llm compare            Compare 6 models on clipboard prompt, judge winner"
     )
     print("")
+    print("Env:")
+    print(
+        "  ww env update             Pick a top Arena model and update MODEL= in .env"
+    )
+    print("")
     print("Action:")
     print("  ww action <workflow.yml>  Trigger a GitHub Actions workflow via gh CLI")
     print("")
@@ -686,6 +691,16 @@ def main():
             m()
         else:
             print(f"Unknown llm command: {subcmd}")
+            sys.exit(1)
+
+    elif group == "env":
+        subcmd = _pop_subcmd()
+        if subcmd == "update":
+            from ww.llm.update_env import main as m
+
+            m()
+        else:
+            print(f"Unknown env command: {subcmd}")
             sys.exit(1)
 
     elif group == "read":
