@@ -91,6 +91,11 @@ def _print_help():
     print("Update:")
     print("  ww update [name...]        Update git repos (default: updated_repos)")
     print("")
+    print("Latest:")
+    print(
+        "  ww latest notes [N]        Show filename and title of latest N notes (default 10)"
+    )
+    print("")
     print("  ww search                 Web search (multi-engine)")
     print("  ww search bing            Search with Bing")
     print("  ww search code            Search code")
@@ -717,6 +722,16 @@ def main():
         from ww.git.git_update import main as m
 
         m()
+
+    elif group == "latest":
+        subcmd = _pop_subcmd()
+        if subcmd == "notes":
+            from ww.note.latest_notes import main as m
+
+            m()
+        else:
+            print(f"Unknown latest command: {subcmd}")
+            sys.exit(1)
 
     else:
         print(f"Unknown command: {group}")
