@@ -1,11 +1,18 @@
 import Quartz  # type: ignore
 from PIL import ImageGrab
 import datetime
+import os
+import sys
 
 
 def main():
     ts = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    path = f"screenshot-{ts}.png"
+    filename = f"screenshot-{ts}.png"
+
+    args = sys.argv[3:]
+    directory = args[0] if args else "."
+    os.makedirs(directory, exist_ok=True)
+    path = os.path.join(directory, filename)
 
     windows = Quartz.CGWindowListCopyWindowInfo(
         Quartz.kCGWindowListOptionOnScreenOnly, Quartz.kCGNullWindowID

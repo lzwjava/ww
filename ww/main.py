@@ -35,7 +35,7 @@ def _print_help():
     print("  ww image avatar           Process avatar image")
     print("  ww image crop             Crop an image")
     print("  ww image remove-bg        Remove image background")
-    print("  ww image screenshot       Take a screenshot")
+    print("  ww image screenshot [dir] Take a screenshot (saves to dir, default: .)")
     print("  ww image screenshot-linux Take a screenshot (Linux)")
     print("  ww image compress         Compress images")
     print("  ww image photo-compress   Compress photos")
