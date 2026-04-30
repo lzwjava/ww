@@ -58,14 +58,12 @@ def detect_extension(content):
     return "txt"
 
 
-def generate_timestamp_filename(content, ext=None):
-    if not ext:
-        ext = detect_extension(content)
+def generate_timestamp_filename(ext):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     return f"{timestamp}.{ext}"
 
 
-def create_normal_log(content=None, ext=None, friendly_name=False):
+def create_normal_log(content=None, ext=None, friendly_name=False, detect_ext=False):
     logs_dir = os.path.join(get_base_path(), "logs")
     if content is None:
         content = get_clipboard_content()
@@ -76,7 +74,8 @@ def create_normal_log(content=None, ext=None, friendly_name=False):
         else:
             ai_filename = generate_filename(content)
     else:
-        ai_filename = generate_timestamp_filename(content, ext=ext)
+        resolved_ext = ext or (detect_extension(content) if detect_ext else "log")
+        ai_filename = generate_timestamp_filename(resolved_ext)
 
     match = re.match(r"^[a-z0-9_-]+\.[a-z0-9]+$", ai_filename)
     if not match:

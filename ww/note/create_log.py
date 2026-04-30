@@ -54,7 +54,9 @@ def _check_duplicate_logs(content):
     return False
 
 
-def _create_log_with_content(content, direct=False, ext=None, friendly_name=False):
+def _create_log_with_content(
+    content, direct=False, ext=None, friendly_name=False, detect_ext=False
+):
     if len(content) > 1048576:
         print("Error: Content exceeds 1MB. Please shorten the log and try again.")
         return
@@ -64,7 +66,9 @@ def _create_log_with_content(content, direct=False, ext=None, friendly_name=Fals
         return
 
     if direct:
-        create_normal_log(content, ext=ext, friendly_name=friendly_name)
+        create_normal_log(
+            content, ext=ext, friendly_name=friendly_name, detect_ext=detect_ext
+        )
         return
 
     if is_sensitive_content(content):
@@ -73,9 +77,13 @@ def _create_log_with_content(content, direct=False, ext=None, friendly_name=Fals
         if not obfuscated:
             print("Error: Obfuscation failed.")
             return
-        create_normal_log(obfuscated, ext=ext, friendly_name=friendly_name)
+        create_normal_log(
+            obfuscated, ext=ext, friendly_name=friendly_name, detect_ext=detect_ext
+        )
     else:
-        create_normal_log(content, ext=ext, friendly_name=friendly_name)
+        create_normal_log(
+            content, ext=ext, friendly_name=friendly_name, detect_ext=detect_ext
+        )
 
 
 def create_log():
@@ -85,7 +93,12 @@ def create_log():
     )
     parser.add_argument(
         "--ext",
-        help="File extension to use (e.g. md, txt), skips AI extension detection",
+        help="File extension to use (e.g. md, txt)",
+    )
+    parser.add_argument(
+        "--detect-ext",
+        action="store_true",
+        help="Use LLM to detect file extension from content",
     )
     parser.add_argument(
         "--friendly-name",
@@ -96,7 +109,11 @@ def create_log():
 
     content = get_clipboard_content()
     _create_log_with_content(
-        content, args.direct, ext=args.ext, friendly_name=args.friendly_name
+        content,
+        args.direct,
+        ext=args.ext,
+        friendly_name=args.friendly_name,
+        detect_ext=args.detect_ext,
     )
 
 
@@ -127,7 +144,12 @@ def create_log_from_file():
     )
     parser.add_argument(
         "--ext",
-        help="File extension to use (e.g. md, txt), skips AI extension detection",
+        help="File extension to use (e.g. md, txt)",
+    )
+    parser.add_argument(
+        "--detect-ext",
+        action="store_true",
+        help="Use LLM to detect file extension from content",
     )
     parser.add_argument(
         "--friendly-name",
@@ -141,5 +163,9 @@ def create_log_from_file():
     with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
     _create_log_with_content(
-        content, args.direct, ext=args.ext, friendly_name=args.friendly_name
+        content,
+        args.direct,
+        ext=args.ext,
+        friendly_name=args.friendly_name,
+        detect_ext=args.detect_ext,
     )
