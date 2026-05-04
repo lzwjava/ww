@@ -141,6 +141,9 @@ def _print_help():
         "  ww env update             Pick a top Arena model and update MODEL= in .env"
     )
     print("")
+    print("Gen-image:")
+    print("  ww gen-image              Generate image from clipboard text (Imagen 3)")
+    print("")
     print("Action:")
     print("  ww action <workflow.yml>  Trigger a GitHub Actions workflow via gh CLI")
     print("")
@@ -682,6 +685,11 @@ def main():
         else:
             print(f"Unknown clash command: {subcmd}")
             sys.exit(1)
+
+    elif group == "gen-image":
+        from ww.image.gen_image import main as m
+
+        m()
 
     elif group == "action":
         from ww.action.action import main as m
