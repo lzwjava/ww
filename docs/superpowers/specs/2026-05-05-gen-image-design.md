@@ -23,7 +23,7 @@ main()
 
 ### `ww/image/gen_image.py`
 
-- `read_clipboard() -> str` — runs `pbpaste`, returns stripped text; exits 1 if empty
+- `read_clipboard() -> str` — uses `pyperclip.paste()`, returns stripped text; exits 1 if empty
 - `generate_image(prompt: str, model: str) -> bytes` — calls Google Generative AI SDK (`google-genai`), returns raw PNG bytes
 - `save_image(data: bytes, path: str) -> None` — writes bytes to file, prints path
 - `main()` — argparse entry point
@@ -57,7 +57,7 @@ ww gen-image --model imagen-3.0-generate-002   # explicit model (this is the def
 | Empty clipboard | Print error, exit 1 |
 | `GEMINI_API_KEY` not set | Print error, exit 1 |
 | API failure | Print error message from SDK, exit 1 |
-| Output path unwritable | Let OS exception surface, exit 1 |
+| Output path unwritable | Catch `OSError`, print clean error message, exit 1 |
 
 ## Dependencies
 
