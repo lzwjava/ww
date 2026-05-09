@@ -37,7 +37,11 @@ reportMissingModuleSource = false
 reportAttributeAccessIssue = false
 exclude = [
     ".venv/",
+    "ww/ml/",
 ]
+
+[tool.ruff]
+extend-exclude = ["ww/ml"]
 
 [tool.ruff.lint]
 ignore = [
