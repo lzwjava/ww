@@ -152,6 +152,9 @@ def _print_help():
         "  ww marp <file.md>         Watch a markdown file and regenerate PDF via marp"
     )
     print("")
+    print("Whisper:")
+    print("  ww whisper <file.mp4>     Transcribe via whisper (Chinese, large, CUDA)")
+    print("")
     print("Linux:")
     print("  ww linux gpu          Show GPU and CUDA details")
     print("  ww linux system       Comprehensive system overview")
@@ -723,6 +726,11 @@ def main():
 
     elif group == "marp":
         from ww.marp.marp_watch import main as m
+
+        m()
+
+    elif group == "whisper":
+        from ww.audio.whisper_translate import main as m
 
         m()
 
