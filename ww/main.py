@@ -154,6 +154,9 @@ def _print_help():
     print("")
     print("Whisper:")
     print("  ww whisper <file.mp4>     Transcribe via whisper (Chinese, large, CUDA)")
+    print(
+        "  ww whisper refine <file.txt>  Refine transcription to .md via OpenRouter (deepseek-v4-flash)"
+    )
     print("")
     print("Linux:")
     print("  ww linux gpu          Show GPU and CUDA details")
@@ -730,9 +733,15 @@ def main():
         m()
 
     elif group == "whisper":
-        from ww.audio.whisper_translate import main as m
+        if len(sys.argv) > 1 and sys.argv[1] == "refine":
+            sys.argv.pop(1)
+            from ww.audio.whisper_refine import main as m
 
-        m()
+            m()
+        else:
+            from ww.audio.whisper_translate import main as m
+
+            m()
 
     elif group == "update":
         from ww.git.git_update import main as m
