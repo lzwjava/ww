@@ -50,12 +50,20 @@ def _call_llm_or_exit(prompt, error_msg):
     return result
 
 
+TITLE_MAX_CHARS = 100
+
+
 def generate_title(content, max_words, format_prompt):
     prompt = format_prompt(get_first_n_words(content))
-    title = _call_llm_or_exit(
+    raw = _call_llm_or_exit(
         prompt, f"Failed to generate title with max {max_words} words. Exit."
     )
-    return re.sub(r"\*", " ", title).strip()
+    title = re.sub(r"\*", " ", raw).strip()
+    if len(title) >= TITLE_MAX_CHARS:
+        raise ValueError(
+            f"Generated title is {len(title)} chars (must be < {TITLE_MAX_CHARS}): {title!r}. Regenerate."
+        )
+    return title
 
 
 def generate_short_title(prompt):

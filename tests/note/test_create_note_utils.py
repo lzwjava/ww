@@ -63,6 +63,46 @@ class TestCleanGrokTags(unittest.TestCase):
         self.assertEqual(result, content)
 
 
+class TestGenerateTitle(unittest.TestCase):
+    @patch("ww.note.create_note_utils.call_openrouter_api")
+    def test_returns_short_title(self, mock_api):
+        from ww.note.create_note_utils import generate_title
+
+        mock_api.return_value = "A Concise Title"
+        result = generate_title("body", 6, lambda c: f"prompt {c}")
+        self.assertEqual(result, "A Concise Title")
+        mock_api.assert_called_once()
+
+    @patch("ww.note.create_note_utils.call_openrouter_api")
+    def test_strips_asterisks_and_whitespace(self, mock_api):
+        from ww.note.create_note_utils import generate_title
+
+        mock_api.return_value = "  **Bold** Title  "
+        result = generate_title("body", 6, lambda c: f"prompt {c}")
+        self.assertEqual(result, "Bold   Title")
+
+    @patch("ww.note.create_note_utils.call_openrouter_api")
+    def test_rejects_runaway_title(self, mock_api):
+        from ww.note.create_note_utils import generate_title
+
+        mock_api.return_value = "A" * 200
+        with self.assertRaises(ValueError) as ctx:
+            generate_title("body", 6, lambda c: f"prompt {c}")
+        self.assertIn("100", str(ctx.exception))
+
+    @patch("ww.note.create_note_utils.call_openrouter_api")
+    def test_rejects_multiline_essay_response(self, mock_api):
+        from ww.note.create_note_utils import generate_title
+
+        mock_api.return_value = (
+            "WeChat 确实不支持将多个群聊合并成一个统一群组。每个群聊都是一个独立的对话空间，"
+            "没有跨群的共享成员列表、统一消息流或父子群结构。\n\n"
+            "您设想的功能更接近 Discord 的频道服务器模型，需要通过手动转发、群公告或第三方机器人实现。"
+        )
+        with self.assertRaises(ValueError):
+            generate_title("body", 6, lambda c: f"prompt {c}")
+
+
 class TestGetBasePath(unittest.TestCase):
     def tearDown(self):
         os.environ.pop("BASE_PATH", None)
