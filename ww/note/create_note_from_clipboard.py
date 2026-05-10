@@ -8,7 +8,6 @@ from ww.note.create_note_utils import (
     get_clipboard_content,
     clean_grok_tags,
     generate_title,
-    generate_short_title,
     create_filename,
     format_front_matter,
     clean_content,
@@ -17,33 +16,27 @@ from ww.note.create_note_utils import (
 from ww.note.check_duplicate_notes import check_duplicate_notes
 
 
-def _validate_and_clean_short_title(raw: str) -> str:
-    short_title = raw.lower().strip("-")
-    short_title = re.sub(r"[^a-z0-9-]", "", short_title)
-    short_title = re.sub(r"-+", "-", short_title).strip("-")
-    parts = short_title.split("-")
-    if (
-        not short_title
-        or len(short_title) > 80
-        or len(parts) > 8
-        or any(len(p) > 20 or not p.isalnum() for p in parts)
-    ):
-        raise ValueError(
-            f"Invalid short_title '{short_title}': must be only lowercase a-z0-9/-, <=80 chars, <=8 words (<=20 chars each). Regenerate."
-        )
-    return short_title
-
-
 def _generate_titles(content):
     full_title_prompt = lambda c: (
-        f"Generate a very short title in English (maximum six words, do not have single quote) for the following text and respond with only the title: {c}"
+        f"Give a short English title (at most 6 words, no quotes, no explanation) for:\n{c}\n\nTitle:"
     )
     full_title = generate_title(content, 6, full_title_prompt)
-    short_title_prompt = f"Generate a concise title for file naming (max 4 words, lowercase letters/numbers/hyphens only, no spaces/special chars/single quotes/underscores, use hyphens to join words) based on this title: {full_title}. Respond with just the title:"
-    short_title = _validate_and_clean_short_title(
-        generate_short_title(short_title_prompt)
-    )
+    short_title = _title_to_slug(full_title)
     return full_title, short_title
+
+
+def _title_to_slug(title):
+    slug = title.lower().replace("'", "").replace(" ", "-")
+    slug = re.sub(r"[^a-z0-9-]", "", slug)
+    slug = re.sub(r"-+", "-", slug).strip("-")
+    if not slug:
+        raise ValueError(f"Slug derived from title is empty: {title!r}")
+    parts = slug.split("-")
+    if len(parts) > 8:
+        slug = "-".join(parts[:8])
+    if len(slug) > 80:
+        slug = slug[:80].rstrip("-")
+    return slug
 
 
 def _titles_from_custom(custom_title):

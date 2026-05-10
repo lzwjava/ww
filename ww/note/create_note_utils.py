@@ -42,8 +42,8 @@ def get_clipboard_content():
     return pyperclip.paste()
 
 
-def _call_llm_or_exit(prompt, error_msg):
-    result = call_openrouter_api(prompt)
+def _call_llm_or_exit(prompt, error_msg, max_tokens=None):
+    result = call_openrouter_api(prompt, max_tokens=max_tokens)
     if not result:
         print(error_msg)
         sys.exit(1)
@@ -51,19 +51,27 @@ def _call_llm_or_exit(prompt, error_msg):
 
 
 TITLE_MAX_CHARS = 100
+TITLE_MAX_RETRIES = 3
 
 
 def generate_title(content, max_words, format_prompt):
     prompt = format_prompt(get_first_n_words(content))
-    raw = _call_llm_or_exit(
-        prompt, f"Failed to generate title with max {max_words} words. Exit."
-    )
-    title = re.sub(r"\*", " ", raw).strip()
-    if len(title) >= TITLE_MAX_CHARS:
-        raise ValueError(
-            f"Generated title is {len(title)} chars (must be < {TITLE_MAX_CHARS}): {title!r}. Regenerate."
+    for attempt in range(1, TITLE_MAX_RETRIES + 1):
+        raw = _call_llm_or_exit(
+            prompt,
+            f"Failed to generate title with max {max_words} words. Exit.",
+            max_tokens=60,
         )
-    return title
+        title = re.sub(r"\*", " ", raw).strip()
+        if len(title) < TITLE_MAX_CHARS:
+            return title
+        if attempt < TITLE_MAX_RETRIES:
+            print(
+                f"[warn] Title too long ({len(title)} chars), retrying ({attempt}/{TITLE_MAX_RETRIES})..."
+            )
+    raise ValueError(
+        f"Generated title still >= {TITLE_MAX_CHARS} chars after {TITLE_MAX_RETRIES} retries: {title!r}."
+    )
 
 
 def generate_short_title(prompt):
