@@ -30,6 +30,9 @@ def _print_help():
     print(
         "  ww macos charge-watch     Alert when charger is plugged in but not charging"
     )
+    print(
+        "  ww macos process          Analyze running processes and suggest what to kill"
+    )
     print("")
     print("Image:")
     print("  ww image avatar           Process avatar image")
@@ -289,6 +292,10 @@ def main():
             m()
         elif subcmd == "charge-watch":
             from ww.macos.charge_watcher import main as m
+
+            m()
+        elif subcmd == "process":
+            from ww.macos.process_analyze import main as m
 
             m()
         else:
