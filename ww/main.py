@@ -153,6 +153,12 @@ def _print_help():
     print("Action:")
     print("  ww action <workflow.yml>  Trigger a GitHub Actions workflow via gh CLI")
     print("")
+    print("Degree (GDUFS 自考):")
+    print("  ww degree                 AI-categorize recent self-study notices")
+    print("  ww degree practical       Filter notices about 实践考核 / scores")
+    print("  ww degree list            Raw scraped list (no AI)")
+    print("  ww degree --pages N       Fetch N list pages (1-11, default 1)")
+    print("")
     print("Marp:")
     print(
         "  ww marp <file.md>         Watch a markdown file and regenerate PDF via marp"
@@ -172,6 +178,15 @@ def _print_help():
     print("  ww linux proxy-setup  Interactively configure APT proxy")
     print("  ww linux wol          Send a Wake-on-LAN packet")
     print("  ww linux terminal     Open a fullscreen terminal")
+    print("")
+    print("Cloudflare:")
+    print(
+        "  ww cloudflare monthly-visit  Monthly page views & visits from Web Analytics"
+    )
+    print("  ww cloudflare zones          List Cloudflare zones")
+    print("  ww cloudflare datasets       List Web Analytics datasets")
+    print("  ww cloudflare schema         Inspect GraphQL Account schema")
+    print("  ww cloudflare pdf <file>     Parse Cloudflare Analytics PDF export")
     print("")
     print("Clash:")
     print("  ww clash select-provider    Select best proxy provider")
@@ -660,6 +675,32 @@ def main():
 
         m()
 
+    elif group == "cloudflare":
+        subcmd = _pop_subcmd()
+        if subcmd == "monthly-visit":
+            from ww.cloudflare.get_monthly_visit import main as m
+
+            m()
+        elif subcmd == "zones":
+            from ww.cloudflare.get_zone_id import main as m
+
+            m()
+        elif subcmd == "datasets":
+            from ww.cloudflare.get_web_analytics_datasets import main as m
+
+            m()
+        elif subcmd == "schema":
+            from ww.cloudflare.get_schema import main as m
+
+            m()
+        elif subcmd == "pdf":
+            from ww.cloudflare.read_analytics_data_from_pdf import main as m
+
+            m()
+        else:
+            print(f"Unknown cloudflare command: {subcmd}")
+            sys.exit(1)
+
     elif group == "clash":
         subcmd = _pop_subcmd()
         if subcmd == "select-provider":
@@ -759,6 +800,11 @@ def main():
 
     elif group == "update":
         from ww.git.git_update import main as m
+
+        m()
+
+    elif group == "degree":
+        from ww.degree.degree import main as m
 
         m()
 
