@@ -1,21 +1,32 @@
+import argparse
 import Quartz  # type: ignore
 from PIL import ImageGrab
 import datetime
 import os
 import sys
+import time
 
 from dotenv import load_dotenv
 
 
 def main():
     load_dotenv()
+    parser = argparse.ArgumentParser(description="Take a screenshot (macOS)")
+    parser.add_argument("dir", nargs="?", default=None, help="Output directory")
+    parser.add_argument(
+        "--delay", type=int, default=0, help="Delay in seconds before taking screenshot"
+    )
+    args = parser.parse_args(sys.argv[3:])
+
+    if args.delay > 0:
+        print(f"Taking screenshot in {args.delay} second(s)...")
+        time.sleep(args.delay)
+
     ts = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     filename = f"screenshot-{ts}.png"
 
-    args = sys.argv[3:]
-    cli_dir = args[0] if args else None
     env_dir = os.environ.get("SCREENSHOT_DIR", "").strip()
-    directory = env_dir or cli_dir or "."
+    directory = env_dir or args.dir or "."
     os.makedirs(directory, exist_ok=True)
     path = os.path.join(directory, filename)
 
