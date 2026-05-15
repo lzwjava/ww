@@ -11,10 +11,18 @@ from dotenv import load_dotenv
 
 def main():
     load_dotenv()
-    parser = argparse.ArgumentParser(description="Take a screenshot (macOS)")
-    parser.add_argument("dir", nargs="?", default=None, help="Output directory")
+    parser = argparse.ArgumentParser(
+        description="Take a screenshot (macOS)",
+        usage="%(prog)s [--delay SECONDS] [--dir DIR]",
+    )
     parser.add_argument(
-        "--delay", type=int, default=0, help="Delay in seconds before taking screenshot"
+        "--delay",
+        type=int,
+        default=0,
+        help="Delay in seconds before capture (default: 0)",
+    )
+    parser.add_argument(
+        "--dir", default=None, help="Output directory (default: SCREENSHOT_DIR or .)"
     )
     args = parser.parse_args(sys.argv[1:])
 

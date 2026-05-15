@@ -54,7 +54,7 @@ ww <group> [command] [options]
 | `ww image avatar` | Process avatar image |
 | `ww image crop` | Crop an image |
 | `ww image remove-bg` | Remove image background |
-| `ww image screenshot` | Take a screenshot (macOS, saves to SCREENSHOT_DIR or [dir], default: .) |
+| `ww image screenshot` | Take a screenshot (macOS, `--delay`, `--dir`) |
 | `ww image screenshot-linux` | Take a screenshot (Linux, saves to SCREENSHOT_DIR, default: assets/screenshots) |
 | `ww image compress` | Compress images |
 | `ww image photo-compress` | Compress photos |
