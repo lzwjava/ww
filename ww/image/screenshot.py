@@ -13,10 +13,11 @@ def main():
     load_dotenv()
     parser = argparse.ArgumentParser(
         description="Take a screenshot (macOS)",
-        usage="%(prog)s [--delay SECONDS] [--dir DIR]",
+        usage="%(prog)s [DELAY] [--dir DIR]",
     )
     parser.add_argument(
-        "--delay",
+        "delay",
+        nargs="?",
         type=int,
         default=0,
         help="Delay in seconds before capture (default: 0)",
