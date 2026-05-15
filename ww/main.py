@@ -14,6 +14,9 @@ def _print_help():
     print("  ww note screenshot-log    Create a note from latest screenshot(s)")
     print("  ww note obfuscate <file>  Obfuscate sensitive data in a file")
     print("")
+    print("Screenshot:")
+    print("  ww screenshot [DELAY]     Take a screenshot (macOS, --dir)")
+    print("")
     print("GIF:")
     print("  ww gif                    Create GIF from images")
     print("")
@@ -247,6 +250,11 @@ def main():
         else:
             print(f"Unknown note command: {subcmd}")
             sys.exit(1)
+
+    elif group == "screenshot":
+        from ww.image.screenshot import main as m
+
+        m()
 
     elif group == "gif":
         from ww.gif.gif import main as m

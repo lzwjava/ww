@@ -25,6 +25,12 @@ ww <group> [command] [options]
 | `ww note screenshot-log` | Create a note from latest screenshot(s) (`-n`, `--prompt`) |
 | `ww note obfuscate <file>` | Obfuscate sensitive data in a file |
 
+### Screenshot
+
+| Command | Description |
+|---------|-------------|
+| `ww screenshot` | Take a screenshot (macOS, `[DELAY]`, `--dir`) |
+
 ### Git
 
 | Command | Description |
