@@ -17,6 +17,9 @@ def _print_help():
     print("  ww screenshot [DELAY]     Take a screenshot (macOS, --dir)")
     print("  ww screenshot-linux       Take a screenshot (Linux)")
     print("  ww screenshot note        Create a note from latest screenshot(s)")
+    print(
+        "  ww screenshot interact-note  Interactively capture screenshots and create a note"
+    )
     print("")
     print("GIF:")
     print("  ww gif                    Create GIF from images")
@@ -247,11 +250,15 @@ def main():
             sys.exit(1)
 
     elif group == "screenshot":
-        # Only pop subcmd if it's "note"; otherwise leave args for screenshot module
-        if len(sys.argv) > 1 and sys.argv[1] == "note":
+        # Only pop subcmd if it's "note" or "interact-note"; otherwise leave args for screenshot module
+        if len(sys.argv) > 1 and sys.argv[1] in ("note", "interact-note"):
             subcmd = _pop_subcmd()
             if subcmd == "note":
                 from ww.note.screenshot_log import main as m
+
+                m()
+            elif subcmd == "interact-note":
+                from ww.image.interact_note import main as m
 
                 m()
         else:

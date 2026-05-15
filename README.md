@@ -31,6 +31,7 @@ ww <group> [command] [options]
 | `ww screenshot [DELAY]` | Take a screenshot (macOS, `--dir`) |
 | `ww screenshot-linux` | Take a screenshot (Linux, saves to SCREENSHOT_DIR, default: assets/screenshots) |
 | `ww screenshot note` | Create a note from latest screenshot(s) (`-n`, `--prompt`) |
+| `ww screenshot interact-note` | Interactively capture screenshots and create a note |
 
 ### Git
 
