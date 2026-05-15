@@ -22,6 +22,7 @@ ww <group> [command] [options]
 |---------|-------------|
 | `ww note` | Create a new note with git integration |
 | `ww note log` | Create a new log entry |
+| `ww note screenshot-log` | Create a note from latest screenshot(s) (`-n`, `--prompt`) |
 | `ww note obfuscate <file>` | Obfuscate sensitive data in a file |
 
 ### Git
@@ -53,8 +54,8 @@ ww <group> [command] [options]
 | `ww image avatar` | Process avatar image |
 | `ww image crop` | Crop an image |
 | `ww image remove-bg` | Remove image background |
-| `ww image screenshot` | Take a screenshot (macOS) |
-| `ww image screenshot-linux` | Take a screenshot (Linux) |
+| `ww image screenshot` | Take a screenshot (macOS, saves to SCREENSHOT_DIR or [dir], default: .) |
+| `ww image screenshot-linux` | Take a screenshot (Linux, saves to SCREENSHOT_DIR, default: assets/screenshots) |
 | `ww image compress` | Compress images |
 | `ww image photo-compress` | Compress photos |
 

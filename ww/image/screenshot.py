@@ -4,13 +4,18 @@ import datetime
 import os
 import sys
 
+from dotenv import load_dotenv
+
 
 def main():
+    load_dotenv()
     ts = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     filename = f"screenshot-{ts}.png"
 
     args = sys.argv[3:]
-    directory = args[0] if args else "."
+    cli_dir = args[0] if args else None
+    env_dir = os.environ.get("SCREENSHOT_DIR", "").strip()
+    directory = env_dir or cli_dir or "."
     os.makedirs(directory, exist_ok=True)
     path = os.path.join(directory, filename)
 

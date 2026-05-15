@@ -11,6 +11,7 @@ def _print_help():
     print("Note:")
     print("  ww note                   Create a new note with git integration")
     print("  ww note log               Create a new log entry")
+    print("  ww note screenshot-log    Create a note from latest screenshot(s)")
     print("  ww note obfuscate <file>  Obfuscate sensitive data in a file")
     print("")
     print("GIF:")
@@ -41,7 +42,9 @@ def _print_help():
     print("  ww image avatar           Process avatar image")
     print("  ww image crop             Crop an image")
     print("  ww image remove-bg        Remove image background")
-    print("  ww image screenshot [dir] Take a screenshot (saves to dir, default: .)")
+    print(
+        "  ww image screenshot [dir] Take a screenshot (saves to SCREENSHOT_DIR or dir, default: .)"
+    )
     print("  ww image screenshot-linux Take a screenshot (Linux)")
     print("  ww image compress         Compress images")
     print("  ww image photo-compress   Compress photos")
@@ -239,6 +242,10 @@ def main():
             from ww.note.obfuscate_log import obfuscate_log
 
             obfuscate_log()
+        elif subcmd == "screenshot-log":
+            from ww.note.screenshot_log import main as m
+
+            m()
         else:
             print(f"Unknown note command: {subcmd}")
             sys.exit(1)
