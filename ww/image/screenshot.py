@@ -16,7 +16,7 @@ def main():
     parser.add_argument(
         "--delay", type=int, default=0, help="Delay in seconds before taking screenshot"
     )
-    args = parser.parse_args(sys.argv[3:])
+    args = parser.parse_args(sys.argv[1:])
 
     if args.delay > 0:
         print(f"Taking screenshot in {args.delay} second(s)...")
