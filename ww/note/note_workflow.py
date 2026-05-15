@@ -102,7 +102,11 @@ def parse_args():
         "--gemini", action="store_true", help="Enable Gemini-specific MathJax fixing"
     )
     parser.add_argument(
-        "--open", action="store_true", help="Open the note in browser after creating"
+        "--open",
+        action=argparse.BooleanOptionalAction,
+        default=os.getenv("NOTE_BROWSER_OPEN", "true").lower()
+        not in ("false", "0", "no"),
+        help="Open the note in browser after creating (default: NOTE_BROWSER_OPEN env, true; use --no-open to skip)",
     )
     parser.add_argument(
         "--no-push", action="store_true", help="Skip the gpa git push step"

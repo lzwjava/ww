@@ -11,11 +11,12 @@ def _print_help():
     print("Note:")
     print("  ww note                   Create a new note with git integration")
     print("  ww note log               Create a new log entry")
-    print("  ww note screenshot-log    Create a note from latest screenshot(s)")
     print("  ww note obfuscate <file>  Obfuscate sensitive data in a file")
     print("")
     print("Screenshot:")
     print("  ww screenshot [DELAY]     Take a screenshot (macOS, --dir)")
+    print("  ww screenshot-linux       Take a screenshot (Linux)")
+    print("  ww screenshot note        Create a note from latest screenshot(s)")
     print("")
     print("GIF:")
     print("  ww gif                    Create GIF from images")
@@ -45,8 +46,6 @@ def _print_help():
     print("  ww image avatar           Process avatar image")
     print("  ww image crop             Crop an image")
     print("  ww image remove-bg        Remove image background")
-    print("  ww image screenshot       Take a screenshot (macOS, --delay, --dir)")
-    print("  ww image screenshot-linux Take a screenshot (Linux)")
     print("  ww image compress         Compress images")
     print("  ww image photo-compress   Compress photos")
     print("")
@@ -243,16 +242,25 @@ def main():
             from ww.note.obfuscate_log import obfuscate_log
 
             obfuscate_log()
-        elif subcmd == "screenshot-log":
-            from ww.note.screenshot_log import main as m
-
-            m()
         else:
             print(f"Unknown note command: {subcmd}")
             sys.exit(1)
 
     elif group == "screenshot":
-        from ww.image.screenshot import main as m
+        # Only pop subcmd if it's "note"; otherwise leave args for screenshot module
+        if len(sys.argv) > 1 and sys.argv[1] == "note":
+            subcmd = _pop_subcmd()
+            if subcmd == "note":
+                from ww.note.screenshot_log import main as m
+
+                m()
+        else:
+            from ww.image.screenshot import main as m
+
+            m()
+
+    elif group == "screenshot-linux":
+        from ww.image.screenshot_linux import main as m
 
         m()
 
@@ -349,14 +357,6 @@ def main():
             m()
         elif subcmd == "remove-bg":
             from ww.image.remove_bg import main as m
-
-            m()
-        elif subcmd == "screenshot":
-            from ww.image.screenshot import main as m
-
-            m()
-        elif subcmd == "screenshot-linux":
-            from ww.image.screenshot_linux import main as m
 
             m()
         elif subcmd == "compress":
