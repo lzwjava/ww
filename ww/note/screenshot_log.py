@@ -12,7 +12,6 @@ from ww.llm.openrouter_client import (
 )
 from ww.note.create_note_utils import (
     get_base_path,
-    format_front_matter,
     process_title_for_filename,
 )
 
@@ -115,6 +114,23 @@ def _build_image_section(image_paths, notes_dir):
     return "\n".join(lines)
 
 
+def _format_front_matter_with_image(full_title, has_image, date=None):
+    if ":" in full_title and '"' not in full_title:
+        full_title = f'"{full_title}"'
+    if date is None:
+        date = datetime.now().strftime("%Y-%m-%d")
+    return f"""---
+audio: false
+generated: true
+image: {"true" if has_image else "false"}
+lang: en
+layout: post
+title: {full_title}
+translated: false
+type: note
+---"""
+
+
 def _create_note_file(content, full_title, image_paths=None, date=None):
     notes_dir = os.path.join(get_base_path(), "notes")
     os.makedirs(notes_dir, exist_ok=True)
@@ -126,7 +142,8 @@ def _create_note_file(content, full_title, image_paths=None, date=None):
     if os.path.exists(file_path):
         print(f"Note already exists: {file_path}")
         sys.exit(1)
-    front_matter = format_front_matter(full_title, date)
+    has_image = bool(image_paths)
+    front_matter = _format_front_matter_with_image(full_title, has_image, date)
     body = content
     if image_paths:
         body += _build_image_section(image_paths, notes_dir)
