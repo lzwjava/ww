@@ -107,7 +107,15 @@ def _generate_title_from_content(content, extra_prompt=None):
     return title
 
 
-def _create_note_file(content, full_title, date=None):
+def _build_image_section(image_paths, notes_dir):
+    lines = ["\n\n---\n\n**Screenshots:**\n"]
+    for path in image_paths:
+        rel = os.path.relpath(path, notes_dir)
+        lines.append(f"![screenshot]({rel})")
+    return "\n".join(lines)
+
+
+def _create_note_file(content, full_title, image_paths=None, date=None):
     notes_dir = os.path.join(get_base_path(), "notes")
     os.makedirs(notes_dir, exist_ok=True)
     if date is None:
@@ -119,8 +127,11 @@ def _create_note_file(content, full_title, date=None):
         print(f"Note already exists: {file_path}")
         sys.exit(1)
     front_matter = format_front_matter(full_title, date)
+    body = content
+    if image_paths:
+        body += _build_image_section(image_paths, notes_dir)
     with open(file_path, "w", encoding="utf-8") as f:
-        f.write(front_matter + "\n\n" + content)
+        f.write(front_matter + "\n\n" + body)
     print(f"Created note: {file_path}")
     return file_path
 
@@ -156,4 +167,4 @@ def main():
     print("Generating title...")
     full_title = _generate_title_from_content(summary, args.prompt)
 
-    _create_note_file(summary, full_title)
+    _create_note_file(summary, full_title, image_paths)
