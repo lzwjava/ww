@@ -52,8 +52,12 @@ def git_pull_rebase() -> None:
 
 
 def _open_url(github_url: str) -> None:
+    browser = os.getenv("NOTE_BROWSER", "").strip()
     if sys.platform.startswith("darwin"):
-        command = ["open", github_url]
+        if browser:
+            command = ["open", "-a", browser, github_url]
+        else:
+            command = ["open", github_url]
     elif sys.platform.startswith("linux"):
         command = ["env", "NO_AT_BRIDGE=1", "xdg-open", github_url]
     else:
