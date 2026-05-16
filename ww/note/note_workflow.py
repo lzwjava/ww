@@ -55,9 +55,9 @@ def _open_url(github_url: str) -> None:
     browser = os.getenv("NOTE_BROWSER", "").strip()
     if sys.platform.startswith("darwin"):
         if browser:
-            command = ["open", "-a", browser, github_url]
+            command = ["open", "-g", "-a", browser, github_url]
         else:
-            command = ["open", github_url]
+            command = ["open", "-g", github_url]
     elif sys.platform.startswith("linux"):
         command = ["env", "NO_AT_BRIDGE=1", "xdg-open", github_url]
     else:
