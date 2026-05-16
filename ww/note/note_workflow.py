@@ -55,9 +55,15 @@ def _open_url(github_url: str) -> None:
     browser = os.getenv("NOTE_BROWSER", "").strip()
     if sys.platform.startswith("darwin"):
         if browser:
-            command = ["open", "-g", "-a", browser, github_url]
-        else:
-            command = ["open", "-g", github_url]
+            script = f'tell application "{browser}" to open location "{github_url}"'
+            try:
+                subprocess.run(
+                    ["osascript", "-e", script], check=False, capture_output=True
+                )
+                return
+            except Exception:
+                pass
+        command = ["open", "-g", github_url]
     elif sys.platform.startswith("linux"):
         command = ["env", "NO_AT_BRIDGE=1", "xdg-open", github_url]
     else:
