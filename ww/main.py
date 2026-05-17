@@ -137,6 +137,7 @@ def _print_help():
     print("  ww sync bashrc [back|forth] Sync .bashrc file")
     print("  ww sync zprofile [back|forth] Sync .zprofile file")
     print("  ww sync ssh [back|forth]    Sync .ssh directory")
+    print("  ww sync hermes [back|forth]  Sync .hermes/config.yaml")
     print("")
     print("Read (RAG):")
     print("  ww read index <dir>       Index documents in a directory (BGE + FAISS)")
@@ -682,6 +683,10 @@ def main():
             from ww.sync.remote import sync_ssh
 
             sync_ssh(direction)
+        elif subcmd == "hermes":
+            from ww.sync.remote import sync_hermes
+
+            sync_hermes(direction)
         elif subcmd == "openclaw":
             from ww.sync.openclaw import main as m
 

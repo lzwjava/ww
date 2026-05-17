@@ -1,6 +1,7 @@
 import argparse
 import base64
 import os
+import subprocess
 import sys
 from datetime import datetime
 
@@ -131,6 +132,43 @@ type: note
 ---"""
 
 
+def _get_github_repo_url():
+    try:
+        remote_url = subprocess.check_output(
+            ["git", "remote", "get-url", "origin"],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return ""
+    if remote_url.startswith("git@github.com:"):
+        remote_url = remote_url.replace("git@github.com:", "https://github.com/")
+    if remote_url.endswith(".git"):
+        remote_url = remote_url[:-4]
+    return remote_url
+
+
+def _print_note_url(file_path):
+    if not file_path or not os.path.exists(file_path):
+        return
+    repo_url = _get_github_repo_url()
+    if not repo_url:
+        return
+    try:
+        repo_root = subprocess.check_output(
+            ["git", "rev-parse", "--show-toplevel"],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return
+    rel_path = os.path.relpath(os.path.abspath(file_path), repo_root).replace(
+        os.sep, "/"
+    )
+    github_url = repo_url + "/blob/main/" + rel_path
+    print(f"[info] Note created at {github_url}")
+
+
 def _create_note_file(content, full_title, image_paths=None, date=None):
     notes_dir = os.path.join(get_base_path(), "notes")
     os.makedirs(notes_dir, exist_ok=True)
@@ -184,4 +222,5 @@ def main():
     print("Generating title...")
     full_title = _generate_title_from_content(summary, args.prompt)
 
-    _create_note_file(summary, full_title, image_paths)
+    note_path = _create_note_file(summary, full_title, image_paths)
+    _print_note_url(note_path)

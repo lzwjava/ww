@@ -41,3 +41,9 @@ def sync_ssh(direction: str = "forth") -> None:
     local_path = str(Path.home() / ".ssh")
     remote_path = "~/.ssh"
     remote_sync(local_path, remote_path, direction)
+
+
+def sync_hermes(direction: str = "forth") -> None:
+    local_path = str(Path.home() / ".hermes" / "config.yaml")
+    remote_path = "~/.hermes/config.yaml"
+    remote_sync(local_path, remote_path, direction)

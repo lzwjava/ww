@@ -181,6 +181,7 @@ ww <group> [command] [options]
 | `ww sync bashrc [back\|forth]` | Sync .bashrc file |
 | `ww sync zprofile [back\|forth]` | Sync .zprofile file |
 | `ww sync ssh [back\|forth]` | Sync .ssh directory |
+| `ww sync hermes [back\|forth]` | Sync .hermes/config.yaml |
 
 ## Requirements
 

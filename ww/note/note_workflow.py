@@ -156,4 +156,15 @@ def main():
         except Exception as e:
             print(f"[warn] Failed to open browser: {e}")
 
-    print(f"[info] Note created at {created_path}")
+    try:
+        repo_root = _git_toplevel()
+        if created_path and os.path.exists(created_path):
+            rel_path = os.path.relpath(
+                os.path.abspath(created_path), repo_root
+            ).replace(os.sep, "/")
+            github_url = args.repo_url.rstrip("/") + "/blob/main/" + rel_path
+            print(f"[info] Note created at {github_url}")
+        else:
+            print(f"[info] Note created at {created_path}")
+    except Exception:
+        print(f"[info] Note created at {created_path}")

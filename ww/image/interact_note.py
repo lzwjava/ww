@@ -8,6 +8,7 @@ from ww.note.screenshot_log import (
     _create_note_file,
     _generate_title_from_content,
     _get_screenshot_dir,
+    _print_note_url,
     _summarize_with_extra_prompt,
     _vision_describe,
 )
@@ -60,4 +61,5 @@ def main():
     full_title = _generate_title_from_content(summary, extra_prompt)
 
     # Create note file
-    _create_note_file(summary, full_title, screenshot_paths)
+    note_path = _create_note_file(summary, full_title, screenshot_paths)
+    _print_note_url(note_path)
