@@ -1,5 +1,3 @@
-import os
-import re
 import subprocess
 import argparse
 
@@ -59,48 +57,6 @@ def _build_prompt(type, diff_output):
 def _clean_commit_message(msg):
     msg = msg.replace("```", "")
     return msg.strip()
-
-
-def _get_github_repo_url(git):
-    try:
-        remote_url = subprocess.check_output(
-            [*git, "remote", "get-url", "origin"],
-            text=True,
-            stderr=subprocess.DEVNULL,
-        ).strip()
-    except subprocess.CalledProcessError:
-        return ""
-    if remote_url.startswith("git@github.com:"):
-        remote_url = remote_url.replace("git@github.com:", "https://github.com/")
-    if remote_url.endswith(".git"):
-        remote_url = remote_url[:-4]
-    return remote_url
-
-
-def _print_note_urls(git, file_changes):
-    if not file_changes:
-        return
-    repo_url = _get_github_repo_url(git)
-    if not repo_url:
-        return
-    note_files = [f for f in file_changes if re.search(r"Added file .*\.md$", f)]
-    if not note_files:
-        return
-    try:
-        repo_root = subprocess.check_output(
-            [*git, "rev-parse", "--show-toplevel"],
-            text=True,
-            stderr=subprocess.DEVNULL,
-        ).strip()
-    except subprocess.CalledProcessError:
-        return
-    for note in note_files:
-        filename = note.replace("Added file ", "")
-        abs_path = os.path.join(repo_root, filename)
-        if os.path.exists(abs_path):
-            rel_path = os.path.relpath(abs_path, repo_root).replace(os.sep, "/")
-            github_url = repo_url + "/blob/main/" + rel_path
-            print(f"[info] Note created at {github_url}")
 
 
 def _push_with_fallback(git, allow_pull_push):
@@ -182,8 +138,6 @@ def gitmessageai(
 
     if push:
         _push_with_fallback(git, allow_pull_push)
-        if type == "file" and file_changes:
-            _print_note_urls(git, file_changes)
     else:
         print("Changes committed locally, but not pushed.")
 
