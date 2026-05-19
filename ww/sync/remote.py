@@ -9,8 +9,8 @@ def remote_sync(local_path: str, remote_path: str, direction: str = "forth") -> 
     direction="forth": local -> remote
     direction="back": remote -> local
     """
-    remote_ip = os.getenv("WW_REMOTE_IP", "192.168.1.3")
-    remote_user = os.getenv("WW_REMOTE_USER", "lzw")
+    remote_ip = os.getenv("WW_REMOTE_IP") or "192.168.1.3"
+    remote_user = os.getenv("WW_REMOTE_USER") or "lzw"
     remote_host = f"{remote_user}@{remote_ip}"
 
     if direction == "forth":
