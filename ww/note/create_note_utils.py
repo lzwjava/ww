@@ -114,6 +114,62 @@ type: note
 ---"""
 
 
+def fix_liquid_raw_tags(content):
+    """Wrap fenced code blocks containing {{ or {% with {% raw %}...{% endraw %}
+    to prevent Jekyll Liquid parsing errors during the CI build.
+
+    Jekyll's Liquid parser runs before Markdown rendering, so any {{ }} or
+    {% %} patterns in code blocks — even fenced ``` blocks — get parsed as
+    Liquid expressions and can crash the build. This function wraps affected
+    blocks so Liquid leaves them untouched.
+    """
+    lines = content.split("\n")
+    result = []
+    i = 0
+    fixed_count = 0
+    while i < len(lines):
+        stripped = lines[i].strip()
+        fence_match = re.match(r"^(```|~~~)", stripped)
+        if fence_match:
+            fence_char = fence_match.group(1)
+            block_lines = [lines[i]]
+            i += 1
+            while i < len(lines):
+                block_lines.append(lines[i])
+                if lines[i].strip().startswith(fence_char):
+                    i += 1
+                    break
+                i += 1
+
+            full_block = "\n".join(block_lines)
+            if re.search(r"\{\{|\{\%", full_block):
+                already = False
+                if result:
+                    last = result[-1].strip()
+                    if re.match(r"\{%-?\s*raw\s*-?%\}", last):
+                        already = True
+                if not already:
+                    result.append("{% raw %}")
+                    result.extend(block_lines)
+                    result.append("{% endraw %}")
+                    fixed_count += 1
+                else:
+                    result.extend(block_lines)
+            else:
+                result.extend(block_lines)
+        else:
+            result.append(lines[i])
+            i += 1
+
+    if fixed_count > 0:
+        print(
+            f"[fix] Wrapped {fixed_count} code block(s) with "
+            f"{{% raw %}} tags for Liquid safety"
+        )
+
+    return "\n".join(result)
+
+
 def clean_content(content):
     lines = content.splitlines()
     if lines and lines[0].startswith("# "):
@@ -128,6 +184,7 @@ def clean_content(content):
 
 
 def write_note(file_path, front_matter, content):
+    content = fix_liquid_raw_tags(content)
     with open(file_path, "w", encoding="utf-8") as file:
         file.write(front_matter + "\n\n" + content)
     print(f"Created note: {file_path}")
