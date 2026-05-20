@@ -4,6 +4,26 @@ import os
 import requests
 
 
+def _check_proxy():
+    for var in ("HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy"):
+        val = os.environ.get(var, "")
+        if val:
+            try:
+                from urllib.parse import urlparse
+
+                parsed = urlparse(val)
+                host = parsed.hostname
+                port = parsed.port or (443 if parsed.scheme == "https" else 80)
+                import socket
+
+                sock = socket.create_connection((host, port), timeout=3)
+                sock.close()
+                return f"{var}={val} (port {port} reachable)"
+            except Exception as e:
+                return f"{var}={val} (UNREACHABLE: {e})"
+    return "No proxy configured"
+
+
 def call_openrouter_api_with_messages(
     messages, model=None, max_tokens=None, debug=False
 ):
@@ -36,8 +56,32 @@ def call_openrouter_api_with_messages(
         print(f"Response: {response.text}")
 
     if not response.ok:
-        raise Exception(f"Error: {response.status_code} - {response.text}")
-    return response.json()["choices"][0]["message"]["content"]
+        proxy_info = _check_proxy()
+        raise Exception(
+            f"OpenRouter API error: HTTP {response.status_code}\n"
+            f"  Model: {model}\n"
+            f"  max_tokens: {max_tokens}\n"
+            f"  Proxy: {proxy_info}\n"
+            f"  Response: {response.text[:1000]}"
+        )
+
+    body = response.json()
+    finish_reason = body.get("choices", [{}])[0].get("finish_reason")
+    content = body.get("choices", [{}])[0].get("message", {}).get("content")
+
+    if not content:
+        proxy_info = _check_proxy()
+        raise Exception(
+            f"OpenRouter API returned empty content.\n"
+            f"  Model: {model}\n"
+            f"  max_tokens: {max_tokens}\n"
+            f"  finish_reason: {finish_reason}\n"
+            f"  HTTP: {response.status_code}\n"
+            f"  Proxy: {proxy_info}\n"
+            f"  Full response: {response.text[:1000]}"
+        )
+
+    return content
 
 
 def call_openrouter_api(prompt, model=None, max_tokens=None, debug=False):

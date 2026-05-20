@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import traceback
 import datetime
 import pyperclip
 
@@ -43,8 +44,19 @@ def get_clipboard_content():
 
 
 def _call_llm_or_exit(prompt, error_msg, max_tokens=None):
-    result = call_openrouter_api(prompt, max_tokens=max_tokens)
+    model = os.getenv("MODEL", "(not set)")
+    try:
+        result = call_openrouter_api(prompt, max_tokens=max_tokens)
+    except Exception as e:
+        print(f"[error] LLM call failed. Model: {model}, max_tokens: {max_tokens}")
+        print(f"[error] Prompt (first 300 chars): {prompt[:300]}")
+        print(f"[error] Exception: {e}")
+        traceback.print_exc()
+        sys.exit(1)
+
     if not result:
+        print(f"[error] LLM returned empty result. Model: {model}, max_tokens: {max_tokens}")
+        print(f"[error] Prompt (first 300 chars): {prompt[:300]}")
         print(error_msg)
         sys.exit(1)
     return result
