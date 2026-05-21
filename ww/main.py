@@ -137,7 +137,9 @@ def _print_help():
     print("  ww sync bashrc [back|forth] Sync .bashrc file")
     print("  ww sync zprofile [back|forth] Sync .zprofile file")
     print("  ww sync ssh [back|forth]    Sync .ssh directory")
-    print("  ww sync hermes [back|forth]  Sync .hermes/config.yaml")
+    print(
+        "  ww sync hermes [forth|back] [--from-host HOST] [--to-host HOST]  Sync ~/.hermes/ directory"
+    )
     print("")
     print("Read (RAG):")
     print("  ww read index <dir>       Index documents in a directory (BGE + FAISS)")
@@ -666,27 +668,45 @@ def main():
 
     elif group == "sync":
         subcmd = _pop_subcmd()
-        direction = _pop_subcmd() or "forth"
         if subcmd == "claude":
             from ww.sync.claude import main as m
 
             m()
         elif subcmd == "bashrc":
+            direction = _pop_subcmd() or "forth"
             from ww.sync.remote import sync_bashrc
 
             sync_bashrc(direction)
         elif subcmd == "zprofile":
+            direction = _pop_subcmd() or "forth"
             from ww.sync.remote import sync_zprofile
 
             sync_zprofile(direction)
         elif subcmd == "ssh":
+            direction = _pop_subcmd() or "forth"
             from ww.sync.remote import sync_ssh
 
             sync_ssh(direction)
         elif subcmd == "hermes":
+            import argparse
+
+            parser = argparse.ArgumentParser(description="Sync Hermes config")
+            parser.add_argument(
+                "direction", nargs="?", default="forth", choices=["forth", "back"]
+            )
+            parser.add_argument(
+                "--from-host",
+                default="localhost",
+                help="Source host (localhost or user@ip)",
+            )
+            parser.add_argument(
+                "--to-host", default="", help="Destination host (localhost or user@ip)"
+            )
+            args = parser.parse_args()
+
             from ww.sync.remote import sync_hermes
 
-            sync_hermes(direction)
+            sync_hermes(args.direction, args.from_host, args.to_host)
         elif subcmd == "openclaw":
             from ww.sync.openclaw import main as m
 
