@@ -51,6 +51,7 @@ def _print_help():
     print("  ww image remove-bg        Remove image background")
     print("  ww image compress         Compress images")
     print("  ww image photo-compress   Compress photos")
+    print("  ww image whatsapp         Download images from WhatsApp Web via Safari")
     print("")
     print("Process:")
     print("  ww proc kill-pattern      Kill processes matching a pattern")
@@ -281,7 +282,12 @@ def main():
 
     elif group == "github":
         subcmd = _pop_subcmd()
-        if subcmd == "gitmessageai":
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww github <command> [options]")
+            print("")
+            print("Commands:")
+            print("  gitmessageai    Generate AI commit message and commit")
+        elif subcmd == "gitmessageai":
             import argparse
             from ww.github.gitmessageai import gitmessageai
 
@@ -311,7 +317,25 @@ def main():
 
     elif group == "macos":
         subcmd = _pop_subcmd()
-        if subcmd == "find-large-dirs":
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww macos <command>")
+            print("")
+            print("Commands:")
+            print("  find-large-dirs  Find largest directories on disk")
+            print("  system-info      Show system information")
+            print("  install          Run macOS install tasks")
+            print("  list-fonts       List installed fonts")
+            print("  list-disks       List portable disks")
+            print("  open-terminal    Open a new terminal window")
+            print("  toast            Show macOS notification toast")
+            print(
+                "  charge-watch     Alert when charger is plugged in but not charging"
+            )
+            print(
+                "  process          Analyze running processes and suggest what to kill"
+            )
+            print("  settings-proxy   Set system proxy (HTTP/HTTPS 7890, SOCKS 7891)")
+        elif subcmd == "find-large-dirs":
             from ww.macos.find_largest_directories import main as m
 
             m()
@@ -357,7 +381,17 @@ def main():
 
     elif group == "image":
         subcmd = _pop_subcmd()
-        if subcmd == "avatar":
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww image <command>")
+            print("")
+            print("Commands:")
+            print("  avatar           Process avatar image")
+            print("  crop             Crop an image")
+            print("  remove-bg        Remove image background")
+            print("  compress         Compress images")
+            print("  photo-compress   Compress photos")
+            print("  whatsapp         Download images from WhatsApp Web via Safari")
+        elif subcmd == "avatar":
             from ww.image.avatar import main as m
 
             m()
@@ -377,13 +411,25 @@ def main():
             from ww.image.photo_compress import main as m
 
             m()
+        elif subcmd == "whatsapp":
+            from ww.image.whatsapp import main as m
+
+            m()
         else:
             print(f"Unknown image command: {subcmd}")
             sys.exit(1)
 
     elif group == "proc":
         subcmd = _pop_subcmd()
-        if subcmd == "kill-pattern":
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww proc <command>")
+            print("")
+            print("Commands:")
+            print("  kill-pattern    Kill processes matching a pattern")
+            print("  kill-port       Kill process on a given port")
+            print("  kill-jekyll     Kill Jekyll server")
+            print("  kill-proxy      Kill macOS proxy")
+        elif subcmd == "kill-pattern":
             from ww.proc.kill_by_pattern import main as m
 
             m()
@@ -405,7 +451,19 @@ def main():
 
     elif group == "utils":
         subcmd = _pop_subcmd()
-        if subcmd == "base64":
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww utils <command>")
+            print("")
+            print("Commands:")
+            print("  base64           Encode/decode base64")
+            print("  ccr              CCR utility")
+            print("  clean-zip        Clean zip files")
+            print("  decode-jwt       Decode a JWT token")
+            print("  py2txt           Convert Python files to text")
+            print("  request-proxy    Make HTTP request via proxy")
+            print("  smart-unzip      Smart unzip archives")
+            print("  unzip            Unzip an archive")
+        elif subcmd == "base64":
             from ww.utils.base64utils import main as m
 
             m()
@@ -443,7 +501,17 @@ def main():
 
     elif group == "java":
         subcmd = _pop_subcmd()
-        if subcmd == "mvn":
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww java <command>")
+            print("")
+            print("Commands:")
+            print("  mvn               Maven project utilities")
+            print("  analyze-deps      Analyze Java dependencies")
+            print("  analyze-packages  Analyze Java packages")
+            print("  analyze-poms      Analyze Maven POM files")
+            print("  analyze-spring    Analyze Spring Boot project")
+            print("  clean-log         Clean Java log files")
+        elif subcmd == "mvn":
             from ww.java.mvn import main as m
 
             m()
@@ -473,7 +541,20 @@ def main():
 
     elif group == "network":
         subcmd = _pop_subcmd()
-        if subcmd == "get-wifi-list":
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww network <command>")
+            print("")
+            print("Commands:")
+            print("  get-wifi-list      Get list of WiFi networks")
+            print("  save-wifi-list     Save WiFi network list")
+            print("  hack-wifi          WiFi password utilities")
+            print("  wifi-gen-password  Generate WiFi password")
+            print("  ip-scan            Scan IP addresses on network")
+            print("  port-scan          Scan open ports")
+            print("  wifi-scan          Scan for WiFi networks")
+            print("  wifi-util          WiFi utility tools")
+            print("  network-plot       Plot network topology")
+        elif subcmd == "get-wifi-list":
             from ww.network.get_wifi_list import main as m
 
             m()
@@ -515,7 +596,22 @@ def main():
 
     elif group == "git":
         subcmd = _pop_subcmd()
-        if subcmd == "amend-push":
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww git <command>")
+            print("")
+            print("Commands:")
+            print("  amend-push         Amend last commit and force push")
+            print("  classify           Classify git commits")
+            print("  find-commit        Find a git commit")
+            print("  delete-commit      Delete a git commit")
+            print("  diff-tree          Show git diff tree")
+            print("  check-filenames    Check git filenames")
+            print("  force-push         Force push to remote")
+            print("  show               Show git commit details")
+            print("  squash             Squash git commits")
+            print("  gca                AI commit, no push (gemini-flash)")
+            print("  gpa                AI commit with pull+push (gemini-flash)")
+        elif subcmd == "amend-push":
             from ww.git.git_amend_push import main as m
 
             m()
@@ -601,7 +697,18 @@ def main():
 
     elif group == "pdf":
         subcmd = _pop_subcmd()
-        if subcmd == "markdown-pdf":
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww pdf <command>")
+            print("")
+            print("Commands:")
+            print("  markdown-pdf   Convert a markdown file to PDF")
+            print("  pdf-pipeline   Batch convert markdown posts to PDFs")
+            print("  update-pdf     Convert markdown files changed in last commit")
+            print("  code2pdf       Convert code files in a directory to PDF")
+            print("  scale-pdf      Scale a PDF using pdfjam")
+            print("  test-latex     Test LaTeX/pandoc PDF generation")
+            print("  md2png         Convert markdown to PNG via HTML+PDF (Chrome)")
+        elif subcmd == "markdown-pdf":
             from ww.pdf.markdown_pdf import main as m
 
             m()
@@ -635,7 +742,14 @@ def main():
 
     elif group == "copilot":
         subcmd = _pop_subcmd()
-        if subcmd == "auth":
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww copilot <command>")
+            print("")
+            print("Commands:")
+            print("  auth       Authenticate via GitHub OAuth device flow")
+            print("  models     List available Copilot models")
+            print("  chat       Chat with a Copilot model")
+        elif subcmd == "auth":
             from ww.llm.copilot_auth import main as m
 
             m()
@@ -668,7 +782,18 @@ def main():
 
     elif group == "sync":
         subcmd = _pop_subcmd()
-        if subcmd == "claude":
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww sync <command> [options]")
+            print("")
+            print("Commands:")
+            print("  claude            Sync Claude Code settings (sanitized)")
+            print("  bashrc [back|forth]  Sync .bashrc file")
+            print("  zprofile [back|forth]  Sync .zprofile file")
+            print("  ssh [back|forth]    Sync .ssh directory")
+            print("  hermes [forth|back] [--from-host HOST] [--to-host HOST]")
+            print("                     Sync ~/.hermes/ directory")
+            print("  openclaw          Sync OpenClaw settings")
+        elif subcmd == "claude":
             from ww.sync.claude import main as m
 
             m()
@@ -722,7 +847,16 @@ def main():
 
     elif group == "cloudflare":
         subcmd = _pop_subcmd()
-        if subcmd == "monthly-visit":
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww cloudflare <command>")
+            print("")
+            print("Commands:")
+            print("  monthly-visit  Monthly page views & visits from Web Analytics")
+            print("  zones          List Cloudflare zones")
+            print("  datasets       List Web Analytics datasets")
+            print("  schema         Inspect GraphQL Account schema")
+            print("  pdf <file>     Parse Cloudflare Analytics PDF export")
+        elif subcmd == "monthly-visit":
             from ww.cloudflare.get_monthly_visit import main as m
 
             m()
@@ -748,7 +882,21 @@ def main():
 
     elif group == "clash":
         subcmd = _pop_subcmd()
-        if subcmd == "select-provider":
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww clash <command>")
+            print("")
+            print("Commands:")
+            print("  select-provider    Select best proxy provider")
+            print("  speed              Run speed test and select best proxy")
+            print("  run                Full clash management with iterations")
+            print("  top-proxies        Print top 5 fastest proxies (single-URL)")
+            print("  top-proxies-multi  Print top 10 fastest proxies (multi-URL)")
+            print("  speed-tiktok       Run speedtest + TikTok load time")
+            print("  query-dns [host]   Test AliDNS DoH resolution")
+            print("  gnome-proxy <set|unset>   Toggle GNOME proxy (Linux)")
+            print("  macos-proxy <set|unset>   Toggle macOS proxy (networksetup)")
+            print("  wifi <on|off>      Toggle macOS Wi-Fi")
+        elif subcmd == "select-provider":
             from ww.clash.clash_select_provider import main as m
 
             m()
@@ -804,7 +952,12 @@ def main():
 
     elif group == "llm":
         subcmd = _pop_subcmd()
-        if subcmd == "compare":
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww llm <command>")
+            print("")
+            print("Commands:")
+            print("  compare    Compare 6 models on clipboard prompt, judge winner")
+        elif subcmd == "compare":
             from ww.llm.compare import main as m
 
             m()
@@ -814,7 +967,12 @@ def main():
 
     elif group == "env":
         subcmd = _pop_subcmd()
-        if subcmd == "update":
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww env <command>")
+            print("")
+            print("Commands:")
+            print("  update    Pick a top Arena model and update MODEL= in .env")
+        elif subcmd == "update":
             from ww.llm.update_env import main as m
 
             m()
@@ -855,7 +1013,14 @@ def main():
 
     elif group == "latest":
         subcmd = _pop_subcmd()
-        if subcmd == "notes":
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww latest <command>")
+            print("")
+            print("Commands:")
+            print(
+                "  notes [N]    Show filename and title of latest N notes (default 10)"
+            )
+        elif subcmd == "notes":
             from ww.note.latest_notes import main as m
 
             m()
