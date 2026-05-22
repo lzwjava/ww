@@ -6,7 +6,7 @@ import shutil
 from typing import Iterable, Optional
 
 try:
-    # pypdf is listed in requirements.txt
+    # pypdf is a project dependency (pyproject.toml)
     from pypdf import PdfReader, PdfWriter  # type: ignore
 except Exception:  # pragma: no cover - optional import for environments without pypdf
     PdfReader = None  # type: ignore
