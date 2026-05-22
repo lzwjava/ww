@@ -158,6 +158,12 @@ def _print_help():
         "  ww env update             Pick a top Arena model and update MODEL= in .env"
     )
     print("")
+    print("Display:")
+    print("  ww display <dark|light|auto|show>")
+    print(
+        "                        Switch macOS appearance (dark/light/auto) or show current"
+    )
+    print("")
     print("Gen-image:")
     print("  ww gen-image              Generate image from clipboard text (Imagen 3)")
     print("")
@@ -795,6 +801,7 @@ def main():
             print("  claude            Sync Claude Code settings (sanitized)")
             print("  bashrc [back|forth]  Sync .bashrc file")
             print("  zprofile [back|forth]  Sync .zprofile file")
+            print("  zed [back|forth]     Sync ~/.config/zed/ directory (Zed config)")
             print("  ssh [back|forth]    Sync .ssh directory")
             print("  hermes [forth|back] [--from-host HOST] [--to-host HOST]")
             print("                     Sync ~/.hermes/ directory")
@@ -813,6 +820,11 @@ def main():
             from ww.sync.remote import sync_zprofile
 
             sync_zprofile(direction)
+        elif subcmd == "zed":
+            direction = _pop_subcmd() or "forth"
+            from ww.sync.remote import sync_zed
+
+            sync_zed(direction)
         elif subcmd == "ssh":
             direction = _pop_subcmd() or "forth"
             from ww.sync.remote import sync_ssh
@@ -945,6 +957,11 @@ def main():
         else:
             print(f"Unknown clash command: {subcmd}")
             sys.exit(1)
+
+    elif group == "display":
+        from ww.display.appearance import main as m
+
+        m()
 
     elif group == "gen-image":
         from ww.image.gen_image import main as m

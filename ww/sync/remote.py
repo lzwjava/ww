@@ -43,6 +43,13 @@ def sync_ssh(direction: str = "forth") -> None:
     remote_sync(local_path, remote_path, direction)
 
 
+def sync_zed(direction: str = "forth") -> None:
+    """Sync ~/.config/zed/ directory (Zed Editor config)."""
+    local_path = str(Path.home() / ".config" / "zed")
+    remote_path = "~/.config/zed"
+    remote_sync(local_path, remote_path, direction)
+
+
 def sync_hermes(
     direction: str = "forth", from_host: str = "localhost", to_host: str = ""
 ) -> None:

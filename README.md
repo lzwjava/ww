@@ -179,9 +179,10 @@ ww <group> [command] [options]
 |---------|-------------|
 | `ww sync claude` | Sync Claude Code settings (sanitized) |
 | `ww sync bashrc [back\|forth]` | Sync .bashrc file |
-| `ww sync zprofile [back\|forth]` | Sync .zprofile file |
-| `ww sync ssh [back\|forth]` | Sync .ssh directory |
-| `ww sync hermes [back\|forth]` | Sync .hermes/config.yaml |
+| `ww sync zprofile [back\\|forth]` | Sync .zprofile file |
+| `ww sync zed [back\\|forth]` | Sync ~/.config/zed/ directory (Zed config) |
+| `ww sync ssh [back\\|forth]` | Sync .ssh directory |
+| `ww sync hermes [back\\|forth]` | Sync .hermes/config.yaml |
 
 ## Requirements
 
