@@ -51,13 +51,17 @@ def sync_zed(direction: str = "forth") -> None:
 
 
 def sync_hermes(
-    direction: str = "forth", from_host: str = "localhost", to_host: str = ""
+    direction: str = "forth",
+    from_host: str = "localhost",
+    to_host: str = "",
+    remote_dir: str = "",
 ) -> None:
     """
     Sync ~/.hermes/ between two hosts.
     direction="forth": copy from from_host to to_host
     direction="back":  copy from to_host to from_host
     Each host is either "localhost" or "user@ip".
+    remote_dir: custom destination path on remote (default: ~/.hermes/)
     """
     if not to_host:
         # Fallback: use env vars like the other sync commands
@@ -73,7 +77,7 @@ def sync_hermes(
         dst_host = from_host
 
     src_path = "~/.hermes/"
-    dst_path = "~/"
+    dst_path = remote_dir if remote_dir else "~/.hermes/"
 
     def _scp_path(host: str, path: str) -> str:
         return path if host == "localhost" else f"{host}:{path}"
@@ -82,6 +86,6 @@ def sync_hermes(
     dst = _scp_path(dst_host, dst_path)
 
     cmd = f"scp -r {src} {dst}"
-    print(f"Syncing {src_host}:~/.hermes/ -> {dst_host}:~/.hermes/")
+    print(f"Syncing {src_host}:~/.hermes/ -> {dst_host}:{dst_path}")
     print(f"  {cmd}")
     subprocess.run(cmd, shell=True, check=True)

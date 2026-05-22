@@ -140,7 +140,7 @@ def _print_help():
     print("  ww sync zprofile [back|forth] Sync .zprofile file")
     print("  ww sync ssh [back|forth]    Sync .ssh directory")
     print(
-        "  ww sync hermes [forth|back] [--from-host HOST] [--to-host HOST]  Sync ~/.hermes/ directory"
+        "  ww sync hermes [forth|back] [--from-host HOST] [--to-host HOST] [--remote-dir DIR]  Sync ~/.hermes/ directory"
     )
     print("")
     print("Read (RAG):")
@@ -241,6 +241,16 @@ def main():
     if group == "note":
         subcmd = _pop_subcmd()
         if subcmd == "" or subcmd == "note":
+            if "--manual" not in sys.argv:
+                print("Use '/note' in hermes-agent to save assistant responses.")
+                print("  /note              Save last response (LLM-generated title)")
+                print("  /note 3            Save 3rd assistant response")
+                print("  /note --title X    Save with custom title")
+                print("")
+                print("To run the standalone note workflow, add --manual:")
+                print("  ww note --manual")
+                return
+            sys.argv = [a for a in sys.argv if a != "--manual"]
             from ww.note.note_workflow import main as m
 
             m()
@@ -865,11 +875,16 @@ def main():
             parser.add_argument(
                 "--to-host", default="", help="Destination host (localhost or user@ip)"
             )
+            parser.add_argument(
+                "--remote-dir",
+                default="",
+                help="Custom destination path on remote (default: ~/.hermes/)",
+            )
             args = parser.parse_args()
 
             from ww.sync.remote import sync_hermes
 
-            sync_hermes(args.direction, args.from_host, args.to_host)
+            sync_hermes(args.direction, args.from_host, args.to_host, args.remote_dir)
         elif subcmd == "openclaw":
             from ww.sync.openclaw import main as m
 
