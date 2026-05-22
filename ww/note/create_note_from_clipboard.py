@@ -1,6 +1,5 @@
 import os
 import re
-import sys
 from datetime import datetime
 
 from ww.note.create_note_utils import (
@@ -49,11 +48,11 @@ def create_note_from_content(content, custom_title=None, directory=None, date=No
     if directory is None:
         directory = os.path.join(get_base_path(), "notes")
     if not content or not content.strip():
-        print("Content is empty or invalid. Aborting.")
-        sys.exit(1)
+        raise ValueError("Content is empty or invalid.")
     if len(content.strip()) < 200:
-        print("Content is less than 200 characters. Aborting.")
-        sys.exit(1)
+        raise ValueError(
+            f"Content is less than 200 characters ({len(content.strip())} chars). Aborting."
+        )
 
     if date is None:
         date = datetime.now().strftime("%Y-%m-%d")

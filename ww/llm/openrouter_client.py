@@ -50,7 +50,7 @@ def call_openrouter_api_with_messages(
         print(f"Request URL: {url}")
         print(f"Request Data: {data}")
 
-    response = requests.post(url, headers=headers, json=data)
+    response = requests.post(url, headers=headers, json=data, timeout=(5, 30))
     if debug:
         print(f"Response Status: {response.status_code}")
         print(f"Response: {response.text}")
@@ -133,7 +133,7 @@ def stream_openrouter_api_with_messages(
         print(f"Request URL: {url}")
         print(f"Request Data: {data}")
 
-    response = requests.post(url, headers=headers, json=data, stream=True)
+    response = requests.post(url, headers=headers, json=data, stream=True, timeout=30)
     if not response.ok:
         raise Exception(f"Error: {response.status_code} - {response.text}")
 

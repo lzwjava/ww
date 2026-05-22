@@ -1,0 +1,4 @@
+name: note
+version: 1.0.0
+description: "Save assistant responses as markdown notes via /note command."
+author: lzwjava

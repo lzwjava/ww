@@ -112,15 +112,17 @@ class TestScanNetwork(unittest.TestCase):
         with patch("ww.network.ip_scan.is_host_up") as mock_is_up:
             mock_is_up.side_effect = lambda ip, port=None: ip == "192.168.1.1"
 
-            result = scan_network("192.168.1.0/29")
-            self.assertEqual(result, ["192.168.1.1"])
+            up_ips, delays = scan_network("192.168.1.0/29")
+            self.assertEqual(up_ips, ["192.168.1.1"])
+            self.assertEqual(delays, {})
 
     def test_empty_when_all_down(self):
         from ww.network.ip_scan import scan_network
 
         with patch("ww.network.ip_scan.is_host_up", return_value=False):
-            result = scan_network("192.168.1.0/30")
-            self.assertEqual(result, [])
+            up_ips, delays = scan_network("192.168.1.0/30")
+            self.assertEqual(up_ips, [])
+            self.assertEqual(delays, {})
 
 
 if __name__ == "__main__":

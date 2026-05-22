@@ -1,7 +1,5 @@
 import os
 import re
-import sys
-import traceback
 import datetime
 import pyperclip
 
@@ -48,17 +46,17 @@ def _call_llm_or_exit(prompt, error_msg, max_tokens=None):
     try:
         result = call_openrouter_api(prompt, max_tokens=max_tokens)
     except Exception as e:
-        print(f"[error] LLM call failed. Model: {model}, max_tokens: {max_tokens}")
-        print(f"[error] Prompt (first 300 chars): {prompt[:300]}")
-        print(f"[error] Exception: {e}")
-        traceback.print_exc()
-        sys.exit(1)
+        raise RuntimeError(
+            f"LLM call failed. Model: {model}, max_tokens: {max_tokens}\n"
+            f"Prompt (first 300 chars): {prompt[:300]}\n"
+            f"Exception: {e}"
+        ) from e
 
     if not result:
-        print(f"[error] LLM returned empty result. Model: {model}, max_tokens: {max_tokens}")
-        print(f"[error] Prompt (first 300 chars): {prompt[:300]}")
-        print(error_msg)
-        sys.exit(1)
+        raise RuntimeError(
+            f"LLM returned empty result. Model: {model}, max_tokens: {max_tokens}\n"
+            f"Prompt (first 300 chars): {prompt[:300]}\n{error_msg}"
+        )
     return result
 
 

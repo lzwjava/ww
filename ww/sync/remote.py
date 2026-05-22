@@ -50,42 +50,33 @@ def sync_zed(direction: str = "forth") -> None:
     remote_sync(local_path, remote_path, direction)
 
 
-def sync_hermes(
-    direction: str = "forth",
-    from_host: str = "localhost",
-    to_host: str = "",
-    remote_dir: str = "",
-) -> None:
+def sync_hermes() -> None:
     """
-    Sync ~/.hermes/ between two hosts.
-    direction="forth": copy from from_host to to_host
-    direction="back":  copy from to_host to from_host
-    Each host is either "localhost" or "user@ip".
-    remote_dir: custom destination path on remote (default: ~/.hermes/)
+    Copy Hermes config from ww/config/hermes/ to ~/.hermes/.
+    Preserves directory structure (plugins/, hooks/, etc.).
     """
-    if not to_host:
-        # Fallback: use env vars like the other sync commands
-        remote_ip = os.getenv("WW_REMOTE_IP") or "192.168.1.3"
-        remote_user = os.getenv("WW_REMOTE_USER") or "lzw"
-        to_host = f"{remote_user}@{remote_ip}"
+    import shutil
 
-    if direction == "forth":
-        src_host = from_host
-        dst_host = to_host
+    src_dir = Path(__file__).resolve().parent.parent / "config" / "hermes"
+    dst_dir = Path.home() / ".hermes"
+
+    if not src_dir.is_dir():
+        print(f"Source not found: {src_dir}")
+        return
+
+    copied = []
+    for src_file in sorted(src_dir.rglob("*")):
+        if not src_file.is_file():
+            continue
+        rel = src_file.relative_to(src_dir)
+        dst_file = dst_dir / rel
+        dst_file.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src_file, dst_file)
+        copied.append(str(rel))
+
+    if copied:
+        print(f"Copied {len(copied)} file(s) from {src_dir} -> {dst_dir}/")
+        for f in copied:
+            print(f"  {f}")
     else:
-        src_host = to_host
-        dst_host = from_host
-
-    src_path = "~/.hermes/"
-    dst_path = remote_dir if remote_dir else "~/.hermes/"
-
-    def _scp_path(host: str, path: str) -> str:
-        return path if host == "localhost" else f"{host}:{path}"
-
-    src = _scp_path(src_host, src_path)
-    dst = _scp_path(dst_host, dst_path)
-
-    cmd = f"scp -r {src} {dst}"
-    print(f"Syncing {src_host}:~/.hermes/ -> {dst_host}:{dst_path}")
-    print(f"  {cmd}")
-    subprocess.run(cmd, shell=True, check=True)
+        print(f"No files found in {src_dir}")
