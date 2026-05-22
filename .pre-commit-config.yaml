@@ -35,5 +35,6 @@ repos:
           - "pyobjc-framework-CoreText; sys_platform == 'darwin'"
           - "pyobjc-framework-UserNotifications; sys_platform == 'darwin'"
           - "dnspython"
+          - "piexif"
           - "speedtest-cli"
           - "wandb"

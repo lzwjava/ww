@@ -51,6 +51,7 @@ def _print_help():
     print("  ww image remove-bg        Remove image background")
     print("  ww image compress         Compress images")
     print("  ww image photo-compress   Compress photos")
+    print("  ww image exif             Scan images for EXIF GPS location data")
     print("  ww image whatsapp         Download images from WhatsApp Web via Safari")
     print("")
     print("Process:")
@@ -390,6 +391,7 @@ def main():
             print("  remove-bg        Remove image background")
             print("  compress         Compress images")
             print("  photo-compress   Compress photos")
+            print("  exif             Scan images for EXIF GPS location data")
             print("  whatsapp         Download images from WhatsApp Web via Safari")
         elif subcmd == "avatar":
             from ww.image.avatar import main as m
@@ -409,6 +411,10 @@ def main():
             m()
         elif subcmd == "photo-compress":
             from ww.image.photo_compress import main as m
+
+            m()
+        elif subcmd == "exif":
+            from ww.image.exif import main as m
 
             m()
         elif subcmd == "whatsapp":

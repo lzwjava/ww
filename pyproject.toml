@@ -24,6 +24,7 @@ dependencies = [
     "google-genai>=1.0.0",
     "chardet>=5.0.0",
     "tavily-python>=0.5.0",
+    "piexif>=1.1.0",
 ]
 
 [project.scripts]
