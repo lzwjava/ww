@@ -811,22 +811,42 @@ def main():
 
             m()
         elif subcmd == "bashrc":
-            direction = _pop_subcmd() or "forth"
+            direction = _pop_subcmd()
+            if direction in ("--help", "-h"):
+                print("Usage: ww sync bashrc [back|forth]")
+                print("  Sync .bashrc file")
+                return
+            direction = direction or "forth"
             from ww.sync.remote import sync_bashrc
 
             sync_bashrc(direction)
         elif subcmd == "zprofile":
-            direction = _pop_subcmd() or "forth"
+            direction = _pop_subcmd()
+            if direction in ("--help", "-h"):
+                print("Usage: ww sync zprofile [back|forth]")
+                print("  Sync .zprofile file")
+                return
+            direction = direction or "forth"
             from ww.sync.remote import sync_zprofile
 
             sync_zprofile(direction)
         elif subcmd == "zed":
-            direction = _pop_subcmd() or "forth"
+            direction = _pop_subcmd()
+            if direction in ("--help", "-h"):
+                print("Usage: ww sync zed [back|forth]")
+                print("  Sync ~/.config/zed/ directory (Zed Editor config)")
+                return
+            direction = direction or "forth"
             from ww.sync.remote import sync_zed
 
             sync_zed(direction)
         elif subcmd == "ssh":
-            direction = _pop_subcmd() or "forth"
+            direction = _pop_subcmd()
+            if direction in ("--help", "-h"):
+                print("Usage: ww sync ssh [back|forth]")
+                print("  Sync .ssh directory")
+                return
+            direction = direction or "forth"
             from ww.sync.remote import sync_ssh
 
             sync_ssh(direction)
