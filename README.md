@@ -1,5 +1,9 @@
 # ww
 
+🌐 **English** | [中文](README-CN.md)
+
+---
+
 A cross-platform CLI toolkit for developer productivity — git workflows, note management, image/PDF processing, web search, and system utilities, with LLM-powered helpers.
 
 ## Installation
