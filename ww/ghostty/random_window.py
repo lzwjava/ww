@@ -44,19 +44,21 @@ def main():
     rows = pixels_to_cells(half_h, is_height=True)
 
     cmd = [
-        "ghostty",
+        "open",
+        "-na",
+        "ghostty.app",
+        "--args",
         f"--window-position-x={x}",
         f"--window-position-y={y}",
         f"--window-width={cols}",
         f"--window-height={rows}",
+        "--window-save-state=never",
     ]
-    subprocess.Popen(cmd)
-    # Bring Ghostty to front and focus
-    subprocess.run(
-        ["osascript", "-e", 'tell application "ghostty" to activate'],
-        capture_output=True,
-        timeout=5,
-    )
+    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+    if proc.returncode != 0:
+        print(f"Error: {proc.stderr.strip()}")
+        sys.exit(1)
+
     print(
         f"Opened Ghostty at ({x}, {y}) size {cols}x{rows} cells ({half_w}x{half_h}px)"
     )
