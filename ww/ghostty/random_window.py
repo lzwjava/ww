@@ -32,16 +32,16 @@ def main():
         print("Error: Could not get screen resolution")
         sys.exit(1)
 
-    half_w = screen_w // 2
-    half_h = screen_h // 2
+    win_w = int(screen_w * 0.75)
+    win_h = int(screen_h * 0.75)
 
-    max_x = screen_w - half_w
-    max_y = screen_h - half_h
+    max_x = screen_w - win_w
+    max_y = screen_h - win_h
     x = random.randint(0, max_x)
     y = random.randint(0, max_y)
 
-    cols = pixels_to_cells(half_w)
-    rows = pixels_to_cells(half_h, is_height=True)
+    cols = pixels_to_cells(win_w)
+    rows = pixels_to_cells(win_h, is_height=True)
 
     cmd = [
         "open",
@@ -59,6 +59,4 @@ def main():
         print(f"Error: {proc.stderr.strip()}")
         sys.exit(1)
 
-    print(
-        f"Opened Ghostty at ({x}, {y}) size {cols}x{rows} cells ({half_w}x{half_h}px)"
-    )
+    print(f"Opened Ghostty at ({x}, {y}) size {cols}x{rows} cells ({win_w}x{win_h}px)")
