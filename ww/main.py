@@ -244,6 +244,9 @@ def _print_help():
     print("  ww clash macos-proxy <set|unset>   Toggle macOS proxy (networksetup)")
     print("  ww clash wifi <on|off>      Toggle macOS Wi-Fi")
     print("")
+    print("Completion:")
+    print("  ww completion install     Install zsh tab completion")
+    print("  ww completion script      Print completion script")
 
 
 def _pop_subcmd():
@@ -1201,6 +1204,43 @@ def main():
         else:
             print(f"Unknown latest command: {subcmd}")
             sys.exit(1)
+
+    elif group == "completion":
+        import os
+        import shutil
+
+        subcmd = _pop_subcmd()
+        script_dir = os.path.join(os.path.dirname(__file__), "..", "completions")
+        script_path = os.path.join(script_dir, "_ww")
+
+        if subcmd == "script":
+            if os.path.exists(script_path):
+                with open(script_path) as f:
+                    print(f.read())
+            else:
+                print("Error: completion script not found at", script_path)
+                sys.exit(1)
+
+        elif subcmd == "install":
+            target_dir = os.path.expanduser("~/.zsh/completions")
+            os.makedirs(target_dir, exist_ok=True)
+            target = os.path.join(target_dir, "_ww")
+            shutil.copy2(script_path, target)
+            print(f"Installed completion script to {target}")
+            print()
+            print("Make sure your ~/.zshrc contains:")
+            print("  fpath=(~/.zsh/completions $fpath)")
+            print("  autoload -Uz compinit && compinit")
+            print()
+            print("Then restart your shell or run:")
+            print("  source ~/.zshrc")
+
+        else:
+            print("Usage: ww completion <install|script>")
+            print()
+            print("Commands:")
+            print("  install   Install zsh tab completion to ~/.zsh/completions/")
+            print("  script    Print the completion script to stdout")
 
     else:
         print(f"Unknown command: {group}")
