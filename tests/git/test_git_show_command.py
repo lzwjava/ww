@@ -144,6 +144,67 @@ class TestMain(unittest.TestCase):
         finally:
             module.CLIPBOARD_AVAILABLE = original
 
+    @patch("subprocess.check_output")
+    def test_main_prints_note_when_pyperclip_unavailable(self, mock_out):
+        from ww.git.git_show_command import main
+        import ww.git.git_show_command as module
+
+        mock_out.side_effect = [
+            "abc123def456 feat: test",
+            "\nscript.py\n",
+        ]
+        original = module.CLIPBOARD_AVAILABLE
+        try:
+            module.CLIPBOARD_AVAILABLE = False
+            with patch("builtins.print") as mock_print:
+                with patch("os.path.exists", return_value=True):
+                    main()
+                output = " ".join(str(c) for c in mock_print.call_args_list)
+                self.assertIn("pyperclip not found", output)
+        finally:
+            module.CLIPBOARD_AVAILABLE = original
+
+    @patch("subprocess.check_output")
+    def test_main_handles_clipboard_oserror(self, mock_out):
+        from ww.git.git_show_command import main
+        import ww.git.git_show_command as module
+
+        mock_out.side_effect = [
+            "abc123def456 feat: test",
+            "\nscript.py\n",
+        ]
+        original = module.CLIPBOARD_AVAILABLE
+        try:
+            module.CLIPBOARD_AVAILABLE = True
+            with patch("pyperclip.copy", side_effect=OSError("no clipboard")):
+                with patch("builtins.print") as mock_print:
+                    with patch("os.path.exists", return_value=True):
+                        main()
+                    output = " ".join(str(c) for c in mock_print.call_args_list)
+                    self.assertIn("Could not copy to clipboard", output)
+        finally:
+            module.CLIPBOARD_AVAILABLE = original
+
+    @patch("subprocess.check_output")
+    def test_main_prints_relative_path_warning(self, mock_out):
+        from ww.git.git_show_command import main
+        import ww.git.git_show_command as module
+
+        mock_out.side_effect = [
+            "abc123def456 feat: test",
+            "\nscript.py\n",
+        ]
+        original = module.CLIPBOARD_AVAILABLE
+        try:
+            module.CLIPBOARD_AVAILABLE = False
+            with patch("builtins.print") as mock_print:
+                with patch("os.path.exists", return_value=False):
+                    main()
+                output = " ".join(str(c) for c in mock_print.call_args_list)
+                self.assertIn("File path might be relative", output)
+        finally:
+            module.CLIPBOARD_AVAILABLE = original
+
 
 if __name__ == "__main__":
     unittest.main()

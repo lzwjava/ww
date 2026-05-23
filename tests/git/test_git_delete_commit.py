@@ -1,3 +1,4 @@
+import sys
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -79,6 +80,68 @@ class TestGetChangedFilesCount(unittest.TestCase):
         from ww.git.git_delete_commit import get_changed_files_count
 
         self.assertEqual(get_changed_files_count("abc123"), 0)
+
+
+if __name__ == "__main__":
+    unittest.main()
+
+
+class TestMain(unittest.TestCase):
+    def test_exits_when_wrong_arg_count(self):
+        from ww.git.git_delete_commit import main
+
+        with patch.object(sys, "argv", ["prog"]):
+            with self.assertRaises(SystemExit):
+                main()
+
+    def test_exits_when_args_not_int(self):
+        from ww.git.git_delete_commit import main
+
+        with patch.object(sys, "argv", ["prog", "abc", "xyz"]):
+            with self.assertRaises(SystemExit):
+                main()
+
+    def test_exits_when_n_negative(self):
+        from ww.git.git_delete_commit import main
+
+        with patch.object(sys, "argv", ["prog", "-1", "0"]):
+            with self.assertRaises(SystemExit):
+                main()
+
+    @patch("ww.git.git_delete_commit.get_commits_with_deletions", return_value=[])
+    def test_prints_none_when_no_commits(self, mock_commits):
+        from ww.git.git_delete_commit import main
+
+        with patch.object(sys, "argv", ["prog", "5", "2"]):
+            with patch("builtins.print") as mock_print:
+                main()
+                mock_print.assert_called_with("none")
+
+    @patch("ww.git.git_delete_commit.get_changed_files_count", return_value=5)
+    @patch(
+        "ww.git.git_delete_commit.get_commits_with_deletions", return_value=["abc123"]
+    )
+    def test_prints_commit_when_files_exceed_threshold(self, mock_commits, mock_count):
+        from ww.git.git_delete_commit import main
+
+        with patch.object(sys, "argv", ["prog", "5", "3"]):
+            with patch("builtins.print") as mock_print:
+                with self.assertRaises(SystemExit) as ctx:
+                    main()
+                self.assertEqual(ctx.exception.code, 0)
+                mock_print.assert_called_with("abc123: 5")
+
+    @patch("ww.git.git_delete_commit.get_changed_files_count", return_value=1)
+    @patch(
+        "ww.git.git_delete_commit.get_commits_with_deletions", return_value=["abc123"]
+    )
+    def test_prints_none_when_files_below_threshold(self, mock_commits, mock_count):
+        from ww.git.git_delete_commit import main
+
+        with patch.object(sys, "argv", ["prog", "5", "3"]):
+            with patch("builtins.print") as mock_print:
+                main()
+                mock_print.assert_called_with("none")
 
 
 if __name__ == "__main__":

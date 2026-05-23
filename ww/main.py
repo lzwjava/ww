@@ -153,6 +153,12 @@ def _print_help():
         "  ww llm compare            Compare 6 models on clipboard prompt, judge winner"
     )
     print("")
+    print("OpenRouter:")
+    print("  ww openrouter info        Account summary: credits, usage, key details")
+    print("  ww openrouter credits     Show credits balance")
+    print("  ww openrouter activity    Past week spend, requests, tokens (--days N)")
+    print("  ww openrouter models      List available models")
+    print("")
     print("Env:")
     print(
         "  ww env update             Pick a top Arena model and update MODEL= in .env"
@@ -990,6 +996,40 @@ def main():
         from ww.action.action import main as m
 
         m()
+
+    elif group == "openrouter":
+        subcmd = _pop_subcmd()
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww openrouter <command>")
+            print()
+            print("Commands:")
+            print("  info      Account summary: credits, usage, key details")
+            print("  credits   Show credits balance")
+            print("  activity  Past week spend, requests, tokens (--days N)")
+            print("  models    List available models (--json for raw)")
+        elif subcmd == "info":
+            from ww.llm.openrouter_mgmt import cmd_info
+
+            cmd_info()
+        elif subcmd == "credits":
+            from ww.llm.openrouter_mgmt import cmd_credits
+
+            cmd_credits()
+        elif subcmd == "activity":
+            from ww.llm.openrouter_mgmt import cmd_activity
+
+            days = 7
+            for i, a in enumerate(sys.argv):
+                if a == "--days" and i + 1 < len(sys.argv):
+                    days = int(sys.argv[i + 1])
+            cmd_activity(days=days)
+        elif subcmd == "models":
+            from ww.llm.openrouter_mgmt import cmd_models
+
+            cmd_models(as_json="--json" in sys.argv)
+        else:
+            print(f"Unknown openrouter command: {subcmd}")
+            sys.exit(1)
 
     elif group == "llm":
         subcmd = _pop_subcmd()

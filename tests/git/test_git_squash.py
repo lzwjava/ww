@@ -81,5 +81,72 @@ class TestMainSquash(unittest.TestCase):
                     self.assertIn("HEAD~2", output)
 
 
+class TestCollectCommits(unittest.TestCase):
+    def test_collects_pick_commit_messages(self):
+        from ww.git.git_squash import collect_commits
+
+        todo = "pick abc123 feat: first\npick def456 fix: second\n"
+        result = collect_commits(todo)
+        self.assertEqual(result, ["feat:", "fix:"])
+
+    def test_collects_squash_commit_messages(self):
+        from ww.git.git_squash import collect_commits
+
+        todo = "pick abc123 feat: first\nsquash def456 fix: second\n"
+        result = collect_commits(todo)
+        self.assertEqual(result, ["feat:", "fix:"])
+
+    def test_skips_comments_and_blanks(self):
+        from ww.git.git_squash import collect_commits
+
+        todo = "# comment\npick abc123 msg\n\n"
+        result = collect_commits(todo)
+        self.assertEqual(result, ["msg"])
+
+
+class TestMainSquashFailure(unittest.TestCase):
+    @patch("ww.git.git_squash.check_git_status", side_effect=RuntimeError("dirty"))
+    def test_main_exits_on_dirty_repo(self, mock_status):
+        from ww.git.git_squash import main
+
+        with patch.object(sys, "argv", ["squash", "3"]):
+            with self.assertRaises(SystemExit):
+                main()
+
+
+class TestMainSquashTodo(unittest.TestCase):
+    @patch("ww.git.git_squash.call_openrouter_api", return_value="feat: squashed")
+    @patch("subprocess.run")
+    def test_main_handles_comment_lines(self, mock_run, mock_api):
+        from ww.git.git_squash import main
+
+        mock_run.return_value = MagicMock(stdout="")
+        rebase_input = (
+            "# rebase instructions\npick abc123 feat: first\npick def456 fix: second\n"
+        )
+
+        with patch.object(sys, "argv", ["git_squash", "2"]):
+            with patch("sys.stdin", StringIO(rebase_input)):
+                with patch("builtins.print") as mock_print:
+                    main()
+                    output = " ".join(str(c) for c in mock_print.call_args_list)
+                    self.assertIn("squash", output)
+
+    @patch("ww.git.git_squash.call_openrouter_api", return_value="feat: squashed")
+    @patch("subprocess.run")
+    def test_main_handles_non_pick_lines(self, mock_run, mock_api):
+        from ww.git.git_squash import main
+
+        mock_run.return_value = MagicMock(stdout="")
+        rebase_input = "pick abc123 feat: first\nedit def456 fix: second\n"
+
+        with patch.object(sys, "argv", ["git_squash", "2"]):
+            with patch("sys.stdin", StringIO(rebase_input)):
+                with patch("builtins.print") as mock_print:
+                    main()
+                    output = " ".join(str(c) for c in mock_print.call_args_list)
+                    self.assertIn("edit", output)
+
+
 if __name__ == "__main__":
     unittest.main()
