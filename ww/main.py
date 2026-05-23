@@ -244,6 +244,15 @@ def _print_help():
     print("  ww clash macos-proxy <set|unset>   Toggle macOS proxy (networksetup)")
     print("  ww clash wifi <on|off>      Toggle macOS Wi-Fi")
     print("")
+    print("Weather:")
+    print("  ww weather                Today's weather (auto-detect location)")
+    print("  ww weather N              Today + next N days (1-3)")
+    print("  ww weather <city>         Weather for a city")
+    print("  ww weather N <city>       N days for a city")
+    print("  ww weather --detail       With network/location details")
+    print("  ww weather --oneline      One-line summary")
+    print("  ww weather --json         JSON output")
+    print("")
     print("Completion:")
     print("  ww completion install     Install zsh tab completion")
     print("  ww completion script      Print completion script")
@@ -1207,6 +1216,11 @@ def main():
         else:
             print(f"Unknown latest command: {subcmd}")
             sys.exit(1)
+
+    elif group == "weather":
+        from ww.weather.weather import main as m
+
+        m()
 
     elif group == "completion":
         import os
