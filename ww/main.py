@@ -51,6 +51,9 @@ def _print_help():
     print(
         "  ww macos settings-proxy   Set system proxy (HTTP/HTTPS 7890, SOCKS 7891) with bypass list"
     )
+    print(
+        "  ww macos apps             Audit installed apps by size and age (--no-llm, --json)"
+    )
     print("")
     print("Image:")
     print("  ww image avatar           Process avatar image")
@@ -403,6 +406,9 @@ def main():
                 "  process          Analyze running processes and suggest what to kill"
             )
             print("  settings-proxy   Set system proxy (HTTP/HTTPS 7890, SOCKS 7891)")
+            print(
+                "  apps             Audit installed apps by size and age (--no-llm, --json)"
+            )
         elif subcmd == "find-large-dirs":
             from ww.macos.find_largest_directories import main as m
 
@@ -441,6 +447,10 @@ def main():
             m()
         elif subcmd == "settings-proxy":
             from ww.macos.settings_proxy import main as m
+
+            m()
+        elif subcmd == "apps":
+            from ww.macos.apps_audit import main as m
 
             m()
         else:
