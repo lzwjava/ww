@@ -32,8 +32,8 @@ def main():
         print("Error: Could not get screen resolution")
         sys.exit(1)
 
-    win_w = int(screen_w * 0.75)
-    win_h = int(screen_h * 0.75)
+    win_w = int(screen_w * random.uniform(0.5, 0.75))
+    win_h = int(screen_h * random.uniform(0.5, 0.75))
 
     max_x = screen_w - win_w
     max_y = screen_h - win_h
