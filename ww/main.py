@@ -99,6 +99,7 @@ def _print_help():
     print("  ww network wifi-scan          Scan for WiFi networks")
     print("  ww network wifi-util          WiFi utility tools")
     print("  ww network network-plot       Plot network topology")
+    print("  ww network discover           Discover devices on local network")
     print("")
     print("Git:")
     print("  ww git amend-push         Amend last commit and force push")
@@ -662,6 +663,7 @@ def main():
             print("  wifi-scan          Scan for WiFi networks")
             print("  wifi-util          WiFi utility tools")
             print("  network-plot       Plot network topology")
+            print("  discover           Discover devices on local network")
         elif subcmd == "get-wifi-list":
             from ww.network.get_wifi_list import main as m
 
@@ -696,6 +698,10 @@ def main():
             m()
         elif subcmd == "network-plot":
             from ww.network.network_plot import main as m
+
+            m()
+        elif subcmd == "discover":
+            from ww.network.discover import main as m
 
             m()
         else:

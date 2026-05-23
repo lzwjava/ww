@@ -73,9 +73,6 @@ def create_note_from_content(content, custom_title=None, directory=None, date=No
 
 def create_note(date=None):
     if check_duplicate_notes():
-        if os.environ.get("NOTE_ENTER_CONFIRM", "1") == "0":
-            print("[warn] Duplicate found but NOTE_ENTER_CONFIRM=0, continuing...")
-        else:
-            raise ValueError("Duplicate note found. Aborting note creation.")
+        raise ValueError("Duplicate note found. Aborting note creation.")
     content = get_clipboard_content()
     return create_note_from_content(content, date=date)

@@ -135,6 +135,7 @@ _ww() {
         'wifi-scan:Scan for WiFi networks'
         'wifi-util:WiFi utility tools'
         'network-plot:Plot network topology'
+        'discover:Discover devices on local network'
     )
 
     local -a git_cmds

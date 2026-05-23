@@ -153,6 +153,7 @@ ww <group> [command] [options]
 | `ww network wifi-scan` | Scan for WiFi networks |
 | `ww network wifi-util` | WiFi utility tools |
 | `ww network network-plot` | Plot network topology |
+| `ww network discover` | Discover devices on local network (ARP + OUI + port probe) |
 
 ### Process
 
