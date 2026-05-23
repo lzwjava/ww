@@ -1,3 +1,4 @@
+# type: ignore[file-header]
 import unittest
 from unittest.mock import patch, MagicMock
 import os
@@ -18,8 +19,8 @@ for mod_name in [
 ]:
     sys.modules[mod_name] = MagicMock()
 
-from ww.auto_ss_config import aliyun_elastic_ip_manager
-from ww.auto_ss_config.aliyun_elastic_ip_manager import Sample
+from ww.auto_ss_config import aliyun_elastic_ip_manager  # noqa: E402
+from ww.auto_ss_config.aliyun_elastic_ip_manager import Sample  # noqa: E402
 
 # Fix UtilClient mock - MagicMock blocks attributes starting with 'assert'
 aliyun_elastic_ip_manager.UtilClient.assert_as_string = MagicMock()
@@ -317,3 +318,26 @@ class TestMain(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+# Cleanup sys.modules to prevent test pollution
+import sys as _sys  # noqa: E402
+
+_aliyun_mocked_modules = [
+    "alibabacloud_vpc20160428",
+    "alibabacloud_vpc20160428.client",
+    "alibabacloud_tea_openapi",
+    "alibabacloud_tea_openapi.models",
+    "alibabacloud_vpc20160428.models",
+    "alibabacloud_tea_util",
+    "alibabacloud_tea_util.client",
+    "alibabacloud_tea_util.models",
+]
+_aliyun_saved = {k: _sys.modules.get(k) for k in _aliyun_mocked_modules}
+
+
+def tearDownModule():
+    for key, original in _aliyun_saved.items():
+        if original is None:
+            _sys.modules.pop(key, None)
+        else:
+            _sys.modules[key] = original

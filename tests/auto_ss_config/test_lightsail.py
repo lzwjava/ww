@@ -1,3 +1,4 @@
+# type: ignore[file-header]
 import unittest
 from unittest.mock import patch, MagicMock
 import os

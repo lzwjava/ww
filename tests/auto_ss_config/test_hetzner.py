@@ -15,7 +15,7 @@ _original_argv = sys.argv
 sys.argv = ["hetzner.py", "--create-snapshot"]
 os.environ.setdefault("HERTZNER_API_KEY", "test-key")
 
-from ww.auto_ss_config import hetzner
+from ww.auto_ss_config import hetzner  # noqa: E402
 
 sys.argv = _original_argv
 
@@ -146,3 +146,17 @@ class TestCreateServerFromSnapshot(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# Cleanup sys.modules to prevent test pollution
+import sys as _sys  # noqa: E402
+
+_saved = {k: _sys.modules.get(k) for k in ["hcloud", "hcloud.hcloud"]}
+
+
+def tearDownModule():
+    for key, original in _saved.items():
+        if original is None:
+            _sys.modules.pop(key, None)
+        else:
+            _sys.modules[key] = original

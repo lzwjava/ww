@@ -5,16 +5,22 @@ import os
 
 os.environ.setdefault("OPENROUTER_API_KEY", "test-fake-key")
 
-# Mock heavy dependencies before importing the module
-sys.modules["pydub"] = MagicMock()
-sys.modules["pydub.audio_segment"] = MagicMock()
-sys.modules["google.cloud"] = MagicMock()
-sys.modules["google.cloud.texttospeech"] = MagicMock()
-sys.modules["markdown"] = MagicMock()
-sys.modules["bs4"] = MagicMock()
-sys.modules["yaml"] = MagicMock()
+# Mock heavy dependencies before importing the module — use patch.dict for cleanup
+_MOCK_MODULES = {
+    "pydub": MagicMock(),
+    "pydub.audio_segment": MagicMock(),
+    "google.cloud": MagicMock(),
+    "google.cloud.texttospeech": MagicMock(),
+    "markdown": MagicMock(),
+    "bs4": MagicMock(),
+    "yaml": MagicMock(),
+}
 
-from ww.audio.audio_pipeline import (
+# Save originals and apply mocks at module level (cleaned up in tearDown)
+_original_modules = {k: sys.modules.get(k) for k in _MOCK_MODULES}
+sys.modules.update(_MOCK_MODULES)
+
+from ww.audio.audio_pipeline import (  # noqa: E402
     split_into_sentences,
     split_text,
     md_to_text,
@@ -255,6 +261,15 @@ class TestProcessMarkdownFiles(unittest.TestCase):
 class TestOutputDirectory(unittest.TestCase):
     def test_output_directory_value(self):
         self.assertEqual(OUTPUT_DIRECTORY, "assets/audios")
+
+
+def tearDownModule():
+    """Restore original sys.modules entries to prevent test pollution."""
+    for key, original in _original_modules.items():
+        if original is None:
+            sys.modules.pop(key, None)
+        else:
+            sys.modules[key] = original
 
 
 if __name__ == "__main__":

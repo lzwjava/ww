@@ -16,7 +16,7 @@ ruamel_mock = MagicMock()
 sys.modules["ruamel"] = ruamel_mock
 sys.modules["ruamel.yaml"] = ruamel_mock.yaml
 
-from ww.auto_ss_config import upload_configs
+from ww.auto_ss_config import upload_configs  # noqa: E402
 
 
 class TestDecodeSsUrl(unittest.TestCase):
@@ -226,3 +226,20 @@ class TestGenerateClashConfig(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# Cleanup sys.modules to prevent test pollution
+import sys as _sys  # noqa: E402
+
+_saved = {
+    k: _sys.modules.get(k)
+    for k in ["google", "google.cloud", "google.cloud.storage", "ruamel", "ruamel.yaml"]
+}
+
+
+def tearDownModule():
+    for key, original in _saved.items():
+        if original is None:
+            _sys.modules.pop(key, None)
+        else:
+            _sys.modules[key] = original

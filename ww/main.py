@@ -25,8 +25,15 @@ def _print_help():
     print("  ww gif                    Create GIF from images")
     print("")
     print("GitHub:")
+    print("  ww github info            Account info, plan, rate limits")
+    print("  ww github repos           List your repos (recently pushed)")
+    print("  ww github starred         List starred repos")
+    print("  ww github followers       List followers")
+    print("  ww github following       List following")
+    print("  ww github notifications   List unread notifications")
+    print("  ww github rate            Show rate limit details")
     print("  ww github gitmessageai    Generate AI commit message and commit")
-    print("")
+    print()
     print("macOS:")
     print("  ww macos find-large-dirs  Find largest directories on disk")
     print("  ww macos system-info      Show system information")
@@ -304,9 +311,44 @@ def main():
         subcmd = _pop_subcmd()
         if subcmd == "" or subcmd in ("--help", "-h"):
             print("Usage: ww github <command> [options]")
-            print("")
+            print()
             print("Commands:")
+            print("  info            Account info, plan, rate limits")
+            print("  repos           List your repos (recently pushed)")
+            print("  starred         List starred repos")
+            print("  followers       List followers")
+            print("  following       List following")
+            print("  notifications   List unread notifications")
+            print("  rate            Show rate limit details")
             print("  gitmessageai    Generate AI commit message and commit")
+        elif subcmd == "info":
+            from ww.github.github_mgmt import cmd_info
+
+            cmd_info()
+        elif subcmd == "repos":
+            from ww.github.github_mgmt import cmd_repos
+
+            cmd_repos()
+        elif subcmd == "starred":
+            from ww.github.github_mgmt import cmd_starred
+
+            cmd_starred()
+        elif subcmd == "followers":
+            from ww.github.github_mgmt import cmd_followers
+
+            cmd_followers()
+        elif subcmd == "following":
+            from ww.github.github_mgmt import cmd_following
+
+            cmd_following()
+        elif subcmd == "notifications":
+            from ww.github.github_mgmt import cmd_notifications
+
+            cmd_notifications()
+        elif subcmd == "rate":
+            from ww.github.github_mgmt import cmd_rate
+
+            cmd_rate()
         elif subcmd == "gitmessageai":
             import argparse
             from ww.github.gitmessageai import gitmessageai
