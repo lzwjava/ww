@@ -256,6 +256,8 @@ def _pop_subcmd():
 
 
 def main():
+    import os
+
     if len(sys.argv) < 2:
         print("hello world")
         print("")
@@ -273,11 +275,12 @@ def main():
         if subcmd == "" or subcmd == "note":
             print("Tip: Use '/note' in hermes-agent to save assistant responses.")
             print("")
-            try:
-                input("Press Enter to continue, Ctrl+C to quit... ")
-            except KeyboardInterrupt:
-                print()
-                return
+            if os.environ.get("NOTE_ENTER_CONFIRM", "1") != "0":
+                try:
+                    input("Press Enter to continue, Ctrl+C to quit... ")
+                except KeyboardInterrupt:
+                    print()
+                    return
             from ww.note.note_workflow import main as m
 
             m()
