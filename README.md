@@ -4,7 +4,7 @@
 
 ---
 
-A cross-platform CLI toolkit for developer productivity — git workflows, note management, image/PDF processing, web search, and system utilities, with LLM-powered helpers.
+A cross-platform CLI toolkit for developer productivity. Covers git workflows, GitHub management, note-taking, screenshot capture, image processing (crop, compress, background removal, EXIF scanning), PDF conversion (Markdown, LaTeX, code-to-PDF), web search (multi-engine), network diagnostics (WiFi scanning, IP/port scanning, network topology), system monitoring (macOS, Linux), process management, Clash proxy control, Java/Maven analysis, RAG document indexing, LLM model comparison, OpenRouter account management, GitHub Actions triggering, speech transcription (Whisper), presentation generation (Marp), Cloudflare analytics, and more — many commands enhanced with LLM-powered intelligence.
 
 ## Installation
 

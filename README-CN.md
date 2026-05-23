@@ -4,7 +4,7 @@
 
 ---
 
-跨平台命令行工具集，提升开发者生产力 —— Git 工作流、笔记管理、图片/PDF 处理、网页搜索及系统工具，内置 LLM 智能辅助。
+跨平台命令行工具集，提升开发者生产力。涵盖 Git 工作流、GitHub 管理、笔记记录、截图捕获、图片处理（裁剪、压缩、去背景、EXIF 扫描）、PDF 转换（Markdown、LaTeX、代码转 PDF）、网页搜索（多引擎）、网络诊断（WiFi 扫描、IP/端口扫描、网络拓扑）、系统监控（macOS、Linux）、进程管理、Clash 代理控制、Java/Maven 分析、RAG 文档索引、LLM 模型对比、OpenRouter 账户管理、GitHub Actions 触发、语音转录（Whisper）、演示文稿生成（Marp）、Cloudflare 分析等 —— 多数命令内置 LLM 智能辅助。
 
 ## 安装
 
