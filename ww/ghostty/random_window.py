@@ -51,6 +51,12 @@ def main():
         f"--window-height={rows}",
     ]
     subprocess.Popen(cmd)
+    # Bring Ghostty to front and focus
+    subprocess.run(
+        ["osascript", "-e", 'tell application "ghostty" to activate'],
+        capture_output=True,
+        timeout=5,
+    )
     print(
         f"Opened Ghostty at ({x}, {y}) size {cols}x{rows} cells ({half_w}x{half_h}px)"
     )
