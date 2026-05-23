@@ -139,7 +139,9 @@ def _print_help():
     print("  ww sync bashrc [back|forth] Sync .bashrc file")
     print("  ww sync zprofile [back|forth] Sync .zprofile file")
     print("  ww sync ssh [back|forth]    Sync .ssh directory")
-    print("  ww sync hermes              Copy ww/config/hermes/ -> ~/.hermes/")
+    print(
+        "  ww sync hermes [back|forth]  Sync config.yaml, SOUL.md, hooks/, plugins/, agent-hooks/ (forth: ~/.hermes/ -> project)"
+    )
     print("")
     print("Read (RAG):")
     print("  ww read index <dir>       Index documents in a directory (BGE + FAISS)")
@@ -855,9 +857,17 @@ def main():
 
             sync_ssh(direction)
         elif subcmd == "hermes":
+            direction = _pop_subcmd()
+            if direction in ("--help", "-h"):
+                print("Usage: ww sync hermes [back|forth]")
+                print(
+                    "  Sync config.yaml, SOUL.md, hooks/, plugins/, agent-hooks/ (forth: ~/.hermes/ -> project, back: reverse)"
+                )
+                return
+            direction = direction or "forth"
             from ww.sync.remote import sync_hermes
 
-            sync_hermes()
+            sync_hermes(direction)
         elif subcmd == "openclaw":
             from ww.sync.openclaw import main as m
 

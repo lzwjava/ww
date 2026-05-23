@@ -50,33 +50,64 @@ def sync_zed(direction: str = "forth") -> None:
     remote_sync(local_path, remote_path, direction)
 
 
-def sync_hermes() -> None:
+def sync_hermes(direction: str = "forth") -> None:
     """
-    Copy Hermes config from ww/config/hermes/ to ~/.hermes/.
-    Preserves directory structure (plugins/, hooks/, etc.).
+    Sync select Hermes config between ww/config/hermes/ and ~/.hermes/.
+    Synced items: config.yaml, SOUL.md, hooks/, plugins/, agent-hooks/.
+    direction="forth": ~/.hermes/ -> ww/config/hermes/ (capture active config into project)
+    direction="back":  ww/config/hermes/ -> ~/.hermes/ (restore project config to active)
     """
     import shutil
 
-    src_dir = Path(__file__).resolve().parent.parent / "config" / "hermes"
-    dst_dir = Path.home() / ".hermes"
+    config_dir = Path(__file__).resolve().parent.parent / "config" / "hermes"
+    home_dir = Path.home() / ".hermes"
 
-    if not src_dir.is_dir():
-        print(f"Source not found: {src_dir}")
+    items = ["config.yaml", "SOUL.md", "hooks", "plugins", "agent-hooks"]
+
+    if direction == "forth":
+        src_base = home_dir
+        dst_base = config_dir
+    else:
+        src_base = config_dir
+        dst_base = home_dir
+
+    if not src_base.is_dir():
+        print(f"Source not found: {src_base}")
         return
 
     copied = []
-    for src_file in sorted(src_dir.rglob("*")):
-        if not src_file.is_file():
+    for rel in items:
+        src_path = src_base / rel
+        dst_path = dst_base / rel
+
+        if not src_path.exists():
+            print(f"  SKIP {rel} (not found in {src_base}/)")
             continue
-        rel = src_file.relative_to(src_dir)
-        dst_file = dst_dir / rel
-        dst_file.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(src_file, dst_file)
-        copied.append(str(rel))
+
+        if src_path.is_file():
+            dst_path.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                shutil.copy2(src_path, dst_path)
+                copied.append(rel)
+            except (PermissionError, OSError) as e:
+                print(f"  SKIP {rel} ({e})")
+        else:
+            # directory — copy all files recursively
+            for f in sorted(src_path.rglob("*")):
+                if not f.is_file():
+                    continue
+                f_rel = f.relative_to(src_base)
+                f_dst = dst_base / f_rel
+                f_dst.parent.mkdir(parents=True, exist_ok=True)
+                try:
+                    shutil.copy2(f, f_dst)
+                    copied.append(str(f_rel))
+                except (PermissionError, OSError) as e:
+                    print(f"  SKIP {f_rel} ({e})")
 
     if copied:
-        print(f"Copied {len(copied)} file(s) from {src_dir} -> {dst_dir}/")
+        print(f"Copied {len(copied)} file(s) from {src_base}/ -> {dst_base}/")
         for f in copied:
             print(f"  {f}")
     else:
-        print(f"No files found in {src_dir}")
+        print("No files copied")
