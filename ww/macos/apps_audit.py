@@ -29,14 +29,14 @@ Output format — use EXACTLY this layout with aligned columns. Use ─ for sepa
 Group KEEP items by category (Core work, Comms, AI/Dev, System, Proxy) on a single line each.
 For CONSIDER show "Replaces" column. For SAFE DELETE show "Why remove". For HOLD show "Question".
 
-  {category} — {subtitle} (save ~{size})
+  {{category}} — {{subtitle}} (save ~{{size}})
 
   App                           Last Touch   Size      Why remove
   ─────────────────────────────────────────────────────────────────
   iTerm.app                     2023-01      72MB      Replaced by Ghostty
   ...
 
-  Potential savings: ~{total}
+  Potential savings: ~{{total}}
 
 Be concise. No preamble. No markdown fences. Plain text only.
 

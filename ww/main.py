@@ -227,6 +227,11 @@ def _print_help():
     print("  ww cloudflare schema         Inspect GraphQL Account schema")
     print("  ww cloudflare pdf <file>     Parse Cloudflare Analytics PDF export")
     print("")
+    print("Ghostty:")
+    print(
+        "  ww ghostty                Open a Ghostty window at a random half-screen position"
+    )
+    print("")
     print("Clash:")
     print("  ww clash select-provider    Select best proxy provider")
     print("  ww clash speed              Run speed test and select best proxy")
@@ -984,6 +989,11 @@ def main():
         else:
             print(f"Unknown cloudflare command: {subcmd}")
             sys.exit(1)
+
+    elif group == "ghostty":
+        from ww.ghostty.random_window import main as m
+
+        m()
 
     elif group == "clash":
         subcmd = _pop_subcmd()
