@@ -54,6 +54,7 @@ def _print_help():
     print(
         "  ww macos apps             Audit installed apps by size and age (--no-llm, --json)"
     )
+    print("  ww macos dock             List apps currently pinned to the Dock (--json)")
     print("")
     print("Image:")
     print("  ww image avatar           Process avatar image")
@@ -413,6 +414,7 @@ def main():
             print(
                 "  apps             Audit installed apps by size and age (--no-llm, --json)"
             )
+            print("  dock             List apps currently pinned to the Dock (--json)")
         elif subcmd == "find-large-dirs":
             from ww.macos.find_largest_directories import main as m
 
@@ -455,6 +457,10 @@ def main():
             m()
         elif subcmd == "apps":
             from ww.macos.apps_audit import main as m
+
+            m()
+        elif subcmd == "dock":
+            from ww.macos.dock import main as m
 
             m()
         else:
