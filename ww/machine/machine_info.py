@@ -199,37 +199,32 @@ MACHINES = {
 
 
 def main():
-    if len(sys.argv) < 2 or sys.argv[1] in ("--help", "-h"):
-        if len(sys.argv) < 2:
-            # No args: show all hosts
-            targets = list(MACHINES.keys())
-        else:
-            print("Usage: ww host [name...]")
-            print()
-            print("Hosts:")
-            print("  local        Current machine")
-            print("  workstation  lzw@192.168.1.36")
-            print("  dmit         DMIT server (root@69.63.219.52)")
-            print()
-            print("Examples:")
-            print("  ww host              Show all hosts")
-            print("  ww host local")
-            print("  ww host workstation")
-            print("  ww host local workstation")
-            return
+    target = sys.argv[1] if len(sys.argv) > 1 else "all"
+
+    if target in ("--help", "-h"):
+        print("Usage: ww host [local|workstation|dmit|all]")
+        print()
+        print("  local        Current machine")
+        print("  workstation  lzw@192.168.1.36 (RTX 4070)")
+        print("  dmit         DMIT server (root@69.63.219.52)")
+        print("  all          All hosts (default)")
+        return
+
+    if target == "all":
+        targets = list(MACHINES.keys())
+    elif target in MACHINES:
+        targets = [target]
     else:
-        targets = sys.argv[1:]
+        print(f"Unknown host: {target}")
+        print("Available: local, workstation, dmit, all")
+        sys.exit(1)
 
     first = True
-    for target in targets:
-        if target not in MACHINES:
-            print(f"Unknown host: {target}")
-            print(f"Available: {', '.join(MACHINES.keys())}")
-            sys.exit(1)
+    for t in targets:
         if not first:
             print()
         first = False
-        cfg = MACHINES[target]
+        cfg = MACHINES[t]
         info = get_machine_info(
             remote=cfg["remote"],
             ssh_args=cfg.get("ssh_args", ""),
