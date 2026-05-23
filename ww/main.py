@@ -228,9 +228,8 @@ def _print_help():
     print("  ww cloudflare pdf <file>     Parse Cloudflare Analytics PDF export")
     print("")
     print("Ghostty:")
-    print(
-        "  ww ghostty                Open a Ghostty window at a random half-screen position"
-    )
+    print("  ww ghostty                Open a Ghostty window at a random position")
+    print("  ww ghostty close          Close all Ghostty windows")
     print("")
     print("Clash:")
     print("  ww clash select-provider    Select best proxy provider")
@@ -991,9 +990,24 @@ def main():
             sys.exit(1)
 
     elif group == "ghostty":
-        from ww.ghostty.random_window import main as m
+        subcmd = _pop_subcmd()
+        if subcmd in ("--help", "-h"):
+            print("Usage: ww ghostty <command>")
+            print("")
+            print("Commands:")
+            print("  (no args)   Open a Ghostty window at random position")
+            print("  close       Close all Ghostty windows")
+        elif subcmd == "" or subcmd == "random":
+            from ww.ghostty.random_window import main as m
 
-        m()
+            m()
+        elif subcmd == "close":
+            from ww.ghostty.close import main as m
+
+            m()
+        else:
+            print(f"Unknown ghostty command: {subcmd}")
+            sys.exit(1)
 
     elif group == "clash":
         subcmd = _pop_subcmd()
