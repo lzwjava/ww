@@ -21,27 +21,24 @@ For each app, you receive: name, size, and last-modified date (which correlates 
 
 Classification rules:
 - KEEP = last touched in last 3 months, clearly active dev/production tool
-- CONSIDER = duplicates of tools already present, or niche utility the user may have replaced (e.g. multiple browsers, FTP clients, etc.)
-- SAFE DELETE = last touched 1+ year ago AND (redundant with another app OR one-time-use tool OR clearly irrelevant to the user's work as an AI engineer)
+- CONSIDER = duplicates of tools already present, or niche utility the user may have replaced
+- SAFE DELETE = last touched 1+ year ago AND (redundant OR one-time-use OR irrelevant to AI engineering)
 - HOLD = large app where you need user input on whether the use case still exists
 
-Output format (be concise, no preamble):
+Output format — use EXACTLY this layout with aligned columns. Use ─ for separator lines.
+Group KEEP items by category (Core work, Comms, AI/Dev, System, Proxy) on a single line each.
+For CONSIDER show "Replaces" column. For SAFE DELETE show "Why remove". For HOLD show "Question".
 
-SUMMARY
-  Total: N apps, X GB
-  KEEP: N | CONSIDER: N | SAFE DELETE: N | HOLD: N
+  {category} — {subtitle} (save ~{size})
 
-KEEP
-  AppName — Size — reason
+  App                           Last Touch   Size      Why remove
+  ─────────────────────────────────────────────────────────────────
+  iTerm.app                     2023-01      72MB      Replaced by Ghostty
+  ...
 
-CONSIDER
-  AppName — Size — reason
+  Potential savings: ~{total}
 
-SAFE DELETE
-  AppName — Size — reason
-
-HOLD
-  AppName — Size — question for user
+Be concise. No preamble. No markdown fences. Plain text only.
 
 App data:
 ---
@@ -51,29 +48,28 @@ App data:
 
 def _format_size(size_kb):
     if size_kb >= 1024 * 1024:
-        return f"{size_kb / (1024 * 1024):.1f} GB"
+        return f"{size_kb / (1024 * 1024):.1f}GB"
     if size_kb >= 1024:
-        return f"{size_kb / 1024:.0f} MB"
-    return f"{size_kb} KB"
+        return f"{size_kb / 1024:.0f}MB"
+    if size_kb > 0:
+        return f"{size_kb}KB"
+    return "--"
 
 
-def _parse_du_size(raw):
-    """Parse 'du -sh' output like '4.7G' or '123M' into KB."""
-    raw = raw.strip()
-    if not raw:
-        return 0
-    unit = raw[-1].upper()
-    try:
-        value = float(raw[:-1])
-    except ValueError:
-        return 0
-    if unit == "G":
-        return int(value * 1024 * 1024)
-    if unit == "M":
-        return int(value * 1024)
-    if unit == "K":
-        return int(value)
-    return int(value)
+def _format_size_short(size_kb):
+    """Compact size for table cells."""
+    if size_kb >= 1024 * 1024:
+        return f"{size_kb / (1024 * 1024):.1f}GB"
+    if size_kb >= 1024:
+        return f"{size_kb / 1024:.0f}MB"
+    return "--"
+
+
+def _month_str(date_str):
+    """Convert 2025-03-12 to 2025-03."""
+    if not date_str:
+        return "--"
+    return date_str[:7]
 
 
 def collect_apps(app_dir):
@@ -91,14 +87,11 @@ def collect_apps(app_dir):
         print(f"No .app bundles found in {app_dir}")
         return apps
 
-    print(f"Scanning {total} apps in {app_dir}...")
-
     for i, bundle in enumerate(app_bundles, 1):
         name = bundle.stem
         if i % 10 == 0 or i == total:
-            print(f"   {i}/{total}", end="\r", flush=True)
+            print(f"  {i}/{total}", end="\r", flush=True)
 
-        # Size
         try:
             result = subprocess.run(
                 ["du", "-sk", str(bundle)],
@@ -110,7 +103,6 @@ def collect_apps(app_dir):
         except (subprocess.TimeoutExpired, ValueError, IndexError):
             size_kb = 0
 
-        # Last modified (macOS stat format)
         try:
             result = subprocess.run(
                 ["stat", "-f", "%Sm", "-t", "%Y-%m-%d", str(bundle)],
@@ -122,7 +114,6 @@ def collect_apps(app_dir):
         except subprocess.TimeoutExpired:
             modified_str = ""
 
-        # Parse date
         modified_date = None
         if modified_str:
             try:
@@ -144,13 +135,11 @@ def collect_apps(app_dir):
             }
         )
 
-    # Clear progress line
     print(" " * 50, end="\r")
     return apps
 
 
 def _classify_by_age(app):
-    """Simple age-based pre-classification (no LLM)."""
     age = app.get("age_days")
     if age is None:
         return "UNKNOWN"
@@ -161,56 +150,102 @@ def _classify_by_age(app):
     return "SAFE DELETE"
 
 
-def print_table(apps, show_class=False):
-    """Print apps as a formatted table."""
-    # Sort by size descending
-    apps = sorted(apps, key=lambda a: a["size_kb"], reverse=True)
-
-    total_size = sum(a["size_kb"] for a in apps)
-    print(f"\n  {len(apps)} apps, {_format_size(total_size)} total\n")
-
-    if show_class:
-        header = f"  {'App':<40} {'Size':>10} {'Modified':>12} {'Age':>8}  {'Class'}"
-    else:
-        header = f"  {'App':<40} {'Size':>10} {'Modified':>12} {'Age':>8}"
-    print(header)
-    print("  " + "-" * len(header.strip()))
-
-    for app in apps:
-        age_str = f"{app['age_days']}d" if app["age_days"] is not None else "?"
-        if app["age_days"] is not None and app["age_days"] > 365:
-            age_str = f"{app['age_days'] // 365}y"
-        line = (
-            f"  {app['name']:<40} {app['size_human']:>10} "
-            f"{app['modified']:>12} {age_str:>8}"
-        )
-        if show_class:
-            cls = _classify_by_age(app)
-            line += f"  {cls}"
-        print(line)
-
-    print()
-
-
-def print_classified(apps):
-    """Print apps grouped by age-based classification."""
+def _group_apps(apps):
     groups = {"KEEP": [], "CONSIDER": [], "SAFE DELETE": [], "UNKNOWN": []}
     for app in apps:
         groups[_classify_by_age(app)].append(app)
-
-    for label in ("KEEP", "CONSIDER", "SAFE DELETE", "UNKNOWN"):
-        bucket = groups[label]
-        if not bucket:
-            continue
+    for bucket in groups.values():
         bucket.sort(key=lambda a: a["size_kb"], reverse=True)
-        total = sum(a["size_kb"] for a in bucket)
-        print(f"\n  {label} ({len(bucket)} apps, {_format_size(total)})")
-        print("  " + "-" * 60)
+    return groups
+
+
+def _trunc(s, width):
+    """Truncate string to width, adding .. if needed."""
+    if len(s) <= width:
+        return s
+    return s[: width - 2] + ".."
+
+
+def print_report(apps):
+    """Print the full audit report with aligned tables."""
+    groups = _group_apps(apps)
+    total_size = sum(a["size_kb"] for a in apps)
+    safe_size = sum(a["size_kb"] for a in groups["SAFE DELETE"])
+    consider_size = sum(a["size_kb"] for a in groups["CONSIDER"])
+
+    n = len(apps)
+    print()
+    print(f"  {n} apps, {_format_size(total_size)} total. Organized by what to do:")
+
+    # SAFE DELETE
+    bucket = groups["SAFE DELETE"]
+    if bucket:
+        save_str = _format_size(safe_size + consider_size)
+        print()
+        print(f"  SAFE DELETE — clearly unused/stale (save ~{save_str})")
+        print()
+        print(f"  {'App':<30} {'Last Touch':<12} {'Size':>8}  {'Why remove'}")
+        print(f"  {'─' * 30} {'─' * 12} {'─' * 8}  {'─' * 20}")
         for app in bucket:
-            age_str = f"{app['age_days']}d" if app["age_days"] is not None else "?"
+            name = _trunc(app["name"] + ".app", 30)
             print(
-                f"    {app['name']:<38} {app['size_human']:>10}  {app['modified']:>12}  {age_str:>6}"
+                f"  {name:<30} {_month_str(app['modified']):<12} "
+                f"{_format_size_short(app['size_kb']):>8}  "
+                f">{365}d stale"
             )
+
+    # CONSIDER
+    bucket = groups["CONSIDER"]
+    if bucket:
+        print()
+        print("  CONSIDER DELETING — 3mo-1yr stale, review case by case")
+        print()
+        print(f"  {'App':<30} {'Last Touch':<12} {'Size':>8}  {'Age'}")
+        print(f"  {'─' * 30} {'─' * 12} {'─' * 8}  {'─' * 8}")
+        for app in bucket:
+            name = _trunc(app["name"] + ".app", 30)
+            age = app["age_days"]
+            age_str = f"{age // 30}mo" if age else "--"
+            print(
+                f"  {name:<30} {_month_str(app['modified']):<12} "
+                f"{_format_size_short(app['size_kb']):>8}  {age_str}"
+            )
+
+    # KEEP
+    bucket = groups["KEEP"]
+    if bucket:
+        keep_size = sum(a["size_kb"] for a in bucket)
+        print()
+        print(
+            f"  KEEP — active use, touched in last 3 months ({_format_size(keep_size)})"
+        )
+        print()
+        for app in bucket:
+            name = app["name"]
+            size = _format_size_short(app["size_kb"])
+            print(f"    {name:<28} {size:>8}")
+
+    # UNKNOWN
+    bucket = groups["UNKNOWN"]
+    if bucket:
+        print()
+        print("  UNKNOWN — no date available")
+        print()
+        for app in bucket:
+            name = app["name"]
+            size = _format_size_short(app["size_kb"])
+            print(f"    {name:<28} {size:>8}")
+
+    # Summary
+    n_safe = len(groups["SAFE DELETE"])
+    n_cons = len(groups["CONSIDER"])
+    n_keep = len(groups["KEEP"])
+    print()
+    print(
+        f"  Potential savings if you delete safe + consider: ~{_format_size(safe_size + consider_size)}"
+    )
+    print(f"  Summary: {n_keep} keep | {n_cons} consider | {n_safe} safe delete")
+    print()
 
 
 def llm_audit(apps):
@@ -251,7 +286,6 @@ def main():
     args = parser.parse_args(sys.argv[1:])
 
     apps = collect_apps(args.path)
-
     if not apps:
         return
 
@@ -260,11 +294,10 @@ def main():
         return
 
     if args.no_llm:
-        print_classified(apps)
+        print_report(apps)
         return
 
-    # LLM-powered analysis
-    print(f"Analyzing {len(apps)} apps with LLM...\n")
+    print(f"  Analyzing {len(apps)} apps with LLM...\n")
     result = llm_audit(apps)
 
     if not result:
