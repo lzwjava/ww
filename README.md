@@ -22,6 +22,7 @@ ww <group> [command] [options]
 |---------|-------------|
 | `ww note` | Create a new note with git integration |
 | `ww note log` | Create a new log entry |
+| `ww note log-file` | Create a log entry from a file |
 | `ww note obfuscate <file>` | Obfuscate sensitive data in a file |
 
 ### Screenshot
@@ -53,6 +54,13 @@ ww <group> [command] [options]
 
 | Command | Description |
 |---------|-------------|
+| `ww github info` | Account info, plan, rate limits |
+| `ww github repos` | List your repos (recently pushed) |
+| `ww github starred` | List starred repos |
+| `ww github followers` | List followers |
+| `ww github following` | List following |
+| `ww github notifications` | List unread notifications |
+| `ww github rate` | Show rate limit details |
 | `ww github gitmessageai` | Generate AI commit message and commit |
 
 ### Image
@@ -64,6 +72,8 @@ ww <group> [command] [options]
 | `ww image remove-bg` | Remove image background |
 | `ww image compress` | Compress images |
 | `ww image photo-compress` | Compress photos |
+| `ww image exif` | Scan images for EXIF GPS location data |
+| `ww image whatsapp` | Download images from WhatsApp Web via Safari |
 
 ### GIF
 
@@ -81,6 +91,7 @@ ww <group> [command] [options]
 | `ww pdf code2pdf` | Convert code files in a directory to PDF |
 | `ww pdf scale-pdf` | Scale a PDF using pdfjam |
 | `ww pdf test-latex` | Test LaTeX/pandoc PDF generation |
+| `ww pdf md2png` | Convert markdown to PNG via HTML+PDF (Chrome) |
 
 ### Search
 
@@ -93,6 +104,8 @@ ww <group> [command] [options]
 | `ww search ecosia` | Search with Ecosia |
 | `ww search filename` | Search by filename |
 | `ww search startpage` | Search with StartPage |
+| `ww search tavily` | Search with Tavily API |
+| `ww search web --json` | JSON output for LLM tool use |
 
 ### macOS
 
@@ -105,6 +118,11 @@ ww <group> [command] [options]
 | `ww macos list-disks` | List portable disks |
 | `ww macos open-terminal` | Open a new terminal window |
 | `ww macos toast` | Show macOS notification toast |
+| `ww macos charge-watch` | Alert when charger is plugged in but not charging |
+| `ww macos process` | Analyze running processes and suggest what to kill |
+| `ww macos settings-proxy` | Set system proxy (HTTP/HTTPS 7890, SOCKS 7891) with bypass list |
+| `ww macos apps` | Audit installed apps by size and age (`--no-llm`, `--json`) |
+| `ww macos dock` | List apps currently pinned to the Dock (`--json`) |
 
 ### Linux
 
@@ -179,10 +197,132 @@ ww <group> [command] [options]
 |---------|-------------|
 | `ww sync claude` | Sync Claude Code settings (sanitized) |
 | `ww sync bashrc [back\|forth]` | Sync .bashrc file |
-| `ww sync zprofile [back\\|forth]` | Sync .zprofile file |
-| `ww sync zed [back\\|forth]` | Sync ~/.config/zed/ directory (Zed config) |
-| `ww sync ssh [back\\|forth]` | Sync .ssh directory |
-| `ww sync hermes [back\\|forth]` | Sync .hermes/config.yaml |
+| `ww sync zprofile [back\|forth]` | Sync .zprofile file |
+| `ww sync zed [back\|forth]` | Sync ~/.config/zed/ directory (Zed config) |
+| `ww sync ssh [back\|forth]` | Sync .ssh directory |
+| `ww sync hermes [back\|forth]` | Sync config.yaml, SOUL.md, hooks/, plugins/, agent-hooks/ |
+
+### Update
+
+| Command | Description |
+|---------|-------------|
+| `ww update [name...]` | Update git repos (default: updated_repos) |
+
+### Latest
+
+| Command | Description |
+|---------|-------------|
+| `ww latest notes [N]` | Show filename and title of latest N notes (default 10) |
+
+### Read (RAG)
+
+| Command | Description |
+|---------|-------------|
+| `ww read index <dir>` | Index documents in a directory (BGE + FAISS) |
+| `ww read query <question>` | Ask a question over indexed documents |
+| `ww read query <q> --top-k N` | Use N retrieved chunks (default 5) |
+
+### LLM
+
+| Command | Description |
+|---------|-------------|
+| `ww llm compare` | Compare 6 models on clipboard prompt, judge winner |
+
+### OpenRouter
+
+| Command | Description |
+|---------|-------------|
+| `ww openrouter info` | Account summary: credits, usage, key details |
+| `ww openrouter credits` | Show credits balance |
+| `ww openrouter activity` | Past week spend, requests, tokens (`--days N`) |
+| `ww openrouter models` | List available models |
+
+### Env
+
+| Command | Description |
+|---------|-------------|
+| `ww env update` | Pick a top Arena model and update MODEL= in .env |
+
+### Display
+
+| Command | Description |
+|---------|-------------|
+| `ww display <dark\|light\|auto\|show>` | Switch macOS appearance or show current |
+
+### Gen-image
+
+| Command | Description |
+|---------|-------------|
+| `ww gen-image` | Generate image from clipboard text (Imagen 3) |
+
+### Action
+
+| Command | Description |
+|---------|-------------|
+| `ww action <workflow.yml>` | Trigger a GitHub Actions workflow via gh CLI |
+
+### Degree
+
+| Command | Description |
+|---------|-------------|
+| `ww degree` | AI-categorize recent self-study notices |
+| `ww degree practical` | Filter notices about practical exams / scores |
+| `ww degree list` | Raw scraped list (no AI) |
+| `ww degree --pages N` | Fetch N list pages (1-11, default 1) |
+
+### Marp
+
+| Command | Description |
+|---------|-------------|
+| `ww marp <file.md>` | Watch a markdown file and regenerate PDF via marp |
+
+### Whisper
+
+| Command | Description |
+|---------|-------------|
+| `ww whisper <file.mp4>` | Transcribe via whisper (Chinese, large, CUDA) |
+| `ww whisper refine <file.txt>` | Refine transcription to .md via OpenRouter |
+
+### Host
+
+| Command | Description |
+|---------|-------------|
+| `ww host` | Show all hosts |
+| `ww host local` | Local machine |
+| `ww host workstation` | Workstation (RTX 4070) |
+| `ww host dmit` | DMIT server |
+
+### Cloudflare
+
+| Command | Description |
+|---------|-------------|
+| `ww cloudflare monthly-visit` | Monthly page views & visits from Web Analytics |
+| `ww cloudflare zones` | List Cloudflare zones |
+| `ww cloudflare datasets` | List Web Analytics datasets |
+| `ww cloudflare schema` | Inspect GraphQL Account schema |
+| `ww cloudflare pdf <file>` | Parse Cloudflare Analytics PDF export |
+
+### Ghostty
+
+| Command | Description |
+|---------|-------------|
+| `ww ghostty` | Open a Ghostty window at a random position |
+| `ww ghostty close` | Close all Ghostty windows |
+
+### Clash
+
+| Command | Description |
+|---------|-------------|
+| `ww clash select-provider` | Select best proxy provider |
+| `ww clash speed` | Run speed test and select best proxy |
+| `ww clash run` | Full clash management with iterations |
+| `ww clash top-proxies` | Print top 5 fastest proxies (single-URL) |
+| `ww clash top-proxies-multi` | Print top 10 fastest proxies (multi-URL) |
+| `ww clash speed-tiktok` | Run speedtest + TikTok load time |
+| `ww clash query-dns [host]` | Test AliDNS DoH resolution |
+| `ww clash gnome-proxy <set\|unset>` | Toggle GNOME proxy (Linux) |
+| `ww clash macos-proxy <set\|unset>` | Toggle macOS proxy (networksetup) |
+| `ww clash wifi <on\|off>` | Toggle macOS Wi-Fi |
 
 ## Requirements
 
