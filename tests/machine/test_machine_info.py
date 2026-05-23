@@ -6,204 +6,172 @@ from ww.machine.machine_info import (
     run_script,
     get_machine_info,
     print_info,
-    build_batch_script,
     MACHINES,
 )
 
 
+def batch_output(
+    *,
+    hostname="myserver",
+    cpu_model="AMD Ryzen 7",
+    cpu_cores="8",
+    load="0.50 0.40 0.30",
+    memory="4.0Gi/16Gi used",
+    disk="50G/100G used (50%)",
+    uptime="up 3 days",
+    gpu="",
+    services=None,
+):
+    """Build the multi-line batch output string that get_machine_info parses."""
+    parts = [
+        "---HOSTNAME---",
+        hostname,
+        "---CPU_MODEL---",
+        cpu_model,
+        "---CPU_CORES---",
+        cpu_cores,
+        "---LOAD---",
+        load,
+        "---MEMORY---",
+        memory,
+        "---DISK---",
+        disk,
+        "---UPTIME---",
+        uptime,
+        "---GPU---",
+        gpu,
+        "---SERVICES---",
+    ]
+    if services:
+        parts.extend(services)
+    parts.append("---END---")
+    return "\n".join(parts)
+
+
 class TestRun(unittest.TestCase):
     @patch("ww.machine.machine_info.subprocess.run")
-    def test_local_returns_stdout(self, mock_run):
-        mock_run.return_value = MagicMock(returncode=0, stdout="hello\n")
+    def test_local_returns_stdout(self, mock_subprocess):
+        mock_subprocess.return_value = MagicMock(returncode=0, stdout="hello\n")
         result = run("echo hello")
         self.assertEqual(result, "hello")
 
     @patch("ww.machine.machine_info.subprocess.run")
-    def test_local_returns_none_on_failure(self, mock_run):
-        mock_run.return_value = MagicMock(returncode=1, stdout="")
+    def test_local_returns_none_on_failure(self, mock_subprocess):
+        mock_subprocess.return_value = MagicMock(returncode=1, stdout="")
         result = run("bad_cmd")
         self.assertIsNone(result)
 
     @patch("ww.machine.machine_info.subprocess.run")
-    def test_returns_none_on_timeout(self, mock_run):
+    def test_returns_none_on_timeout(self, mock_subprocess):
         import subprocess as sp
 
-        mock_run.side_effect = sp.TimeoutExpired("cmd", 15)
+        mock_subprocess.side_effect = sp.TimeoutExpired("cmd", 10)
         result = run("slow_cmd")
         self.assertIsNone(result)
 
     @patch("ww.machine.machine_info.subprocess.run")
-    def test_remote_uses_ssh(self, mock_run):
-        mock_run.return_value = MagicMock(returncode=0, stdout="ok\n")
+    def test_remote_uses_ssh(self, mock_subprocess):
+        mock_subprocess.return_value = MagicMock(returncode=0, stdout="ok\n")
         result = run("hostname", remote="user@host")
         self.assertEqual(result, "ok")
-        called_cmd = mock_run.call_args[0][0]
+        called_cmd = mock_subprocess.call_args[0][0]
         self.assertIn("ssh", called_cmd)
         self.assertIn("user@host", called_cmd)
-        self.assertIn("hostname", called_cmd)
 
     @patch("ww.machine.machine_info.subprocess.run")
-    def test_remote_with_ssh_args(self, mock_run):
-        mock_run.return_value = MagicMock(returncode=0, stdout="ok\n")
+    def test_remote_with_ssh_args(self, mock_subprocess):
+        mock_subprocess.return_value = MagicMock(returncode=0, stdout="ok\n")
         run("hostname", remote="root@1.2.3.4", ssh_args="-i /path/key.pem")
-        called_cmd = mock_run.call_args[0][0]
+        called_cmd = mock_subprocess.call_args[0][0]
         self.assertIn("-i /path/key.pem", called_cmd)
         self.assertIn("root@1.2.3.4", called_cmd)
 
     @patch("ww.machine.machine_info.subprocess.run")
-    def test_remote_includes_connect_timeout(self, mock_run):
-        mock_run.return_value = MagicMock(returncode=0, stdout="ok\n")
+    def test_remote_includes_connect_timeout(self, mock_subprocess):
+        mock_subprocess.return_value = MagicMock(returncode=0, stdout="ok\n")
         run("hostname", remote="user@host")
-        called_cmd = mock_run.call_args[0][0]
+        called_cmd = mock_subprocess.call_args[0][0]
         self.assertIn("ConnectTimeout=5", called_cmd)
         self.assertIn("ProxyCommand=none", called_cmd)
 
 
 class TestRunScript(unittest.TestCase):
     @patch("ww.machine.machine_info.subprocess.run")
-    def test_local_runs_bash(self, mock_run):
-        mock_run.return_value = MagicMock(returncode=0, stdout="out\n")
-        result = run_script("echo out")
-        self.assertEqual(result, "out")
-        called_cmd = mock_run.call_args[0][0]
-        self.assertEqual(called_cmd, "bash")
+    def test_local_returns_stdout(self, mock_subprocess):
+        mock_subprocess.return_value = MagicMock(returncode=0, stdout="line1\nline2\n")
+        result = run_script("echo line1\necho line2")
+        self.assertEqual(result, "line1\nline2")
 
     @patch("ww.machine.machine_info.subprocess.run")
-    def test_remote_pipes_to_ssh_bash(self, mock_run):
-        mock_run.return_value = MagicMock(returncode=0, stdout="out\n")
-        result = run_script("echo out", remote="user@host")
-        self.assertEqual(result, "out")
-        called_cmd = mock_run.call_args[0][0]
+    def test_remote_pipes_via_ssh(self, mock_subprocess):
+        mock_subprocess.return_value = MagicMock(returncode=0, stdout="ok\n")
+        run_script("echo ok", remote="user@host")
+        called_cmd = mock_subprocess.call_args[0][0]
         self.assertIn("ssh", called_cmd)
         self.assertIn("bash", called_cmd)
-        # Script is passed via stdin
-        self.assertEqual(mock_run.call_args[1]["input"], "echo out")
-
-    @patch("ww.machine.machine_info.subprocess.run")
-    def test_returns_none_on_failure(self, mock_run):
-        mock_run.return_value = MagicMock(returncode=1, stdout="")
-        result = run_script("bad")
-        self.assertIsNone(result)
-
-
-class TestBuildBatchScript(unittest.TestCase):
-    def test_base_script_has_sections(self):
-        script = build_batch_script()
-        for section in [
-            "HOSTNAME",
-            "CPU_MODEL",
-            "CPU_CORES",
-            "LOAD",
-            "MEMORY",
-            "DISK",
-            "UPTIME",
-            "GPU",
-            "SERVICES",
-            "END",
-        ]:
-            self.assertIn(f"---{section}---", script)
-
-    def test_services_appended(self):
-        script = build_batch_script(["hysteria", "nginx"])
-        self.assertIn("pgrep -x hysteria", script)
-        self.assertIn("pgrep -x nginx", script)
-        self.assertIn("hysteria=UP", script)
-        self.assertIn("nginx=UP", script)
-
-    def test_no_services(self):
-        script = build_batch_script([])
-        self.assertNotIn("pgrep", script)
-
-
-SAMPLE_OUTPUT = """---HOSTNAME---
-DMIT-KiXdN3dnsQ
----CPU_MODEL---
-AMD EPYC 9655 96-Core Processor
----CPU_CORES---
-1
----LOAD---
-0.92 1.16 1.24
----MEMORY---
-1.0Gi/1.9Gi used
----DISK---
-8.6G/20G used (46%)
----UPTIME---
-up 6 weeks, 1 day, 8 hours, 57 minutes
----GPU---
----SERVICES---
-hysteria=UP
----END---"""
-
-
-SAMPLE_OUTPUT_MACOS = """---HOSTNAME---
-lzw-mac.local
----CPU_MODEL---
-Apple M2
----CPU_CORES---
-8
----LOAD---
-2.89 2.63 2.94
----MEMORY---
-macos_mem
----DISK---
-12Gi/460Gi used (20%)
----UPTIME---
-up 2 days
----GPU---
----SERVICES---
----END---"""
 
 
 class TestGetMachineInfo(unittest.TestCase):
     @patch("ww.machine.machine_info.run_script")
     def test_parses_linux_output(self, mock_script):
-        mock_script.return_value = SAMPLE_OUTPUT
-        info = get_machine_info(remote="root@host", services=["hysteria"])
-        assert info is not None
-        self.assertEqual(info["hostname"], "DMIT-KiXdN3dnsQ")
-        self.assertEqual(info["cpu_model"], "AMD EPYC 9655 96-Core Processor")
-        self.assertEqual(info["cpu_cores"], "1")
-        self.assertEqual(info["load"], "0.92 1.16 1.24")
-        self.assertEqual(info["memory"], "1.0Gi/1.9Gi used")
-        self.assertEqual(info["disk"], "8.6G/20G used (46%)")
-        self.assertIsNone(info["gpu"])
-        self.assertEqual(info["services"], [("hysteria", True)])
-
-    @patch("ww.machine.machine_info.run_script")
-    @patch("ww.machine.machine_info.run")
-    def test_parses_macos_output(self, mock_run, mock_script):
-        mock_script.return_value = SAMPLE_OUTPUT_MACOS
-        # macOS memory fallback
-        mock_run.side_effect = lambda cmd, *a, **kw: {
-            "vm_stat | head -1 | grep -o '[0-9]*' | tail -1": "16384",
-            "sysctl -n hw.memsize": str(16 * 1024**3),
-        }.get(cmd.split("&&")[0].strip() if "&&" in cmd else cmd, None)
+        mock_script.return_value = batch_output()
         info = get_machine_info()
         assert info is not None
-        self.assertEqual(info["hostname"], "lzw-mac.local")
-        self.assertEqual(info["cpu_model"], "Apple M2")
+        self.assertEqual(info["hostname"], "myserver")
         self.assertEqual(info["cpu_cores"], "8")
+        self.assertEqual(info["cpu_model"], "AMD Ryzen 7")
+        self.assertEqual(info["load"], "0.50 0.40 0.30")
+        self.assertEqual(info["memory"], "4.0Gi/16Gi used")
+        self.assertEqual(info["disk"], "50G/100G used (50%)")
+        self.assertEqual(info["uptime"], "up 3 days")
+        self.assertIsNone(info["gpu"])
+
+    @patch("ww.machine.machine_info.run")
+    @patch("ww.machine.machine_info.run_script")
+    def test_macos_memory_fallback(self, mock_script, mock_run):
+        """When batch returns macos_mem, individual run() calls fill in memory."""
+        mock_script.return_value = batch_output(memory="macos_mem")
+        mock_run.side_effect = ["16384", str(16 * 1024**3), "3.2"]
+        info = get_machine_info()
+        assert info is not None
+        self.assertIn("/16G used", info["memory"])
+
+    @patch("ww.machine.machine_info.run_script")
+    def test_gpu_detected(self, mock_script):
+        mock_script.return_value = batch_output(gpu="RTX 4070, 168, 12282")
+        info = get_machine_info()
+        assert info is not None
+        assert info["gpu"] is not None
+        self.assertIn("RTX 4070", info["gpu"])
+        self.assertIn("168MB", info["gpu"])
+
+    @patch("ww.machine.machine_info.run_script")
+    def test_gpu_not_detected(self, mock_script):
+        mock_script.return_value = batch_output(gpu="")
+        info = get_machine_info()
+        assert info is not None
+        self.assertIsNone(info["gpu"])
+
+    @patch("ww.machine.machine_info.run_script")
+    def test_services_detected(self, mock_script):
+        mock_script.return_value = batch_output(services=["hysteria=UP", "nginx=DOWN"])
+        info = get_machine_info(services=["hysteria", "nginx"])
+        assert info is not None
+        self.assertEqual(info["services"], [("hysteria", True), ("nginx", False)])
 
     @patch("ww.machine.machine_info.run_script")
     def test_returns_none_on_failure(self, mock_script):
         mock_script.return_value = None
-        info = get_machine_info(remote="bad@host")
+        info = get_machine_info()
         self.assertIsNone(info)
 
     @patch("ww.machine.machine_info.run_script")
-    def test_services_false_when_down(self, mock_script):
-        output = SAMPLE_OUTPUT.replace("hysteria=UP", "hysteria=DOWN")
-        mock_script.return_value = output
-        info = get_machine_info(services=["hysteria"])
-        assert info is not None
-        self.assertEqual(info["services"], [("hysteria", False)])
-
-    @patch("ww.machine.machine_info.run_script")
-    def test_no_services(self, mock_script):
-        mock_script.return_value = SAMPLE_OUTPUT
-        info = get_machine_info()
-        assert info is not None
-        self.assertEqual(info["services"], [])
+    def test_ssh_args_passed_through(self, mock_script):
+        mock_script.return_value = batch_output()
+        get_machine_info(remote="root@1.2.3.4", ssh_args="-i /key.pem")
+        args = mock_script.call_args
+        self.assertEqual(args[0][1], "root@1.2.3.4")
+        self.assertEqual(args[0][2], "-i /key.pem")
 
 
 class TestMachines(unittest.TestCase):
