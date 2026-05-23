@@ -33,7 +33,7 @@ class TestSmartUnzip(unittest.TestCase):
         out_path = os.path.join(self.tmpdir, "test_processed.zip")
         with zipfile.ZipFile(out_path, "r") as zf:
             names = zf.namelist()
-        self.assertIn("no_ext", names)
+        self.assertIn("no_ext.unknown", names)
         self.assertIn("has.txt", names)
 
     def test_files_with_extensions_preserved(self):

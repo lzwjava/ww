@@ -100,10 +100,10 @@ class TestMainDispatch(unittest.TestCase):
         self._run(["ww", "image", "remove-bg"], "ww.image.remove_bg.main")
 
     def test_screenshot_dispatches(self):
-        self._run(["ww", "image", "screenshot"], "ww.image.screenshot.main")
+        self._run(["ww", "screenshot"], "ww.image.screenshot.main")
 
     def test_screenshot_linux_dispatches(self):
-        self._run(["ww", "image", "screenshot-linux"], "ww.image.screenshot_linux.main")
+        self._run(["ww", "screenshot-linux"], "ww.image.screenshot_linux.main")
 
     def test_image_compress_dispatches(self):
         self._run(["ww", "image", "compress"], "ww.image.image_compress.main")
