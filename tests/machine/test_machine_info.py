@@ -6,8 +6,27 @@ from ww.machine.machine_info import (
     run_script,
     get_machine_info,
     print_info,
+    build_batch_script,
     MACHINES,
+    main,
 )
+
+
+def make_info(**overrides):
+    """Return a default info dict like get_machine_info() would."""
+    base = {
+        "hostname": "myserver",
+        "cpu_model": "AMD Ryzen 7",
+        "cpu_cores": "8",
+        "load": "0.50 0.40 0.30",
+        "memory": "4.0Gi/16Gi used",
+        "disk": "50G/100G used (50%)",
+        "uptime": "up 3 days",
+        "gpu": None,
+        "services": [],
+    }
+    base.update(overrides)
+    return base
 
 
 def batch_output(
@@ -231,6 +250,90 @@ class TestPrintInfo(unittest.TestCase):
         }
         services = [("hysteria", True), ("nginx", False)]
         print_info(info, "Test", services=services)
+
+
+class TestBuildBatchScript(unittest.TestCase):
+    def test_base_script_contains_end(self):
+        script = build_batch_script()
+        self.assertIn('echo "---END---"', script)
+
+    def test_appends_service_checks(self):
+        script = build_batch_script(services=["hysteria", "nginx"])
+        self.assertIn("pgrep -x hysteria", script)
+        self.assertIn("pgrep -x nginx", script)
+
+    def test_no_services_still_has_end(self):
+        script = build_batch_script(services=[])
+        self.assertIn("---END---", script)
+
+
+class TestMain(unittest.TestCase):
+    @patch("ww.machine.machine_info.get_machine_info")
+    def test_default_all(self, mock_info):
+        """No arg → runs all 3 hosts."""
+        mock_info.return_value = make_info()
+        with patch("sys.argv", ["ww"]):
+            main()
+        self.assertEqual(mock_info.call_count, 3)
+
+    @patch("ww.machine.machine_info.get_machine_info")
+    def test_local(self, mock_info):
+        mock_info.return_value = make_info()
+        with patch("sys.argv", ["ww", "local"]):
+            main()
+        mock_info.assert_called_once()
+        args = mock_info.call_args
+        self.assertIsNone(args.kwargs.get("remote"))
+
+    @patch("ww.machine.machine_info.get_machine_info")
+    def test_workstation(self, mock_info):
+        mock_info.return_value = make_info()
+        with patch("sys.argv", ["ww", "workstation"]):
+            main()
+        mock_info.assert_called_once()
+        remote = mock_info.call_args.kwargs.get("remote")
+        self.assertEqual(remote, "lzw@192.168.1.36")
+
+    @patch("ww.machine.machine_info.get_machine_info")
+    def test_dmit(self, mock_info):
+        mock_info.return_value = make_info()
+        with patch("sys.argv", ["ww", "dmit"]):
+            main()
+        mock_info.assert_called_once()
+        remote = mock_info.call_args.kwargs.get("remote")
+        self.assertEqual(remote, "root@69.63.219.52")
+        self.assertIn("pem", mock_info.call_args.kwargs.get("ssh_args", ""))
+
+    @patch("ww.machine.machine_info.get_machine_info")
+    def test_dmit_services(self, mock_info):
+        mock_info.return_value = make_info(services=[("hysteria", True)])
+        with patch("sys.argv", ["ww", "dmit"]):
+            main()
+        # print_info is called with the services from info dict
+        # just verify get_machine_info was called with hysteria in services
+        services_arg = mock_info.call_args.kwargs.get("services")
+        self.assertIn("hysteria", services_arg)
+
+    @patch("ww.machine.machine_info.get_machine_info")
+    def test_unknown_host_exits(self, mock_info):
+        with patch("sys.argv", ["ww", "mars"]):
+            with self.assertRaises(SystemExit) as ctx:
+                main()
+        self.assertEqual(ctx.exception.code, 1)
+        mock_info.assert_not_called()
+
+    @patch("ww.machine.machine_info.get_machine_info")
+    def test_failed_connection_prints_failed(self, mock_info):
+        mock_info.return_value = None
+        with patch("sys.argv", ["ww", "local"]):
+            main()
+        # prints "Failed to connect" — no crash
+
+    @patch("ww.machine.machine_info.get_machine_info")
+    def test_help(self, mock_info):
+        with patch("sys.argv", ["ww", "--help"]):
+            main()
+        mock_info.assert_not_called()
 
 
 if __name__ == "__main__":
