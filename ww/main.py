@@ -200,11 +200,12 @@ def _print_help():
         "  ww whisper refine <file.txt>  Refine transcription to .md via OpenRouter (deepseek-v4-flash)"
     )
     print("")
-    print("Machine:")
-    print("  ww machine local          Show local machine info")
-    print("  ww machine workstation    Show workstation info (lzw@192.168.1.36)")
-    print("  ww machine dmit           Show DMIT server info (root@69.63.219.52)")
-    print("  ww machine local workstation  Show multiple")
+    print("Host:")
+    print("  ww host                   Show all hosts")
+    print("  ww host local             Show local machine info")
+    print("  ww host workstation       Show workstation info (lzw@192.168.1.36)")
+    print("  ww host dmit              Show DMIT server info (root@69.63.219.52)")
+    print("  ww host local workstation Show multiple")
     print("")
     print("Linux:")
     print("  ww linux gpu          Show GPU and CUDA details")
@@ -935,7 +936,7 @@ def main():
 
         m()
 
-    elif group == "machine":
+    elif group == "host":
         from ww.machine.machine_info import main as m
 
         m()

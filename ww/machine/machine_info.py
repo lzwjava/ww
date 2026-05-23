@@ -200,24 +200,30 @@ MACHINES = {
 
 def main():
     if len(sys.argv) < 2 or sys.argv[1] in ("--help", "-h"):
-        print("Usage: ww machine <name> [name...]")
-        print()
-        print("Machines:")
-        print("  local        Current machine")
-        print("  workstation   lzw@192.168.1.36")
-        print("  dmit          DMIT server (root@69.63.219.52)")
-        print()
-        print("Examples:")
-        print("  ww machine local")
-        print("  ww machine workstation")
-        print("  ww machine local workstation")
-        return
+        if len(sys.argv) < 2:
+            # No args: show all hosts
+            targets = list(MACHINES.keys())
+        else:
+            print("Usage: ww host [name...]")
+            print()
+            print("Hosts:")
+            print("  local        Current machine")
+            print("  workstation  lzw@192.168.1.36")
+            print("  dmit         DMIT server (root@69.63.219.52)")
+            print()
+            print("Examples:")
+            print("  ww host              Show all hosts")
+            print("  ww host local")
+            print("  ww host workstation")
+            print("  ww host local workstation")
+            return
+    else:
+        targets = sys.argv[1:]
 
-    targets = sys.argv[1:]
     first = True
     for target in targets:
         if target not in MACHINES:
-            print(f"Unknown machine: {target}")
+            print(f"Unknown host: {target}")
             print(f"Available: {', '.join(MACHINES.keys())}")
             sys.exit(1)
         if not first:
