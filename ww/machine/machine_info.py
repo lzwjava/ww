@@ -7,7 +7,7 @@ def run(cmd, remote=None, ssh_args=""):
     try:
         if remote:
             cmd = f"ssh -o ConnectTimeout=5 -o ProxyCommand=none {ssh_args} {remote} {cmd}"
-        r = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=10)
+        r = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=15)
         if r.returncode == 0:
             return r.stdout.strip()
     except (subprocess.SubprocessError, subprocess.TimeoutExpired):
@@ -15,37 +15,116 @@ def run(cmd, remote=None, ssh_args=""):
     return None
 
 
-def get_machine_info(remote=None, ssh_args=""):
-    """Collect basic machine info: hostname, cpu, load, memory, disk."""
+def run_script(script, remote=None, ssh_args=""):
+    """Run a multi-line shell script locally or pipe via stdin to SSH."""
+    try:
+        if remote:
+            cmd = (
+                f"ssh -o ConnectTimeout=5 -o ProxyCommand=none {ssh_args} {remote} bash"
+            )
+            r = subprocess.run(
+                cmd,
+                shell=True,
+                input=script,
+                capture_output=True,
+                text=True,
+                timeout=15,
+            )
+        else:
+            r = subprocess.run(
+                "bash",
+                shell=True,
+                input=script,
+                capture_output=True,
+                text=True,
+                timeout=15,
+            )
+        if r.returncode == 0:
+            return r.stdout.strip()
+    except (subprocess.SubprocessError, subprocess.TimeoutExpired):
+        pass
+    return None
+
+
+# Shell script that collects all info in one shot, outputting one value per line.
+# Section markers like ---HOSTNAME--- delimit output. Empty = not available.
+BATCH_SCRIPT = r"""
+echo "---HOSTNAME---"
+hostname
+echo "---CPU_MODEL---"
+if command -v lscpu >/dev/null 2>&1; then
+  lscpu | grep '^Model name' | sed 's/Model name:\s*//'
+else
+  sysctl -n machdep.cpu.brand_string 2>/dev/null
+fi
+echo "---CPU_CORES---"
+nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null
+echo "---LOAD---"
+if [ -f /proc/loadavg ]; then
+  awk '{print $1, $2, $3}' /proc/loadavg
+else
+  sysctl -n vm.loadavg 2>/dev/null | awk '{print $2, $3, $4}'
+fi
+echo "---MEMORY---"
+if command -v free >/dev/null 2>&1; then
+  free -h | awk '/^Mem:/{print $3"/"$2" used"}'
+else
+  echo "macos_mem"
+fi
+echo "---DISK---"
+df -h / | awk 'NR==2{print $3"/"$2" used ("$5")"}'
+echo "---UPTIME---"
+uptime -p 2>/dev/null || uptime | sed 's/.*up /up /' | sed 's/,.*//'
+echo "---GPU---"
+nvidia-smi --query-gpu=name,memory.used,memory.total --format=csv,noheader,nounits 2>/dev/null
+echo "---SERVICES---"
+"""
+
+
+def build_batch_script(services=None):
+    """Append service checks to the batch script."""
+    script = BATCH_SCRIPT
+    if services:
+        for svc in services:
+            script += f"pgrep -x {svc} >/dev/null 2>&1 && echo '{svc}=UP' || echo '{svc}=DOWN'\n"
+    script += 'echo "---END---"\n'
+    return script
+
+
+def get_machine_info(remote=None, ssh_args="", services=None):
+    """Collect basic machine info in a single SSH call."""
+    script = build_batch_script(services)
+    raw = run_script(script, remote, ssh_args)
+    if not raw:
+        return None
+
+    lines = raw.split("\n")
+    sections = {}
+    current = None
+    for line in lines:
+        if line.startswith("---") and line.endswith("---"):
+            tag = line.strip("-")
+            if tag == "END":
+                break
+            current = tag
+            sections[current] = []
+        elif current is not None:
+            sections[current].append(line)
+
+    def get(section):
+        vals = [v for v in sections.get(section, []) if v.strip()]
+        return vals[0].strip() if vals else None
+
     info = {}
-
-    # Hostname
-    info["hostname"] = run("hostname", remote, ssh_args) or "unknown"
-
-    # CPU cores
-    cpu_cores = run("nproc", remote, ssh_args)
-    if not cpu_cores:
-        cpu_cores = run("sysctl -n hw.ncpu", remote, ssh_args)
-    info["cpu_cores"] = cpu_cores or "?"
-
-    # CPU model (first line)
-    cpu_model = run(
-        "lscpu | grep '^Model name' | sed 's/Model name:\\s*//'", remote, ssh_args
-    )
-    if not cpu_model:
-        cpu_model = run("sysctl -n machdep.cpu.brand_string", remote, ssh_args)
-    info["cpu_model"] = cpu_model or "unknown"
-
-    # Load average
-    load = run("cat /proc/loadavg | awk '{print $1, $2, $3}'", remote, ssh_args)
-    if not load:
-        load = run("sysctl -n vm.loadavg | awk '{print $2, $3, $4}'", remote, ssh_args)
-    info["load"] = load or "?"
+    info["hostname"] = get("HOSTNAME") or "unknown"
+    info["cpu_model"] = get("CPU_MODEL") or "unknown"
+    info["cpu_cores"] = get("CPU_CORES") or "?"
+    info["load"] = get("LOAD") or "?"
 
     # Memory
-    mem = run('free -h | awk \'/^Mem:/{print $3"/"$2" used"}\'', remote, ssh_args)
-    if not mem:
-        # macOS: use sysctl for total, vm_stat for usage
+    mem = get("MEMORY")
+    if mem == "macos_mem" or not mem:
+        # macOS fallback — run separately (local only, so fast)
         page_size = run(
             "vm_stat | head -1 | grep -o '[0-9]*' | tail -1", remote, ssh_args
         )
@@ -55,7 +134,7 @@ def get_machine_info(remote=None, ssh_args=""):
             total_gb = int(total_bytes) / 1073741824
             used = run(
                 f"vm_stat | awk -v ps={ps} "
-                "'/Pages active/{{act=$3}} /Pages wired/{{wired=$3}} "
+                "'/Pages active/{act=$3} /Pages wired/{wired=$3} "
                 'END{printf "%.1f", (act+wired)*ps/1073741824}\'',
                 remote,
                 ssh_args,
@@ -64,24 +143,12 @@ def get_machine_info(remote=None, ssh_args=""):
                 mem = f"{used}G/{total_gb:.0f}G used"
     info["memory"] = mem or "?"
 
-    # Disk
-    disk = run('df -h / | awk \'NR==2{print $3"/"$2" used ("$5")"}\'', remote, ssh_args)
-    info["disk"] = disk or "?"
+    info["disk"] = get("DISK") or "?"
+    info["uptime"] = get("UPTIME") or "?"
 
-    # Uptime
-    uptime = run("uptime -p", remote, ssh_args)
-    if not uptime:
-        uptime = run("uptime | sed 's/.*up /up /' | sed 's/,.*//'", remote, ssh_args)
-    info["uptime"] = uptime or "?"
-
-    # GPU (NVIDIA only, skip if not present)
-    gpu = run(
-        "nvidia-smi --query-gpu=name,memory.used,memory.total --format=csv,noheader,nounits 2>/dev/null",
-        remote,
-        ssh_args,
-    )
+    # GPU
+    gpu = get("GPU")
     if gpu and "failed" not in gpu.lower():
-        # Format: name, used, total
         parts = [p.strip() for p in gpu.split(",")]
         if len(parts) >= 3:
             info["gpu"] = f"{parts[0]} ({parts[1]}MB/{parts[2]}MB)"
@@ -90,10 +157,19 @@ def get_machine_info(remote=None, ssh_args=""):
     else:
         info["gpu"] = None
 
+    # Services
+    svc_lines = sections.get("SERVICES", [])
+    svc_results = []
+    if services:
+        for svc in services:
+            found = any(line.strip() == f"{svc}=UP" for line in svc_lines)
+            svc_results.append((svc, found))
+    info["services"] = svc_results
+
     return info
 
 
-def print_info(info, label):
+def print_info(info, label, services=None):
     """Print machine info in a compact format."""
     print(f"--- {label} ({info['hostname']}) ---")
     print(f"  CPU:    {info['cpu_model']} ({info['cpu_cores']} cores)")
@@ -103,6 +179,11 @@ def print_info(info, label):
     print(f"  Uptime: {info['uptime']}")
     if info.get("gpu"):
         print(f"  GPU:    {info['gpu']}")
+    if services:
+        for name, up in services:
+            icon = "✓" if up else "✗"
+            status = "running" if up else "NOT running"
+            print(f"  {icon} {name}: {status}")
 
 
 MACHINES = {
@@ -112,6 +193,7 @@ MACHINES = {
         "label": "DMIT",
         "remote": "root@69.63.219.52",
         "ssh_args": "-i ~/projects/DMIT-KiXdN3dnsQ-id_rsa/id_rsa.pem",
+        "services": ["hysteria"],
     },
 }
 
@@ -142,5 +224,13 @@ def main():
             print()
         first = False
         cfg = MACHINES[target]
-        info = get_machine_info(remote=cfg["remote"], ssh_args=cfg.get("ssh_args", ""))
-        print_info(info, cfg["label"])
+        info = get_machine_info(
+            remote=cfg["remote"],
+            ssh_args=cfg.get("ssh_args", ""),
+            services=cfg.get("services", []),
+        )
+        if not info:
+            print(f"--- {cfg['label']} ---")
+            print("  Failed to connect")
+        else:
+            print_info(info, cfg["label"], services=info.get("services", []))

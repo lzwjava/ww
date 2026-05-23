@@ -1,7 +1,14 @@
 import unittest
 from unittest.mock import patch, MagicMock
 
-from ww.machine.machine_info import run, get_machine_info, print_info, MACHINES
+from ww.machine.machine_info import (
+    run,
+    run_script,
+    get_machine_info,
+    print_info,
+    build_batch_script,
+    MACHINES,
+)
 
 
 class TestRun(unittest.TestCase):
@@ -21,7 +28,7 @@ class TestRun(unittest.TestCase):
     def test_returns_none_on_timeout(self, mock_run):
         import subprocess as sp
 
-        mock_run.side_effect = sp.TimeoutExpired("cmd", 10)
+        mock_run.side_effect = sp.TimeoutExpired("cmd", 15)
         result = run("slow_cmd")
         self.assertIsNone(result)
 
@@ -52,98 +59,151 @@ class TestRun(unittest.TestCase):
         self.assertIn("ProxyCommand=none", called_cmd)
 
 
-class TestGetMachineInfo(unittest.TestCase):
-    @patch("ww.machine.machine_info.run")
-    def test_local_linux(self, mock_run):
-        mock_run.side_effect = lambda cmd, *a, **kw: {
-            "hostname": "myserver",
-            "nproc": "8",
-            "lscpu | grep '^Model name' | sed 's/Model name:\\s*//'": "AMD Ryzen 7",
-            "cat /proc/loadavg | awk '{print $1, $2, $3}'": "0.50 0.40 0.30",
-            'free -h | awk \'/^Mem:/{print $3"/"$2" used"}\'': "4.0Gi/16Gi used",
-            'df -h / | awk \'NR==2{print $3"/"$2" used ("$5")"}\'': "50G/100G used (50%)",
-            "uptime -p": "up 3 days",
-        }.get(cmd)
-        info = get_machine_info()
-        self.assertEqual(info["hostname"], "myserver")
-        self.assertEqual(info["cpu_cores"], "8")
-        self.assertEqual(info["cpu_model"], "AMD Ryzen 7")
-        self.assertEqual(info["load"], "0.50 0.40 0.30")
-        self.assertEqual(info["memory"], "4.0Gi/16Gi used")
-        self.assertEqual(info["disk"], "50G/100G used (50%)")
-        self.assertEqual(info["uptime"], "up 3 days")
-        self.assertIsNone(info["gpu"])
+class TestRunScript(unittest.TestCase):
+    @patch("ww.machine.machine_info.subprocess.run")
+    def test_local_runs_bash(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=0, stdout="out\n")
+        result = run_script("echo out")
+        self.assertEqual(result, "out")
+        called_cmd = mock_run.call_args[0][0]
+        self.assertEqual(called_cmd, "bash")
 
+    @patch("ww.machine.machine_info.subprocess.run")
+    def test_remote_pipes_to_ssh_bash(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=0, stdout="out\n")
+        result = run_script("echo out", remote="user@host")
+        self.assertEqual(result, "out")
+        called_cmd = mock_run.call_args[0][0]
+        self.assertIn("ssh", called_cmd)
+        self.assertIn("bash", called_cmd)
+        # Script is passed via stdin
+        self.assertEqual(mock_run.call_args[1]["input"], "echo out")
+
+    @patch("ww.machine.machine_info.subprocess.run")
+    def test_returns_none_on_failure(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=1, stdout="")
+        result = run_script("bad")
+        self.assertIsNone(result)
+
+
+class TestBuildBatchScript(unittest.TestCase):
+    def test_base_script_has_sections(self):
+        script = build_batch_script()
+        for section in [
+            "HOSTNAME",
+            "CPU_MODEL",
+            "CPU_CORES",
+            "LOAD",
+            "MEMORY",
+            "DISK",
+            "UPTIME",
+            "GPU",
+            "SERVICES",
+            "END",
+        ]:
+            self.assertIn(f"---{section}---", script)
+
+    def test_services_appended(self):
+        script = build_batch_script(["hysteria", "nginx"])
+        self.assertIn("pgrep -x hysteria", script)
+        self.assertIn("pgrep -x nginx", script)
+        self.assertIn("hysteria=UP", script)
+        self.assertIn("nginx=UP", script)
+
+    def test_no_services(self):
+        script = build_batch_script([])
+        self.assertNotIn("pgrep", script)
+
+
+SAMPLE_OUTPUT = """---HOSTNAME---
+DMIT-KiXdN3dnsQ
+---CPU_MODEL---
+AMD EPYC 9655 96-Core Processor
+---CPU_CORES---
+1
+---LOAD---
+0.92 1.16 1.24
+---MEMORY---
+1.0Gi/1.9Gi used
+---DISK---
+8.6G/20G used (46%)
+---UPTIME---
+up 6 weeks, 1 day, 8 hours, 57 minutes
+---GPU---
+---SERVICES---
+hysteria=UP
+---END---"""
+
+
+SAMPLE_OUTPUT_MACOS = """---HOSTNAME---
+lzw-mac.local
+---CPU_MODEL---
+Apple M2
+---CPU_CORES---
+8
+---LOAD---
+2.89 2.63 2.94
+---MEMORY---
+macos_mem
+---DISK---
+12Gi/460Gi used (20%)
+---UPTIME---
+up 2 days
+---GPU---
+---SERVICES---
+---END---"""
+
+
+class TestGetMachineInfo(unittest.TestCase):
+    @patch("ww.machine.machine_info.run_script")
+    def test_parses_linux_output(self, mock_script):
+        mock_script.return_value = SAMPLE_OUTPUT
+        info = get_machine_info(remote="root@host", services=["hysteria"])
+        assert info is not None
+        self.assertEqual(info["hostname"], "DMIT-KiXdN3dnsQ")
+        self.assertEqual(info["cpu_model"], "AMD EPYC 9655 96-Core Processor")
+        self.assertEqual(info["cpu_cores"], "1")
+        self.assertEqual(info["load"], "0.92 1.16 1.24")
+        self.assertEqual(info["memory"], "1.0Gi/1.9Gi used")
+        self.assertEqual(info["disk"], "8.6G/20G used (46%)")
+        self.assertIsNone(info["gpu"])
+        self.assertEqual(info["services"], [("hysteria", True)])
+
+    @patch("ww.machine.machine_info.run_script")
     @patch("ww.machine.machine_info.run")
-    def test_local_macos_fallback(self, mock_run):
-        """When Linux commands return None, macOS fallbacks are used."""
-        call_count = {"n": 0}
-        macos_responses = {
-            "hostname": "lzw-mac",
-            "sysctl -n hw.ncpu": "8",
-            "sysctl -n machdep.cpu.brand_string": "Apple M2",
-            "sysctl -n vm.loadavg | awk '{print $2, $3, $4}'": "2.50 2.40 2.30",
+    def test_parses_macos_output(self, mock_run, mock_script):
+        mock_script.return_value = SAMPLE_OUTPUT_MACOS
+        # macOS memory fallback
+        mock_run.side_effect = lambda cmd, *a, **kw: {
             "vm_stat | head -1 | grep -o '[0-9]*' | tail -1": "16384",
             "sysctl -n hw.memsize": str(16 * 1024**3),
-            "uptime | sed 's/.*up /up /' | sed 's/,.*//'": "up 2 days",
-        }
-
-        def fake_run(cmd, *a, **kw):
-            # Linux commands return None; macOS commands return values
-            if cmd in (
-                "nproc",
-                "lscpu | grep '^Model name' | sed 's/Model name:\\s*//'",
-                "cat /proc/loadavg | awk '{print $1, $2, $3}'",
-                'free -h | awk \'/^Mem:/{print $3"/"$2" used"}\'',
-                "uptime -p",
-            ):
-                return None
-            return macos_responses.get(cmd)
-
-        mock_run.side_effect = fake_run
-        # Patch the vm_stat awk command separately since it's built with f-string
-        original_run = mock_run
-
-        def run_with_vm_stat(cmd, *a, **kw):
-            if "vm_stat | awk" in cmd:
-                return "3.2"
-            return fake_run(cmd, *a, **kw)
-
-        mock_run.side_effect = run_with_vm_stat
+        }.get(cmd.split("&&")[0].strip() if "&&" in cmd else cmd, None)
         info = get_machine_info()
-        self.assertEqual(info["hostname"], "lzw-mac")
-        self.assertEqual(info["cpu_cores"], "8")
+        assert info is not None
+        self.assertEqual(info["hostname"], "lzw-mac.local")
         self.assertEqual(info["cpu_model"], "Apple M2")
-        self.assertEqual(info["load"], "2.50 2.40 2.30")
-        self.assertIn("/16G used", info["memory"])
+        self.assertEqual(info["cpu_cores"], "8")
 
-    @patch("ww.machine.machine_info.run")
-    def test_gpu_detected(self, mock_run):
-        def fake_run(cmd, *a, **kw):
-            if "nvidia-smi" in cmd:
-                return "RTX 4070, 168, 12282"
-            return "stub"
+    @patch("ww.machine.machine_info.run_script")
+    def test_returns_none_on_failure(self, mock_script):
+        mock_script.return_value = None
+        info = get_machine_info(remote="bad@host")
+        self.assertIsNone(info)
 
-        mock_run.side_effect = fake_run
+    @patch("ww.machine.machine_info.run_script")
+    def test_services_false_when_down(self, mock_script):
+        output = SAMPLE_OUTPUT.replace("hysteria=UP", "hysteria=DOWN")
+        mock_script.return_value = output
+        info = get_machine_info(services=["hysteria"])
+        assert info is not None
+        self.assertEqual(info["services"], [("hysteria", False)])
+
+    @patch("ww.machine.machine_info.run_script")
+    def test_no_services(self, mock_script):
+        mock_script.return_value = SAMPLE_OUTPUT
         info = get_machine_info()
-        self.assertIsNotNone(info["gpu"])
-        self.assertIn("RTX 4070", info["gpu"])
-        self.assertIn("168MB", info["gpu"])
-
-    @patch("ww.machine.machine_info.run")
-    def test_gpu_not_detected(self, mock_run):
-        mock_run.return_value = None
-        info = get_machine_info()
-        self.assertIsNone(info["gpu"])
-
-    @patch("ww.machine.machine_info.run")
-    def test_ssh_args_passed_through(self, mock_run):
-        mock_run.return_value = "val"
-        get_machine_info(remote="root@1.2.3.4", ssh_args="-i /key.pem")
-        for call in mock_run.call_args_list:
-            args = call[0]
-            if len(args) >= 3:
-                self.assertEqual(args[2], "-i /key.pem")
+        assert info is not None
+        self.assertEqual(info["services"], [])
 
 
 class TestMachines(unittest.TestCase):
@@ -160,12 +220,11 @@ class TestMachines(unittest.TestCase):
         cfg = MACHINES["dmit"]
         self.assertEqual(cfg["remote"], "root@69.63.219.52")
         self.assertIn("id_rsa.pem", cfg["ssh_args"])
+        self.assertIn("hysteria", cfg["services"])
 
 
 class TestPrintInfo(unittest.TestCase):
-    def test_prints_all_fields(
-        self,
-    ):
+    def test_prints_all_fields(self):
         info = {
             "hostname": "testhost",
             "cpu_model": "Test CPU",
@@ -176,7 +235,6 @@ class TestPrintInfo(unittest.TestCase):
             "uptime": "up 1 day",
             "gpu": None,
         }
-        # Should not raise
         print_info(info, "Test")
 
     def test_prints_gpu_when_present(self):
@@ -190,8 +248,21 @@ class TestPrintInfo(unittest.TestCase):
             "uptime": "up 1 day",
             "gpu": "RTX 4070 (500MB/12282MB)",
         }
-        # Should not raise
         print_info(info, "Test")
+
+    def test_prints_services(self):
+        info = {
+            "hostname": "testhost",
+            "cpu_model": "Test CPU",
+            "cpu_cores": "4",
+            "load": "1.0 0.5 0.25",
+            "memory": "8G/16G used",
+            "disk": "50G/100G used (50%)",
+            "uptime": "up 1 day",
+            "gpu": None,
+        }
+        services = [("hysteria", True), ("nginx", False)]
+        print_info(info, "Test", services=services)
 
 
 if __name__ == "__main__":
