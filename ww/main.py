@@ -205,6 +205,11 @@ def _print_help():
         "  ww whisper refine <file.txt>  Refine transcription to .md via OpenRouter (deepseek-v4-flash)"
     )
     print("")
+    print("Zed:")
+    print(
+        "  ww zed [path]             Open Zed connected to remote workstation via SSH"
+    )
+    print("")
     print("Host:")
     print("  ww host                   Show all hosts")
     print("  ww host local             Local machine")
@@ -1277,6 +1282,11 @@ def main():
             print("Commands:")
             print("  install   Install zsh tab completion to ~/.zsh/completions/")
             print("  script    Print the completion script to stdout")
+
+    elif group == "zed":
+        from ww.zed.zed_remote import main as m
+
+        m()
 
     else:
         print(f"Unknown command: {group}")
