@@ -231,6 +231,8 @@ def _print_help():
     print("")
     print("Ghostty:")
     print("  ww ghostty                Open a Ghostty window at a random position")
+    print("  ww ghostty list           List all open Ghostty windows")
+    print("  ww ghostty focus <N>      Focus a Ghostty window by index or title")
     print("  ww ghostty close          Close all Ghostty windows")
     print("")
     print("Clash:")
@@ -1023,9 +1025,19 @@ def main():
             print("")
             print("Commands:")
             print("  (no args)   Open a Ghostty window at random position")
+            print("  list        List all open Ghostty windows")
+            print("  focus <N>   Focus a window by index or title substring")
             print("  close       Close all Ghostty windows")
         elif subcmd == "" or subcmd == "random":
             from ww.ghostty.random_window import main as m
+
+            m()
+        elif subcmd == "list":
+            from ww.ghostty.list_windows import main as m
+
+            m()
+        elif subcmd == "focus":
+            from ww.ghostty.focus import main as m
 
             m()
         elif subcmd == "close":
