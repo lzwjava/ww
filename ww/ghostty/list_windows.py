@@ -1,4 +1,8 @@
-"""List all open Ghostty windows with ID, title, position, and size."""
+"""List all open Ghostty windows with ID, title, position, and size.
+
+For windows titled "hermes", also queries running hermes processes
+to show which project directory each instance is working in.
+"""
 
 import subprocess
 import sys
@@ -84,6 +88,41 @@ def get_ghostty_windows():
     return windows
 
 
+def get_hermes_cwds():
+    """Get CWDs of all running hermes processes.
+
+    Returns list of dicts: [{pid, cwd}, ...]
+    """
+    try:
+        result = subprocess.run(
+            ["pgrep", "-f", "Python.*hermes"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode != 0:
+            return []
+
+        pids = [p.strip() for p in result.stdout.strip().splitlines() if p.strip()]
+        cwds = []
+        for pid in pids:
+            proc = subprocess.run(
+                ["lsof", "-p", pid, "-a", "-d", "cwd"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            for line in proc.stdout.splitlines():
+                if "cwd" in line:
+                    parts = line.split()
+                    if len(parts) >= 9:
+                        cwds.append({"pid": pid, "cwd": parts[8]})
+                        break
+        return cwds
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return []
+
+
 def main():
     windows = get_ghostty_windows()
 
@@ -108,3 +147,21 @@ def main():
         print(
             f"{w['index']:>{idx_w}}. {wid_str:<{id_w}}  {w['title']:<{title_w}}  {pos_str:<{pos_w}}  {size_str}"
         )
+
+    # Show hermes CWD info for windows titled "hermes"
+    hermes_wins = [w for w in windows if w["title"].strip() == "hermes"]
+    if hermes_wins:
+        hermes_cwds = get_hermes_cwds()
+        if hermes_cwds:
+            # Extract unique project names
+            seen = set()
+            unique_projects = []
+            for h in hermes_cwds:
+                cwd = h["cwd"]
+                proj = cwd.split("/projects/")[-1] if "/projects/" in cwd else cwd
+                if proj not in seen:
+                    seen.add(proj)
+                    unique_projects.append(proj)
+
+            if unique_projects:
+                print(f"\nHermes instances: {', '.join(unique_projects)}")
