@@ -1,7 +1,7 @@
-"""List all open Ghostty windows with ID, title, position, and size.
+"""List all open Ghostty windows with ID, title, position, size, and hermes project info.
 
-For windows titled "hermes", also queries running hermes processes
-to show which project directory each instance is working in.
+Uses CGWindowList for window enumeration and AXUIElement for hermes project
+directory matching (via AXDocument attribute).
 """
 
 import subprocess
@@ -41,15 +41,74 @@ func listGhosttyWindows() -> [WinInfo] {
     return results
 }
 
+// Get AXDocument for each hermes window (working directory)
+func getHermesDocs() -> [String: String] {
+    // posKey -> project name
+    var result: [String: String] = [:]
+    // Find the main Ghostty process (the one with the most windows)
+    let ghosttyApps = NSWorkspace.shared.runningApplications.filter {
+        $0.localizedName?.lowercased().contains("ghostty") == true
+    }
+    var bestApp: NSRunningApplication?
+    var bestCount = 0
+    for app in ghosttyApps {
+        let el = AXUIElementCreateApplication(app.processIdentifier)
+        var ref: CFTypeRef?
+        AXUIElementCopyAttributeValue(el, kAXWindowsAttribute as CFString, &ref)
+        let count = (ref as? [AXUIElement])?.count ?? 0
+        if count > bestCount {
+            bestCount = count
+            bestApp = app
+        }
+    }
+    guard let ghostty = bestApp else { return result }
+
+    let appEl = AXUIElementCreateApplication(ghostty.processIdentifier)
+    var winsRef: CFTypeRef?
+    AXUIElementCopyAttributeValue(appEl, kAXWindowsAttribute as CFString, &winsRef)
+    guard let windows = winsRef as? [AXUIElement] else { return result }
+
+    for win in windows {
+        var titleRef: CFTypeRef?
+        AXUIElementCopyAttributeValue(win, kAXTitleAttribute as CFString, &titleRef)
+        let title = (titleRef as? String ?? "").trimmingCharacters(in: .whitespaces)
+        guard title == "hermes" else { continue }
+
+        var docRef: CFTypeRef?
+        AXUIElementCopyAttributeValue(win, kAXDocumentAttribute as CFString, &docRef)
+        if let doc = docRef as? String {
+            let path = doc.replacingOccurrences(of: "file://", with: "")
+            let proj = path.split(separator: "/").last.map { String($0) } ?? path
+            // Use position as key
+            var posRef: CFTypeRef?
+            AXUIElementCopyAttributeValue(win, kAXPositionAttribute as CFString, &posRef)
+            var pos = CGPoint.zero
+            if let pv = posRef { AXValueGetValue(pv as! AXValue, .cgPoint, &pos) }
+            let key = "\(Int(pos.x)),\(Int(pos.y))"
+            result[key] = proj
+        }
+    }
+    return result
+}
+
 let windows = listGhosttyWindows()
+let hermesDocs = getHermesDocs()
+
 for (i, win) in windows.enumerated() {
-    print("\(i + 1)\t\(win.id)\t\(win.name)\t\(win.x),\(win.y)\t\(win.w)x\(win.h)")
+    var extra = ""
+    if win.name == "hermes" || win.name == "hermes " {
+        let key = "\(win.x),\(win.y)"
+        if let proj = hermesDocs[key] {
+            extra = proj
+        }
+    }
+    print("\(i + 1)\t\(win.id)\t\(win.name)\t\(win.x),\(win.y)\t\(win.w)x\(win.h)\t\(extra)")
 }
 """
 
 
 def get_ghostty_windows():
-    """Return list of dicts: [{index, id, title, x, y, w, h}, ...]"""
+    """Return list of dicts: [{index, id, title, x, y, w, h, project}, ...]"""
     result = subprocess.run(
         ["swift", "-e", SWIFT_CODE],
         capture_output=True,
@@ -58,20 +117,22 @@ def get_ghostty_windows():
     )
     if result.returncode != 0:
         err = result.stderr.strip()
-        if "not allowed assistive access" in err:
-            print(
-                "Error: Accessibility permissions required. Grant in System Settings > Privacy & Security > Accessibility."
-            )
-        else:
-            print(f"Error: {err or 'Swift script failed'}")
+        print(f"Error: {err or 'Swift script failed'}")
         sys.exit(1)
 
     windows = []
     for line in result.stdout.strip().splitlines():
         parts = line.split("\t")
-        if len(parts) != 5:
+        if len(parts) < 6:
             continue
-        idx_str, wid_str, title, pos, size = parts
+        idx_str, wid_str, title, pos, size, project = (
+            parts[0],
+            parts[1],
+            parts[2],
+            parts[3],
+            parts[4],
+            parts[5].strip(),
+        )
         x_str, y_str = pos.split(",")
         w_str, h_str = size.split("x")
         windows.append(
@@ -83,44 +144,10 @@ def get_ghostty_windows():
                 "y": int(y_str),
                 "w": int(w_str),
                 "h": int(h_str),
+                "project": project,
             }
         )
     return windows
-
-
-def get_hermes_cwds():
-    """Get CWDs of all running hermes processes.
-
-    Returns list of dicts: [{pid, cwd}, ...]
-    """
-    try:
-        result = subprocess.run(
-            ["pgrep", "-f", "Python.*hermes"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-        if result.returncode != 0:
-            return []
-
-        pids = [p.strip() for p in result.stdout.strip().splitlines() if p.strip()]
-        cwds = []
-        for pid in pids:
-            proc = subprocess.run(
-                ["lsof", "-p", pid, "-a", "-d", "cwd"],
-                capture_output=True,
-                text=True,
-                timeout=5,
-            )
-            for line in proc.stdout.splitlines():
-                if "cwd" in line:
-                    parts = line.split()
-                    if len(parts) >= 9:
-                        cwds.append({"pid": pid, "cwd": parts[8]})
-                        break
-        return cwds
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        return []
 
 
 def main():
@@ -132,10 +159,10 @@ def main():
 
     # Column widths
     idx_w = max(len(str(len(windows))), 5)
-    id_w = max(len(str(max(w["id"] for w in windows))), 2) + 2  # brackets
+    id_w = max(len(str(max(w["id"] for w in windows))), 2) + 2
     title_w = max(len(w["title"]) for w in windows)
     title_w = max(title_w, 5)
-    pos_w = 15  # (x, y)
+    pos_w = 15
 
     print(
         f" {'#':<{idx_w}}  {'Window ID':<{id_w}}  {'Title':<{title_w}}  {'Position':<{pos_w}}  {'Size'}"
@@ -144,24 +171,9 @@ def main():
         wid_str = f"[{w['id']}]"
         pos_str = f"({w['x']},{w['y']})"
         size_str = f"{w['w']}x{w['h']}"
+        title = w["title"]
+        if w["project"]:
+            title = f"{title} [{w['project']}]"
         print(
-            f"{w['index']:>{idx_w}}. {wid_str:<{id_w}}  {w['title']:<{title_w}}  {pos_str:<{pos_w}}  {size_str}"
+            f"{w['index']:>{idx_w}}. {wid_str:<{id_w}}  {title:<{title_w}}  {pos_str:<{pos_w}}  {size_str}"
         )
-
-    # Show hermes CWD info for windows titled "hermes"
-    hermes_wins = [w for w in windows if w["title"].strip() == "hermes"]
-    if hermes_wins:
-        hermes_cwds = get_hermes_cwds()
-        if hermes_cwds:
-            # Extract unique project names
-            seen = set()
-            unique_projects = []
-            for h in hermes_cwds:
-                cwd = h["cwd"]
-                proj = cwd.split("/projects/")[-1] if "/projects/" in cwd else cwd
-                if proj not in seen:
-                    seen.add(proj)
-                    unique_projects.append(proj)
-
-            if unique_projects:
-                print(f"\nHermes instances: {', '.join(unique_projects)}")
