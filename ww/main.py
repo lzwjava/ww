@@ -219,6 +219,7 @@ def _print_help():
     print("  ww linux proxy-setup  Interactively configure APT proxy")
     print("  ww linux wol          Send a Wake-on-LAN packet")
     print("  ww linux terminal     Open a fullscreen terminal")
+    print("  ww linux switch-keys  Swap Caps Lock and Left Control keys")
     print("")
     print("Cloudflare:")
     print(

@@ -18,6 +18,7 @@ def _print_help():
     print("  setup        Run general Linux setup tasks")
     print("  wol          Send a Wake-on-LAN packet")
     print("  terminal     Open a fullscreen terminal")
+    print("  switch-keys  Swap Caps Lock and Left Control keys")
 
 
 def main():
@@ -56,6 +57,10 @@ def main():
         run_wol()
     elif subcmd == "terminal":
         from ww.linux.terminal import run
+
+        run()
+    elif subcmd == "switch-keys":
+        from ww.linux.switch_keys import run
 
         run()
     else:
