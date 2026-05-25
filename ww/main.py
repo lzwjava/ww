@@ -188,6 +188,12 @@ def _print_help():
     print("Action:")
     print("  ww action <workflow.yml>  Trigger a GitHub Actions workflow via gh CLI")
     print("")
+    print("Actions:")
+    print(
+        "  ww actions check          Check recent workflow runs (default: gh-pages.yml)"
+    )
+    print("  ww actions check --repo R --count N  Specify repo and count")
+    print("")
     print("Degree (GDUFS 自考):")
     print("  ww degree                 AI-categorize recent self-study notices")
     print("  ww degree practical       Filter notices about 实践考核 / scores")
@@ -1128,6 +1134,21 @@ def main():
         from ww.action.action import main as m
 
         m()
+
+    elif group == "actions":
+        subcmd = _pop_subcmd()
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww actions <command>")
+            print()
+            print("Commands:")
+            print("  check   Check recent workflow runs (default: gh-pages.yml)")
+        elif subcmd == "check":
+            from ww.actions.check import main as m
+
+            m()
+        else:
+            print(f"Unknown actions command: {subcmd}")
+            sys.exit(1)
 
     elif group == "openrouter":
         subcmd = _pop_subcmd()
