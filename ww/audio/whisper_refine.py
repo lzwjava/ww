@@ -8,38 +8,15 @@ from ww.llm.openrouter_client import stream_openrouter_api
 
 REFINE_RULE = """Refine a Raw Whisper Meeting Transcription into a Polished, Comprehensive Article
 
-CRITICAL INSTRUCTION — This is the single most important paragraph in this entire prompt. Read it twice.
-
-This is a REFINEMENT task, NOT a summarization task. Your #1 failure mode as a language model is condensing — collapsing 10 points into 3, replacing specific examples with vague summaries, turning a 5-minute nuanced explanation into two sentences. You must actively and continuously fight this tendency. The output MUST be approximately the SAME LENGTH as the input (within 85–115% of the input's word count). If the input is 5,000 words, your output should be 4,250–5,750 words — NOT 1,500 words. If you find your output is less than 80% of the input length, you are summarizing too aggressively. Go back and add the details you dropped.
-
-QUANTITATIVE RULE: For every distinct speaker utterance in the input that contains substantive content (a claim, example, question, answer, argument, or explanation), your output must contain at least one sentence covering that utterance. Do not skip any speaker's contribution. If someone said something — even briefly — it must appear in the output.
-
-Think of this as: you are a professional meeting scribe who is also an excellent editor. Your job is to take messy, rambling, interleaved conversation and turn it into a clean, readable, well-organized article — without losing a single meaningful thing that was said. You are NOT an abstractor. You are NOT a summarizer. You are a CLEANER — you reorganize and polish, but you keep everything.
-
----
-
-### What "Too Summarized" Looks Like (DO NOT DO THIS)
-
-Input snippet (200 words of discussion about database migration):
-"Speaker 1 says they're considering PostgreSQL 16 because of the JSONB improvements, specifically the new JSON path query syntax. Speaker 2 asks about downtime. Speaker 1 says they tested it on staging and got 47 seconds of downtime with pg_upgrade using --link mode. Speaker 3 mentions they're worried about the replication lag during cutover, specifically with their 3 read replicas. Speaker 1 says they'll need to reconfigure streaming replication after the upgrade. Speaker 2 asks about rollback. Speaker 1 says they'll use pg_dump before the upgrade as a safety net. Speaker 3 asks about the timeline. Speaker 1 says Q2, probably mid-April. Speaker 2 says that conflicts with the product launch. Speaker 1 says they could push to early May. Speaker 3 says they'd prefer after the May 15 launch window."
-
-BAD output (summarized, ~50 words):
-"The group discussed migrating to PostgreSQL 16, weighing the JSONB improvements against downtime and replication concerns. They agreed on a Q2 or early May timeline, after the product launch."
-
-GOOD output (refined, ~180 words):
-"The discussion turned to PostgreSQL 16 migration. One participant highlighted the JSONB improvements as the primary motivation, specifically the new JSON path query syntax that would simplify their document queries. Another participant raised the question of downtime during the migration. The group reviewed testing results from staging: using `pg_upgrade` with `--link` mode, they measured 47 seconds of downtime — a figure they considered acceptable.
-
-A third participant expressed concern about replication lag during the cutover, noting they currently run 3 read replicas. The group discussed whether streaming replication would need to be reconfigured after the upgrade, and agreed it would. On the question of rollback, one participant proposed using `pg_dump` before the upgrade as a safety net.
-
-The timeline discussion revealed some tension. One participant proposed Q2, specifically mid-April. Another pointed out this conflicts with the product launch. The group discussed pushing to early May instead, and a third participant expressed a preference for scheduling the migration after the May 15 launch window to avoid compounding risk."
-
-Notice: the GOOD output is roughly the same length as the input. It captures every point: the specific PostgreSQL version, the JSON path syntax feature, the 47-second downtime, the --link mode, the 3 read replicas concern, the pg_dump rollback plan, the mid-April proposal, the product launch conflict, the early May alternative, and the May 15 preference. Nothing was dropped.
+IMPORTANT — Read this entire instruction carefully before proceeding. This is a REFINEMENT task, NOT a summarization task. Your natural tendency as a language model is to condense and simplify. You must actively resist that tendency here. The output should be approximately the same length as the input (in total word/character count), not dramatically shorter. If the input has 200 paragraphs of discussion, the output should have roughly 200 paragraphs of substance — just cleaned, organized, and polished. Every time you feel the urge to collapse three bullet points into one, or to write "they discussed various approaches" instead of listing each approach — stop and write out the details.
 
 ---
 
 Context: You are given a raw transcription file generated by Whisper from a recorded meeting conversation. Whisper does NOT emit speaker labels — utterances from multiple speakers are interleaved with no markers. The text may also contain noise, broken sentences, filler words, code-switching (especially Chinese-English mixed speech), and recognition errors. The meeting may be a technical discussion, a planning session, a design review, an interview, a brainstorming session, or any other type of conversation.
 
-Task: Read the provided transcription and produce a refined Markdown article that captures the full discussion in comprehensive detail. This is REFINEMENT, not summarization. Preserve every substantive point — restructure for clarity, but never condense or drop information. The cardinal sin is omission.
+Task: Read the provided transcription and produce a refined Markdown article that captures the full discussion in comprehensive detail. This is REFINEMENT, not summarization. Preserve every substantive point — restructure for clarity, but never condense or drop information.
+
+Think of this as: you are a professional meeting scribe who is also an excellent editor. Your job is to take messy, rambling, interleaved conversation and turn it into a clean, readable, well-organized article — without losing a single meaningful thing that was said.
 
 ---
 
@@ -59,10 +36,8 @@ Task: Read the provided transcription and produce a refined Markdown article tha
 - Organize the body under H2 section headings driven by natural topic shifts in the discussion. A topic shift occurs when the subject matter, context, or focus of the conversation meaningfully changes.
 - Use H3 sub-headings within sections when a section covers multiple distinct sub-topics. Do not force H3 headings where the section is already focused on a single coherent topic — a section with only one H3 is a sign that the H3 is probably the H2.
 - Within sections, break content into focused paragraphs by topic subtopic — typically 3–8 sentences each. Avoid walls of text (paragraphs over 10 sentences should be split) and avoid one-sentence paragraphs (which fragment the reading experience).
-- PREFER MORE PARAGRAPHS OVER FEWER. When in doubt, start a new paragraph. A 20-paragraph section is better than a 5-paragraph section that tries to cram everything into dense blocks.
 - Use bullet lists when the speakers genuinely enumerate items: steps in a process, options under consideration, pros and cons of a decision, named tools or technologies, criteria, requirements, risks, open questions. Use prose paragraphs for explanations, narratives, background context, and reasoned arguments.
 - Within bullet lists, each item should be substantive — not "Talked about databases" but "Discussed whether to migrate from PostgreSQL 14 to 16, weighing the JSONB performance improvements against the downtime required."
-- NEVER collapse a list of discussed items into a single summary sentence. If 7 tools were mentioned, list all 7. If 4 concerns were raised, list all 4. If 3 alternatives were compared, describe all 3.
 - When the conversation naturally follows a sequence (e.g., a walkthrough of an architecture, a step-by-step debugging session, a chronological retelling of events), preserve that sequence rather than forcing a topical regroup.
 
 ### Topic Grouping Across Time
@@ -71,17 +46,15 @@ Task: Read the provided transcription and produce a refined Markdown article tha
 
 ---
 
-## 2. Detail Preservation (Critical — Highest Priority — The Entire Point of This Task)
+## 2. Detail Preservation (Critical — Highest Priority)
 
-This is the most important section. The whole reason this prompt exists is to prevent detail loss. Violating these rules produces a bad output. Read each bullet carefully. Re-read them after you finish writing your output and before you submit it.
+This is the most important section. Violating these rules produces a bad output. Read each bullet carefully.
 
-### Anti-Summarization Rules (Non-Negotiable)
+### Anti-Summarization Rules
 - Do NOT summarize, simplify, compress, or condense the discussion. Cover every meaningful point that was made. If someone spent three minutes explaining a nuanced technical tradeoff, your output should reflect all three minutes of nuance — not a one-sentence gloss.
 - If the input contains 10 distinct points about a topic, your output must contain all 10 — even if you think 5 would be "cleaner." Cleanliness is achieved through organization and prose quality, not through deletion.
 - CRITICAL TEST: After writing a section, compare it against the relevant portion of the input. If you can point to a substantive claim, example, argument, or detail in the input that is absent from your output, you have failed. Revise.
-- SECOND CRITICAL TEST: Count the number of distinct substantive points in the input section and count them in your output section. If your count is less than 75% of the input count, you have summarized instead of refined. Add back the missing points.
-- Redundancy in the original transcript (the same person making the same point twice in the same words) should be collapsed to the clearest version — that is the one exception to "keep everything." But if two different people make the same point, or someone makes the same point in two different contexts, keep both.
-- When in doubt, KEEP IT. It is always better to include a point that turns out to be minor than to omit a point that turns out to be important. Err on the side of inclusion, never exclusion.
+- Redundancy in the original transcript (the same person making the same point twice in different words) should be collapsed to the clearest version — that is the one exception to "keep everything." But if two different people make the same point, or someone makes the same point in two different contexts, keep both.
 
 ### Specifics and Concrete Details
 - Preserve specific examples, anecdotes, numbers, names, dates, file paths, command names, configuration values, version numbers, metrics, benchmarks, URLs, and technical details exactly as discussed. If the input says "we saw a 47% improvement in p99 latency after switching the connection pool from HikariCP 5.0.1 to 5.1.0 with the new keepaliveTimeMs=30000 setting," your output must include all of those specifics — not "they improved latency by changing pool settings."
@@ -364,19 +337,16 @@ Use fenced code blocks with language specifiers for:
 - Use `[text](url)` for links when URLs are mentioned. If only a domain or service name is mentioned without a specific URL, do not link it.
 - Tables are acceptable when the discussion involves structured comparison data: pros/cons, feature matrices, benchmark results, timeline milestones. Use sparingly and only when a table genuinely improves readability over prose or a list.
 
-### Final Quality Check (MANDATORY — Do This Before Submitting)
-
-Before finalizing, perform these checks IN ORDER:
-1. **Length check**: Count the approximate word count of your output. Compare to the input word count. If your output is less than 85% of the input, you have summarized too aggressively. Go back and add the missing detail.
-2. **Coverage check**: Scan through the input paragraph by paragraph. For each paragraph, verify that the content appears in your output. If any substantive paragraph is missing, add it.
-3. **Specificity check**: Scan your output for any instance of "various," "several," "multiple," "a number of," "and so on," "etc.," "among other things," "they discussed," "they covered," or "they talked about" — each of these is a red flag that you collapsed detail. Replace each one with the actual content.
-4. Is every substantive point from the input present in the output?
-5. Are all numbers, names, dates, and technical specifics preserved exactly?
-6. Are all decisions and action items captured explicitly?
-7. Are there no vague collapse phrases?
-8. Are speaker labels entirely absent?
-9. Is the tone authentic to the original conversation?
-10. Does the output start directly with the H1 title, with no preamble?
+### Final Quality Check
+Before finalizing, mentally verify:
+1. Is every substantive point from the input present in the output? (Scan for omissions.)
+2. Are all numbers, names, dates, and technical specifics preserved exactly?
+3. Are all decisions and action items captured explicitly?
+4. Is the output approximately the same length as the input in substance?
+5. Are there no vague collapse phrases ("various topics," "and so on," "etc.")?
+6. Are speaker labels entirely absent?
+7. Is the tone authentic to the original conversation?
+8. Does the output start directly with the H1 title, with no preamble?
 """
 
 
