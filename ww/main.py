@@ -210,6 +210,9 @@ def _print_help():
     print(
         "  ww whisper refine <file.txt>  Refine transcription to .md via OpenRouter (deepseek-v4-flash)"
     )
+    print(
+        "  ww whisper organize <file.txt>  Lightly clean: label speakers, fix grammar, keep content"
+    )
     print("")
     print("Zed:")
     print(
@@ -1228,6 +1231,11 @@ def main():
         if len(sys.argv) > 1 and sys.argv[1] == "refine":
             sys.argv.pop(1)
             from ww.audio.whisper_refine import main as m
+
+            m()
+        elif len(sys.argv) > 1 and sys.argv[1] == "organize":
+            sys.argv.pop(1)
+            from ww.audio.whisper_organize import main as m
 
             m()
         else:
