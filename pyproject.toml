@@ -7,7 +7,7 @@ name = "ww"
 version = "0.1.0"
 description = "A cross-platform CLI toolkit for personal and enterprise automation, with LLM integration."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 dependencies = [
     "requests>=2.32.0",
     "pyperclip>=1.8.0",
@@ -31,7 +31,7 @@ dependencies = [
 ww = "ww.main:main"
 
 [tool.pyright]
-pythonVersion = "3.9"
+pythonVersion = "3.11"
 typeCheckingMode = "basic"
 reportMissingImports = true
 reportMissingModuleSource = false

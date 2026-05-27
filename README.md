@@ -341,6 +341,6 @@ ww <group> [command] [options]
 
 ## Requirements
 
-- Python >= 3.9
+- Python >= 3.11
 - [uv](https://docs.astral.sh/uv/) (recommended) or pip
 - See `pyproject.toml` for full dependency list

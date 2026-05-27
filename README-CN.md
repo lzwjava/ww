@@ -338,6 +338,6 @@ ww <命令组> [命令] [选项]
 
 ## 依赖
 
-- Python >= 3.9
+- Python >= 3.11
 - [uv](https://docs.astral.sh/uv/)（推荐）或 pip
 - 完整依赖列表见 `pyproject.toml`
