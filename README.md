@@ -8,9 +8,19 @@ A cross-platform CLI toolkit for developer productivity. Covers git workflows, G
 
 ## Installation
 
+**With [uv](https://docs.astral.sh/uv/) (recommended):**
+
+```bash
+uv sync
+```
+
+**With pip:**
+
 ```bash
 pip install -e .
 ```
+
+After install, run `ww` directly — no activation needed with `uv run ww ...`.
 
 ## Usage
 

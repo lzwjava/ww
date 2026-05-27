@@ -31,7 +31,7 @@ dependencies = [
 ww = "ww.main:main"
 
 [tool.pyright]
-pythonVersion = "3.8"
+pythonVersion = "3.9"
 typeCheckingMode = "basic"
 reportMissingImports = true
 reportMissingModuleSource = false
