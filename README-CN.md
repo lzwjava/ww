@@ -8,6 +8,14 @@
 
 ## 安装
 
+**使用 [uv](https://docs.astral.sh/uv/)（推荐）：**
+
+```bash
+uv sync
+```
+
+**使用 pip：**
+
 ```bash
 pip install -e .
 ```
@@ -330,5 +338,6 @@ ww <命令组> [命令] [选项]
 
 ## 依赖
 
-- Python >= 3.8
+- Python >= 3.9
+- [uv](https://docs.astral.sh/uv/)（推荐）或 pip
 - 完整依赖列表见 `pyproject.toml`
