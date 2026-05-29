@@ -171,6 +171,9 @@ def _print_help():
     print("  ww openrouter activity    Past week spend, requests, tokens (--days N)")
     print("  ww openrouter models      List available models")
     print("")
+    print("HuggingFace:")
+    print("  ww hf [username]          Show HuggingFace profile (default: lzwjava)")
+    print("")
     print("Env:")
     print(
         "  ww env update             Pick a top Arena model and update MODEL= in .env"
@@ -1201,6 +1204,11 @@ def main():
         else:
             print(f"Unknown llm command: {subcmd}")
             sys.exit(1)
+
+    elif group == "hf":
+        from ww.hf.hf import main as m
+
+        m()
 
     elif group == "env":
         subcmd = _pop_subcmd()
