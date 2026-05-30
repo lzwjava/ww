@@ -280,6 +280,11 @@ def _print_help():
     print("Completion:")
     print("  ww completion install     Install zsh tab completion")
     print("  ww completion script      Print completion script")
+    print("")
+    print("AMD Dev Cloud:")
+    print(
+        "  ww amd-dev-cloud snapshots   List snapshots (requires AMD_DEV_CLOUD_API_KEY)"
+    )
 
 
 def _pop_subcmd():
@@ -1354,6 +1359,21 @@ def main():
         from ww.zed.zed_remote import main as m
 
         m()
+
+    elif group == "amd-dev-cloud":
+        subcmd = _pop_subcmd()
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww amd-dev-cloud <command>")
+            print("")
+            print("Commands:")
+            print("  snapshots   List all snapshots")
+        elif subcmd == "snapshots":
+            from ww.amd_dev_cloud.snapshots import main as m
+
+            m()
+        else:
+            print(f"Unknown amd-dev-cloud command: {subcmd}")
+            sys.exit(1)
 
     else:
         print(f"Unknown command: {group}")
