@@ -874,6 +874,21 @@ def main():
             print(f"Unknown pdf command: {subcmd}")
             sys.exit(1)
 
+    elif group == "md":
+        subcmd = _pop_subcmd()
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww md <command>")
+            print("")
+            print("Commands:")
+            print("  md2jpg         Convert markdown to JPG via HTML+PDF (Chrome)")
+        elif subcmd == "md2jpg":
+            from ww.md.md2jpg import main as m
+
+            m()
+        else:
+            print(f"Unknown md command: {subcmd}")
+            sys.exit(1)
+
     elif group == "copilot":
         subcmd = _pop_subcmd()
         if subcmd == "" or subcmd in ("--help", "-h"):
