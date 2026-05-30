@@ -291,6 +291,9 @@ def _print_help():
     print(
         "  ww amd-dev-cloud end-train    Snapshot and destroy a GPU droplet"
     )
+    print(
+        "  ww amd-dev-cloud delete-snapshot  Delete a snapshot"
+    )
 
 
 def _pop_subcmd():
@@ -1372,11 +1375,16 @@ def main():
             print("Usage: ww amd-dev-cloud <command>")
             print("")
             print("Commands:")
-            print("  snapshots    List all snapshots")
-            print("  start-train  Create GPU droplet from snapshot for training")
-            print("  end-train    Snapshot and destroy a GPU droplet")
+            print("  snapshots        List all snapshots")
+            print("  delete-snapshot  Delete a snapshot")
+            print("  start-train      Create GPU droplet from snapshot for training")
+            print("  end-train        Snapshot and destroy a GPU droplet")
         elif subcmd == "snapshots":
             from ww.amd_dev_cloud.snapshots import main as m
+
+            m()
+        elif subcmd == "delete-snapshot":
+            from ww.amd_dev_cloud.delete_snapshot import main as m
 
             m()
         elif subcmd == "start-train":
