@@ -16,7 +16,7 @@ _MOCK_MODULES = {
     "yaml": MagicMock(),
 }
 
-# Save originals and apply mocks at module level (cleaned up in tearDown)
+# Save originals and apply mocks for import-time only
 _original_modules = {k: sys.modules.get(k) for k in _MOCK_MODULES}
 sys.modules.update(_MOCK_MODULES)
 
@@ -28,6 +28,13 @@ from ww.audio.audio_pipeline import (  # noqa: E402
     text_to_speech,
     OUTPUT_DIRECTORY,
 )
+
+# Restore original modules so other test files aren't poisoned
+for k, v in _original_modules.items():
+    if v is None:
+        sys.modules.pop(k, None)
+    else:
+        sys.modules[k] = v
 
 
 class TestSplitIntoSentences(unittest.TestCase):
@@ -85,10 +92,11 @@ class TestMdToText(unittest.TestCase):
             # Mock markdown.markdown and BeautifulSoup
             import ww.audio.audio_pipeline as mod
 
-            with patch.object(mod, "markdown") as mock_md, patch.object(
-                mod, "BeautifulSoup"
-            ) as mock_bs, patch.object(mod, "yaml") as mock_yaml, patch.object(
-                mod, "unescape", side_effect=lambda x: x
+            with (
+                patch.object(mod, "markdown") as mock_md,
+                patch.object(mod, "BeautifulSoup") as mock_bs,
+                patch.object(mod, "yaml") as mock_yaml,
+                patch.object(mod, "unescape", side_effect=lambda x: x),
             ):
                 mock_md.markdown.return_value = "<h1>Hello</h1><p>World</p>"
                 mock_soup = MagicMock()
@@ -105,9 +113,11 @@ class TestMdToText(unittest.TestCase):
         with patch("builtins.open", m):
             import ww.audio.audio_pipeline as mod
 
-            with patch.object(mod, "markdown") as mock_md, patch.object(
-                mod, "BeautifulSoup"
-            ) as mock_bs, patch.object(mod, "unescape", side_effect=lambda x: x):
+            with (
+                patch.object(mod, "markdown") as mock_md,
+                patch.object(mod, "BeautifulSoup") as mock_bs,
+                patch.object(mod, "unescape", side_effect=lambda x: x),
+            ):
                 mock_md.markdown.return_value = "<p>Content here</p>"
                 mock_soup = MagicMock()
                 mock_soup.get_text.return_value = "Content here"
@@ -169,12 +179,12 @@ class TestTextToSpeech(unittest.TestCase):
         mock_segment = MagicMock()
         mock_segment.__add__ = MagicMock(return_value=mock_segment)
 
-        with patch.object(
-            mod, "split_text", return_value=["Hello world."]
-        ), patch.object(mod, "texttospeech") as mock_tts, patch.object(
-            mod, "AudioSegment"
-        ) as mock_audio, patch("tempfile.NamedTemporaryFile") as mock_tmp, patch(
-            "os.remove"
+        with (
+            patch.object(mod, "split_text", return_value=["Hello world."]),
+            patch.object(mod, "texttospeech") as mock_tts,
+            patch.object(mod, "AudioSegment") as mock_audio,
+            patch("tempfile.NamedTemporaryFile") as mock_tmp,
+            patch("os.remove"),
         ):
             mock_tts.TextToSpeechClient.return_value = mock_client
             mock_tts.VoiceSelectionParams.return_value = MagicMock()
@@ -196,9 +206,10 @@ class TestTextToSpeech(unittest.TestCase):
     def test_api_error_returns_false(self):
         import ww.audio.audio_pipeline as mod
 
-        with patch.object(
-            mod, "split_text", return_value=["Hello world."]
-        ), patch.object(mod, "texttospeech") as mock_tts:
+        with (
+            patch.object(mod, "split_text", return_value=["Hello world."]),
+            patch.object(mod, "texttospeech") as mock_tts,
+        ):
             mock_client = MagicMock()
             mock_tts.TextToSpeechClient.return_value = mock_client
             mock_tts.VoiceSelectionParams.return_value = MagicMock()
@@ -211,9 +222,10 @@ class TestTextToSpeech(unittest.TestCase):
     def test_language_code_variants(self):
         import ww.audio.audio_pipeline as mod
 
-        with patch.object(mod, "split_text", return_value=["Test."]), patch.object(
-            mod, "texttospeech"
-        ) as mock_tts:
+        with (
+            patch.object(mod, "split_text", return_value=["Test."]),
+            patch.object(mod, "texttospeech") as mock_tts,
+        ):
             mock_client = MagicMock()
             mock_tts.TextToSpeechClient.return_value = mock_client
             mock_tts.VoiceSelectionParams.return_value = MagicMock()

@@ -47,3 +47,6 @@ ww/config/*-sanitized.json
 
 # Jupyter
 .ipynb_checkpoints/
+
+uv.lock
+tmp/

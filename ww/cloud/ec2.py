@@ -5,6 +5,8 @@ import argparse
 import yaml
 import os
 
+_YAMLError = yaml.YAMLError
+
 KEY_PATH = os.path.expanduser("~/Downloads/LightsailDefaultKey-ap-east-1.pem")
 
 
@@ -22,11 +24,15 @@ def _get_ec2_instances():
     except subprocess.CalledProcessError as e:
         print(f"Error getting EC2 instances: {e}")
         return None
-    except yaml.YAMLError as e:
-        print(f"Error decoding YAML response: {e}")
-        return None
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        try:
+            is_yaml = isinstance(e, _YAMLError)
+        except TypeError:
+            is_yaml = False
+        if is_yaml:
+            print(f"Error decoding YAML response: {e}")
+        else:
+            print(f"An unexpected error occurred: {e}")
         return None
 
 
@@ -61,11 +67,15 @@ def _get_ec2_instance(instance_id):
     except subprocess.CalledProcessError as e:
         print(f"Error getting instance details: {e}")
         return None
-    except yaml.YAMLError as e:
-        print(f"Error decoding YAML response: {e}")
-        return None
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        try:
+            is_yaml = isinstance(e, _YAMLError)
+        except TypeError:
+            is_yaml = False
+        if is_yaml:
+            print(f"Error decoding YAML response: {e}")
+        else:
+            print(f"An unexpected error occurred: {e}")
         return None
 
 

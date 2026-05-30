@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 import argparse
 import os
-import shutil
-import subprocess
 import sys
 import tempfile
+from pathlib import Path
 
 _CSS = """
 body {
@@ -66,24 +65,10 @@ hr { border: none; border-top: 1px solid #eaecef; margin: 1.5em 0; }
 """
 
 
-def _chrome_path():
-    candidates = [
-        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-        "/Applications/Chromium.app/Contents/MacOS/Chromium",
-        "google-chrome",
-        "chromium",
-        "chromium-browser",
-    ]
-    for c in candidates:
-        if os.path.isabs(c):
-            if os.path.isfile(c):
-                return c
-        elif shutil.which(c):
-            return c
-    return None
-
-
 def _md_to_html(md_path, html_path, title):
+    import shutil
+    import subprocess
+
     tmpdir = tempfile.mkdtemp()
     try:
         header_file = os.path.join(tmpdir, "header.html")
@@ -110,66 +95,26 @@ def _md_to_html(md_path, html_path, title):
         shutil.rmtree(tmpdir, ignore_errors=True)
 
 
-def _html_to_pdf(html_path, pdf_path, chrome):
-    cmd = [
-        chrome,
-        "--headless=new",
-        "--disable-gpu",
-        f"--print-to-pdf={os.path.abspath(pdf_path)}",
-        "--no-pdf-header-footer",
-        f"file://{os.path.abspath(html_path)}",
-    ]
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0:
-        print(f"Chrome error: {result.stderr}")
-        return False
-    if not os.path.isfile(pdf_path):
-        print("Chrome did not produce a PDF.")
-        return False
-    return True
+def _html_to_jpg(html_path, output_jpg, quality, width):
+    from playwright.sync_api import sync_playwright  # pyright: ignore[reportMissingImports]
 
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": width, "height": 100})
+        page.goto(f"file://{Path(html_path).resolve()}")
+        page.wait_for_load_state("networkidle")
 
-def _pdf_to_jpg(pdf_path, output_jpg, density, quality):
-    tmpdir = tempfile.mkdtemp()
-    try:
-        pages_pattern = os.path.join(tmpdir, "page-%02d.jpg")
-        cmd = [
-            "magick",
-            "-density",
-            str(density),
-            pdf_path,
-            "-quality",
-            str(quality),
-            pages_pattern,
-        ]
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        if result.returncode != 0:
-            print(f"ImageMagick error: {result.stderr}")
-            return False
+        # Get exact content height, resize to fit
+        height = page.evaluate("document.body.scrollHeight")
+        page.set_viewport_size({"width": width, "height": height})
 
-        pages = sorted(
-            f
-            for f in os.listdir(tmpdir)
-            if f.startswith("page-") and f.endswith(".jpg")
+        page.screenshot(
+            path=output_jpg,
+            full_page=True,
+            type="jpeg",
+            quality=quality,
         )
-        if not pages:
-            print("No pages generated from PDF.")
-            return False
-
-        page_paths = [os.path.join(tmpdir, p) for p in pages]
-
-        if len(page_paths) == 1:
-            shutil.copyfile(page_paths[0], output_jpg)
-        else:
-            cmd = ["magick"] + page_paths + ["-append", output_jpg]
-            result = subprocess.run(cmd, capture_output=True, text=True)
-            if result.returncode != 0:
-                print(f"ImageMagick append error: {result.stderr}")
-                return False
-
-        return True
-    finally:
-        shutil.rmtree(tmpdir, ignore_errors=True)
+        browser.close()
 
 
 def _frontmatter_title(md_path):
@@ -187,9 +132,36 @@ def _frontmatter_title(md_path):
     return None
 
 
+def _resolve_path(input_str):
+    """Resolve partial filename to a .md file in CWD. Returns full path or None."""
+    # Exact match
+    if os.path.isfile(input_str):
+        return input_str
+
+    # Search .md files in CWD for substring match
+    cwd = os.getcwd()
+    candidates = []
+    for f in os.listdir(cwd):
+        if not f.endswith(".md"):
+            continue
+        if input_str.lower() in f.lower():
+            candidates.append(f)
+
+    if len(candidates) == 1:
+        return os.path.join(cwd, candidates[0])
+    elif len(candidates) > 1:
+        print(f"Multiple matches for '{input_str}':")
+        for c in candidates:
+            print(f"  {c}")
+        sys.exit(1)
+    else:
+        print(f"No .md file matching '{input_str}' in {cwd}")
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(
-        description="Convert a markdown file to a JPG image via HTML → PDF → JPG"
+        description="Convert a markdown file to a JPG image via HTML screenshot (Playwright)"
     )
     parser.add_argument("markdown_file", help="Path to the markdown file")
     parser.add_argument("--output", "-o", help="Output JPG path (default: <input>.jpg)")
@@ -197,21 +169,21 @@ def main():
         "--output-dir", "-d", help="Output directory (default: same as input)"
     )
     parser.add_argument(
-        "--density",
-        type=int,
-        default=150,
-        help="DPI for PDF→JPG conversion (default: 150)",
-    )
-    parser.add_argument(
         "--quality",
         type=int,
         default=90,
         help="JPG compression quality 1-100 (default: 90)",
     )
+    parser.add_argument(
+        "--width",
+        type=int,
+        default=900,
+        help="Viewport width in pixels (default: 900)",
+    )
     args = parser.parse_args()
 
-    md_path = args.markdown_file
-    if not os.path.isfile(md_path):
+    md_path = _resolve_path(args.markdown_file)
+    if not md_path:
         print(f"Error: File not found: {md_path}")
         sys.exit(1)
 
@@ -225,30 +197,19 @@ def main():
         output_jpg = base + ".jpg"
     title = _frontmatter_title(md_path) or os.path.basename(base)
 
-    chrome = _chrome_path()
-    if not chrome:
-        print(
-            "Error: Chrome or Chromium not found. Install Google Chrome and try again."
-        )
-        sys.exit(1)
-
     tmpdir = tempfile.mkdtemp(prefix="md2jpg-")
     try:
         html_path = os.path.join(tmpdir, "output.html")
-        pdf_path = os.path.join(tmpdir, "output.pdf")
 
-        print("[1/3] markdown -> HTML")
+        print("[1/2] markdown -> HTML")
         if not _md_to_html(md_path, html_path, title):
             sys.exit(1)
 
-        print("[2/3] HTML -> PDF")
-        if not _html_to_pdf(html_path, pdf_path, chrome):
-            sys.exit(1)
-
-        print("[3/3] PDF -> JPG")
-        if not _pdf_to_jpg(pdf_path, output_jpg, args.density, args.quality):
-            sys.exit(1)
+        print("[2/2] HTML -> JPG (Playwright screenshot)")
+        _html_to_jpg(html_path, output_jpg, args.quality, args.width)
     finally:
+        import shutil
+
         shutil.rmtree(tmpdir, ignore_errors=True)
 
     print(f"Done: {output_jpg}")
