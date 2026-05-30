@@ -173,6 +173,9 @@ def _print_help():
     print("")
     print("HuggingFace:")
     print("  ww hf [username]          Show HuggingFace profile (default: lzwjava)")
+    print(
+        "  ww hf news                Trending models, datasets, and spaces (--limit N, --json)"
+    )
     print("")
     print("Env:")
     print(
@@ -1222,9 +1225,20 @@ def main():
             sys.exit(1)
 
     elif group == "hf":
-        from ww.hf.hf import main as m
+        subcmd = _pop_subcmd()
+        if subcmd == "news":
+            from ww.hf.hf import cmd_news
 
-        m()
+            cmd_news()
+        elif subcmd in ("", "--help", "-h"):
+            from ww.hf.hf import main as m
+
+            m()
+        else:
+            # Treat as username for profile lookup
+            from ww.hf.hf import cmd_info
+
+            cmd_info(subcmd)
 
     elif group == "env":
         subcmd = _pop_subcmd()
