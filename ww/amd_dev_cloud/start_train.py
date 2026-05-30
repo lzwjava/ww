@@ -9,7 +9,7 @@ from datetime import datetime
 import requests
 
 API_BASE = "https://api.digitalocean.com/v2"
-GPU_SIZE = "gpu-mi300x1-192gb-devcloud"
+GPU_SIZE = "gpu-mi300x1-192gb"
 
 
 def fetch_ssh_keys(token):
