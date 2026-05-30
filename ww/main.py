@@ -283,7 +283,10 @@ def _print_help():
     print("")
     print("AMD Dev Cloud:")
     print(
-        "  ww amd-dev-cloud snapshots   List snapshots (requires AMD_DEV_CLOUD_API_KEY)"
+        "  ww amd-dev-cloud snapshots    List snapshots (requires AMD_DEV_CLOUD_API_KEY)"
+    )
+    print(
+        "  ww amd-dev-cloud start-train  Create GPU droplet from snapshot for training"
     )
 
 
@@ -1366,9 +1369,14 @@ def main():
             print("Usage: ww amd-dev-cloud <command>")
             print("")
             print("Commands:")
-            print("  snapshots   List all snapshots")
+            print("  snapshots    List all snapshots")
+            print("  start-train  Create GPU droplet from snapshot for training")
         elif subcmd == "snapshots":
             from ww.amd_dev_cloud.snapshots import main as m
+
+            m()
+        elif subcmd == "start-train":
+            from ww.amd_dev_cloud.start_train import main as m
 
             m()
         else:

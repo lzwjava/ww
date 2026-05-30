@@ -44,15 +44,18 @@ def main():
         return
 
     print(f"Snapshots ({len(all_snapshots)}):\n")
-    print(f"  {'ID':<20} {'Name':<45} {'Region':<12} {'Min Disk':<10} {'Created'}")
-    print(f"  {'-' * 20} {'-' * 45} {'-' * 12} {'-' * 10} {'-' * 25}")
+    print(
+        f"  {'ID':<20} {'Name':<45} {'Region':<12} {'Min Disk':<10} {'Size (GB)':<10} {'Created'}"
+    )
+    print(f"  {'-' * 20} {'-' * 45} {'-' * 12} {'-' * 10} {'-' * 10} {'-' * 25}")
 
     for snap in all_snapshots:
         snap_id = str(snap.get("id", ""))
         name = snap.get("name", "")
         regions = snap.get("regions", [])
         region = regions[0] if regions else ""
-        size = snap.get("min_disk_size", 0)
+        min_disk = snap.get("min_disk_size", 0)
+        size_gb = snap.get("size_gigabytes", 0)
         created = snap.get("created_at", "")
 
         # Truncate long names
@@ -63,7 +66,9 @@ def main():
         if created:
             created = created[:19].replace("T", " ")
 
-        print(f"  {snap_id:<20} {name:<45} {region:<12} {size:<10} {created}")
+        print(
+            f"  {snap_id:<20} {name:<45} {region:<12} {min_disk:<10} {size_gb:<10} {created}"
+        )
 
     print(f"\nTotal: {len(all_snapshots)} snapshots")
 
