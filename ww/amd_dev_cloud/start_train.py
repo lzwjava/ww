@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
-"""Create a GPU droplet from an existing snapshot for training.
-
-GPU droplets on AMD Dev Cloud can only be created via the web dashboard
-(not the DigitalOcean API — GPU sizes have regions=[] in the API).
-"""
+"""Create a GPU droplet from an existing snapshot for training."""
 
 import os
 import sys
 import time
-import webbrowser
 from datetime import datetime
 
 import requests
 
 API_BASE = "https://api.digitalocean.com/v2"
+GPU_SIZE = "gpu-mi300x1-192gb-devcloud"
+
+
+def fetch_ssh_keys(token):
+    """Fetch all SSH keys from the account."""
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    resp = requests.get(f"{API_BASE}/account/keys", headers=headers)
+    if resp.status_code != 200:
+        return []
+    return resp.json().get("ssh_keys", [])
 
 
 def fetch_snapshots(token):
@@ -34,30 +39,54 @@ def fetch_snapshots(token):
     return all_snapshots
 
 
-def wait_for_droplet(token, name, timeout=300):
-    """Poll for a new droplet matching the given name."""
+def create_droplet(token, name, region, snapshot_id, ssh_keys):
+    """Create a droplet from a snapshot."""
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-    print(f"Waiting for droplet '{name}'...", end="", flush=True)
+    payload = {
+        "name": name,
+        "region": region,
+        "size": GPU_SIZE,
+        "image": snapshot_id,
+        "ssh_keys": ssh_keys,
+        "tags": ["training", "gpu"],
+    }
+
+    print(f"\nCreating droplet '{name}'...")
+    print(f"  Region: {region} | Size: {GPU_SIZE}")
+
+    resp = requests.post(f"{API_BASE}/droplets", headers=headers, json=payload)
+    if resp.status_code != 202:
+        print(f"Error: {resp.status_code} {resp.text}", file=sys.stderr)
+        sys.exit(1)
+
+    droplet = resp.json().get("droplet", {})
+    print(f"Droplet created! ID: {droplet.get('id')}")
+    return droplet
+
+
+def wait_for_droplet(token, droplet_id, timeout=300):
+    """Wait for droplet to become active and return its IP."""
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    print("Waiting for droplet...", end="", flush=True)
     start = time.time()
 
     while time.time() - start < timeout:
-        resp = requests.get(f"{API_BASE}/droplets?per_page=200", headers=headers)
+        resp = requests.get(f"{API_BASE}/droplets/{droplet_id}", headers=headers)
         if resp.status_code == 200:
-            for d in resp.json().get("droplets", []):
-                if d.get("name") == name:
-                    status = d.get("status")
-                    for net in d.get("networks", {}).get("v4", []):
-                        if net.get("type") == "public" and net.get("ip_address"):
-                            if status == "active":
-                                print(" Active!")
-                                return net["ip_address"]
-                    if status == "errored":
-                        print(" Errored!")
-                        return None
+            droplet = resp.json().get("droplet", {})
+            status = droplet.get("status")
+            for net in droplet.get("networks", {}).get("v4", []):
+                if net.get("type") == "public" and net.get("ip_address"):
+                    if status == "active":
+                        print(" Active!")
+                        return net["ip_address"]
+            if status == "errored":
+                print(" Errored!")
+                return None
         print(".", end="", flush=True)
         time.sleep(5)
 
-    print(" Timeout! Check the dashboard.")
+    print(" Timeout!")
     return None
 
 
@@ -96,35 +125,36 @@ def main():
             pass
         print(f"Enter 1-{len(gpu_snapshots)} or 'q'.")
 
+    # Auto-select all SSH keys
+    ssh_keys = [k["id"] for k in fetch_ssh_keys(token)]
+    print(f"SSH keys: {len(ssh_keys)} attached")
+
     # Build name with timestamp
     ts = datetime.now().strftime("%m%d-%H%M")
     snap_short = selected.get("name", "gpu")[:20]
     default_name = f"train-{snap_short}-{ts}"
+    name = input(f"\nDroplet name [{default_name}]: ").strip() or default_name
 
-    # Open browser to create droplet from snapshot
-    snap_id = selected["id"]
+    # Region from snapshot
     region = selected.get("regions", ["atl1"])[0]
-    create_url = f"https://cloud.digitalocean.com/droplets/new?region={region}&size=gpu-mi300x1-192gb&snapshot={snap_id}"
 
-    print(f"\nGPU droplets can't be created via API (size not available in any region).")
-    print(f"Opening browser to create droplet from snapshot...\n")
-    print(f"  Name:     {default_name}")
-    print(f"  Snapshot: {selected.get('name')}")
-    print(f"  Region:   {region}")
-    print(f"  Size:     gpu-mi300x1-192gb\n")
-    print(f"  URL: {create_url}\n")
+    # Confirm
+    print(f"\n--- Creating ---")
+    print(f"Snapshot: {selected.get('name')}")
+    print(f"Name: {name} | Region: {region} | Size: {GPU_SIZE}")
+    if input("Proceed? [y/N]: ").strip().lower() != "y":
+        print("Aborted.")
+        return
 
-    webbrowser.open(create_url)
+    # Create and wait
+    droplet = create_droplet(token, name, region, selected["id"], ssh_keys)
+    ip = wait_for_droplet(token, droplet["id"])
 
-    # Wait for user to create, then poll for the droplet
-    input("Press Enter after creating the droplet in the browser...")
-
-    ip = wait_for_droplet(token, default_name)
     if ip:
         print(f"\nDroplet ready! IP: {ip}")
         print(f"  ssh root@{ip}")
     else:
-        print(f"\nDroplet not found. Check the dashboard.")
+        print(f"\nCheck droplet ID {droplet['id']} in console.")
 
 
 if __name__ == "__main__":

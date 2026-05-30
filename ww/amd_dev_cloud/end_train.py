@@ -4,7 +4,6 @@
 import os
 import sys
 import time
-import webbrowser
 from datetime import datetime
 
 import requests
@@ -30,52 +29,49 @@ def fetch_droplets(token):
     return all_droplets
 
 
-def snapshot_and_destroy(token, droplet_id, droplet_name):
-    """Create a snapshot of the droplet via browser, then destroy it."""
-    # Snapshotting GPU droplets also requires the web UI
-    ts = datetime.now().strftime("%m%d-%H%M")
-    snap_name = f"{droplet_name}-{ts}"
-
-    snap_url = f"https://cloud.digitalocean.com/droplets/{droplet_id}/snapshots"
-
-    print(f"\nGPU droplet snapshots must be created via web dashboard.")
-    print(f"Opening browser to snapshot page...\n")
-    print(f"  Suggested snapshot name: {snap_name}\n")
-    print(f"  URL: {snap_url}\n")
-
-    webbrowser.open(snap_url)
-    input("Press Enter after creating the snapshot in the browser...")
-
-    # Verify snapshot exists
-    print("Verifying snapshot...", end="", flush=True)
+def create_snapshot(token, droplet_id, name):
+    """Create a snapshot of a droplet via API."""
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-    for _ in range(12):  # 60 seconds
-        resp = requests.get(f"{API_BASE}/snapshots?per_page=200", headers=headers)
+    payload = {"type": "snapshot", "name": name}
+    resp = requests.post(f"{API_BASE}/droplets/{droplet_id}/actions", headers=headers, json=payload)
+    if resp.status_code != 201:
+        print(f"Error creating snapshot: {resp.status_code} {resp.text}", file=sys.stderr)
+        return None
+    return resp.json().get("action", {})
+
+
+def wait_for_snapshot(token, droplet_id, timeout=600):
+    """Wait for the snapshot action to complete."""
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    print("Snapshotting", end="", flush=True)
+    start = time.time()
+
+    while time.time() - start < timeout:
+        resp = requests.get(f"{API_BASE}/droplets/{droplet_id}/actions?per_page=5", headers=headers)
         if resp.status_code == 200:
-            for s in resp.json().get("snapshots", []):
-                if droplet_name in s.get("name", "") or snap_name in s.get("name", ""):
-                    print(f" Found: {s.get('name', '')}")
-                    break
-            else:
-                print(".", end="", flush=True)
-                time.sleep(5)
-                continue
-            break
+            actions = resp.json().get("actions", [])
+            for a in actions:
+                if a.get("type") == "snapshot":
+                    status = a.get("status")
+                    if status == "completed":
+                        print(" Done!")
+                        return True
+                    elif status == "errored":
+                        print(" Errored!")
+                        return False
         print(".", end="", flush=True)
-        time.sleep(5)
-    else:
-        print(" Snapshot not found yet, continuing anyway.")
+        time.sleep(10)
 
-    # Destroy the droplet
-    print(f"\nDestroying droplet '{droplet_name}' (ID: {droplet_id})...")
-    confirm = input("Confirm destroy? [y/N]: ").strip().lower()
-    if confirm != "y":
-        print("Aborted. Droplet still running!")
-        return
+    print(" Timeout!")
+    return False
 
+
+def destroy_droplet(token, droplet_id, name):
+    """Destroy a droplet."""
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
     resp = requests.delete(f"{API_BASE}/droplets/{droplet_id}", headers=headers)
     if resp.status_code == 204:
-        print("Droplet destroyed.")
+        print(f"Droplet '{name}' destroyed.")
     else:
         print(f"Error: {resp.status_code} {resp.text}", file=sys.stderr)
 
@@ -89,7 +85,7 @@ def main():
     # Fetch droplets
     droplets = fetch_droplets(token)
 
-    # Filter to GPU droplets (those with gpu in size slug or tags)
+    # Filter to GPU droplets
     gpu_droplets = []
     for d in droplets:
         size_slug = d.get("size", {}).get("slug", "")
@@ -104,7 +100,6 @@ def main():
     # Show droplets
     print("GPU Droplets:\n")
     for i, d in enumerate(gpu_droplets, 1):
-        droplet_id = d.get("id")
         name = d.get("name", "")
         status = d.get("status", "")
         size = d.get("size", {}).get("slug", "")
@@ -115,7 +110,7 @@ def main():
                 break
         created = d.get("created_at", "")[:19].replace("T", " ")
         print(f"  [{i}] {name}")
-        print(f"      ID: {droplet_id} | Status: {status} | Size: {size} | IP: {ip} | Created: {created}")
+        print(f"      ID: {d['id']} | Status: {status} | Size: {size} | IP: {ip} | Created: {created}")
 
     # Select droplet
     print()
@@ -132,7 +127,30 @@ def main():
             pass
         print(f"Enter 1-{len(gpu_droplets)} or 'q'.")
 
-    snapshot_and_destroy(token, selected["id"], selected.get("name", "gpu"))
+    droplet_id = selected["id"]
+    droplet_name = selected.get("name", "gpu")
+
+    # Snapshot
+    ts = datetime.now().strftime("%m%d-%H%M")
+    snap_name = f"snap-{droplet_name}-{ts}"
+
+    print(f"\nCreating snapshot: {snap_name}")
+    action = create_snapshot(token, droplet_id, snap_name)
+    if not action:
+        print("Failed to create snapshot. Aborting.")
+        return
+
+    if not wait_for_snapshot(token, droplet_id):
+        print("Snapshot failed. Droplet NOT destroyed.")
+        return
+
+    # Destroy
+    confirm = input(f"\nDestroy droplet '{droplet_name}'? [y/N]: ").strip().lower()
+    if confirm != "y":
+        print("Aborted. Droplet still running!")
+        return
+
+    destroy_droplet(token, droplet_id, droplet_name)
 
 
 if __name__ == "__main__":
