@@ -54,6 +54,33 @@ def create_note_from_content(content, custom_title=None, directory=None, date=No
             f"Content is less than 200 characters ({len(content.strip())} chars). Aborting."
         )
 
+    # Check for duplicates before creating
+    from ww.note.check_duplicate_notes import (
+        _are_notes_quick_similar,
+        _extract_content_without_frontmatter,
+    )
+    from pathlib import Path
+
+    notes_path = Path(directory)
+    if notes_path.exists():
+        note_files = sorted(
+            notes_path.glob("*.md"), key=lambda f: f.stat().st_mtime, reverse=True
+        )
+        cleaned_content = clean_grok_tags(content)
+        cleaned_content = clean_content(cleaned_content)
+
+        for note_file in note_files[:200]:  # Check against latest 200 notes
+            try:
+                existing_content = _extract_content_without_frontmatter(note_file)
+                if _are_notes_quick_similar(cleaned_content, existing_content):
+                    raise ValueError(
+                        f"Duplicate note detected: content similar to {note_file.name}"
+                    )
+            except ValueError:
+                raise
+            except Exception as e:
+                print(f"[warn] Error checking {note_file.name}: {e}")
+
     if date is None:
         date = datetime.now().strftime("%Y-%m-%d")
 

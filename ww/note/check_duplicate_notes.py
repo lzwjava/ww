@@ -81,7 +81,7 @@ def check_duplicate_notes(notes_dir=None) -> bool:
         return False
 
     note_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
-    latest_notes = note_files[:-1]
+    latest_notes = note_files[1:]  # Exclude newest file (current clipboard)
 
     print(f"[info] Checking against latest {len(latest_notes)} notes...")
     return _is_duplicate_of_any(clipboard_content, latest_notes)
