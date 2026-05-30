@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-import argparse
+"""Shared utilities for md2jpg and md2png."""
+
 import os
 import sys
 import tempfile
-from pathlib import Path
 
 _CSS = """
 body {
@@ -65,7 +65,7 @@ hr { border: none; border-top: 1px solid #eaecef; margin: 1.5em 0; }
 """
 
 
-def _md_to_html(md_path, html_path, title):
+def md_to_html(md_path, html_path, title):
     import shutil
     import subprocess
 
@@ -95,8 +95,33 @@ def _md_to_html(md_path, html_path, title):
         shutil.rmtree(tmpdir, ignore_errors=True)
 
 
-def _html_to_jpg(html_path, output_jpg, quality, width):
+_QUALITY_PRESETS = {
+    "low": {"width": 600, "quality": 60},
+    "medium": {"width": 900, "quality": 80},
+    "high": {"width": 1200, "quality": 95},
+}
+
+
+def html_to_image(
+    html_path, output_path, width, img_type="jpeg", quality=None, preset=None
+):
+    from pathlib import Path
+
     from playwright.sync_api import sync_playwright  # pyright: ignore[reportMissingImports]
+
+    # Apply preset if provided
+    if preset and preset in _QUALITY_PRESETS:
+        p = _QUALITY_PRESETS[preset]
+        width = p["width"]
+        if img_type == "jpeg":
+            quality = p["quality"]
+    elif preset:
+        print(f"Unknown preset '{preset}'. Use: low, medium, high")
+        return
+
+    kwargs = {"path": output_path, "full_page": True, "type": img_type}
+    if quality is not None:
+        kwargs["quality"] = quality
 
     with sync_playwright() as p:
         browser = p.chromium.launch()
@@ -104,20 +129,14 @@ def _html_to_jpg(html_path, output_jpg, quality, width):
         page.goto(f"file://{Path(html_path).resolve()}")
         page.wait_for_load_state("networkidle")
 
-        # Get exact content height, resize to fit
         height = page.evaluate("document.body.scrollHeight")
         page.set_viewport_size({"width": width, "height": height})
 
-        page.screenshot(
-            path=output_jpg,
-            full_page=True,
-            type="jpeg",
-            quality=quality,
-        )
+        page.screenshot(**kwargs)
         browser.close()
 
 
-def _frontmatter_title(md_path):
+def frontmatter_title(md_path):
     """Return the title from YAML frontmatter, or None if not found."""
     with open(md_path, encoding="utf-8") as f:
         lines = f.readlines()
@@ -132,13 +151,11 @@ def _frontmatter_title(md_path):
     return None
 
 
-def _resolve_path(input_str):
+def resolve_path(input_str):
     """Resolve partial filename to a .md file in CWD. Returns full path or None."""
-    # Exact match
     if os.path.isfile(input_str):
         return input_str
 
-    # Search .md files in CWD for substring match
     cwd = os.getcwd()
     candidates = []
     for f in os.listdir(cwd):
@@ -159,61 +176,12 @@ def _resolve_path(input_str):
         sys.exit(1)
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Convert a markdown file to a JPG image via HTML screenshot (Playwright)"
-    )
-    parser.add_argument("markdown_file", help="Path to the markdown file")
-    parser.add_argument("--output", "-o", help="Output JPG path (default: <input>.jpg)")
-    parser.add_argument(
-        "--output-dir", "-d", help="Output directory (default: same as input)"
-    )
-    parser.add_argument(
-        "--quality",
-        type=int,
-        default=90,
-        help="JPG compression quality 1-100 (default: 90)",
-    )
-    parser.add_argument(
-        "--width",
-        type=int,
-        default=900,
-        help="Viewport width in pixels (default: 900)",
-    )
-    args = parser.parse_args()
-
-    md_path = _resolve_path(args.markdown_file)
-    if not md_path:
-        print(f"Error: File not found: {md_path}")
-        sys.exit(1)
-
+def resolve_output(md_path, arg_output, arg_output_dir, ext):
+    """Determine output file path."""
     base = md_path[:-3] if md_path.lower().endswith(".md") else md_path
-    if args.output:
-        output_jpg = args.output
-    elif args.output_dir:
-        os.makedirs(args.output_dir, exist_ok=True)
-        output_jpg = os.path.join(args.output_dir, os.path.basename(base) + ".jpg")
-    else:
-        output_jpg = base + ".jpg"
-    title = _frontmatter_title(md_path) or os.path.basename(base)
-
-    tmpdir = tempfile.mkdtemp(prefix="md2jpg-")
-    try:
-        html_path = os.path.join(tmpdir, "output.html")
-
-        print("[1/2] markdown -> HTML")
-        if not _md_to_html(md_path, html_path, title):
-            sys.exit(1)
-
-        print("[2/2] HTML -> JPG (Playwright screenshot)")
-        _html_to_jpg(html_path, output_jpg, args.quality, args.width)
-    finally:
-        import shutil
-
-        shutil.rmtree(tmpdir, ignore_errors=True)
-
-    print(f"Done: {output_jpg}")
-
-
-if __name__ == "__main__":
-    main()
+    if arg_output:
+        return arg_output
+    if arg_output_dir:
+        os.makedirs(arg_output_dir, exist_ok=True)
+        return os.path.join(arg_output_dir, os.path.basename(base) + ext)
+    return base + ext

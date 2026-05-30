@@ -19,10 +19,13 @@ def _run(cmd: str) -> tuple[str, int]:
 
 def _is_x11() -> bool:
     """Check if we're running under X11."""
-    return os.environ.get("XDG_SESSION_TYPE") == "x11" or bool(os.environ.get("DISPLAY"))
+    return os.environ.get("XDG_SESSION_TYPE") == "x11" or bool(
+        os.environ.get("DISPLAY")
+    )
 
 
 # ── state detection ────────────────────────────────────────────────────────────
+
 
 def _setxkbmap_has_swap() -> bool:
     """Check if ctrl:swapcaps is active via setxkbmap."""
@@ -47,9 +50,10 @@ def _xmodmap_has_swap() -> bool:
                 kc = int(parts[1])
             except ValueError:
                 continue
-            if kc == 66 and len(parts) > 2 and "Control" in parts[2]:
+            rest = " ".join(parts[2:])
+            if kc == 66 and "Control" in rest:
                 found_kc66 = True
-            if kc == 37 and len(parts) > 2 and "Caps" in parts[2]:
+            if kc == 37 and "Caps" in rest:
                 found_kc37 = True
     return found_kc66 and found_kc37
 
@@ -61,8 +65,7 @@ def _xmodmap_file_has_swap() -> bool:
         return False
     with open(path) as f:
         content = f.read()
-    return ("keycode 66 = Control_L" in content
-            and "keycode 37 = Caps_Lock" in content)
+    return "keycode 66 = Control_L" in content and "keycode 37 = Caps_Lock" in content
 
 
 def _detect_state() -> str:
@@ -77,6 +80,7 @@ def _detect_state() -> str:
 
 # ── apply / revert ─────────────────────────────────────────────────────────────
 
+
 def _enable_swap() -> None:
     """Apply the Caps Lock ↔ Ctrl swap at runtime."""
     _run("setxkbmap -option ctrl:swapcaps")
@@ -86,7 +90,7 @@ def _enable_swap() -> None:
 def _disable_swap() -> None:
     """Revert Caps Lock ↔ Ctrl to default at runtime."""
     # Remove the swapcaps option and re-apply base options
-    _run("setxkbmap -option")             # clear all options
+    _run("setxkbmap -option")  # clear all options
     _run("setxkbmap -option terminate:ctrl_alt_bksp")  # restore preferred option
     # Reset xmodmap if it was loaded
     _run("xmodmap -e 'keycode 66 = Caps_Lock' -e 'keycode 37 = Control_L' 2>/dev/null")
@@ -134,7 +138,10 @@ def _install_persist() -> None:
             f.write("# Load Caps Lock ↔ Ctrl swap\n")
             f.write("[ -f ~/.Xmodmap ] && xmodmap ~/.Xmodmap\n")
         print(f"  ✓ Appended xmodmap load to {XPROFILE_PATH}")
-    elif "xmodmap ~/.Xmodmap" in existing_xprofile or "ctrl:swapcaps" in existing_xprofile:
+    elif (
+        "xmodmap ~/.Xmodmap" in existing_xprofile
+        or "ctrl:swapcaps" in existing_xprofile
+    ):
         print(f"  ✓ {XPROFILE_PATH} already loads the swap (no change)")
 
 
@@ -178,6 +185,7 @@ def _remove_persist() -> None:
 
 # ── interactive ────────────────────────────────────────────────────────────────
 
+
 def _prompt_yn(question: str) -> bool:
     """Ask a yes/no question, return True for yes."""
     answer = input(f"{question} (y/N): ").strip().lower()
@@ -186,18 +194,21 @@ def _prompt_yn(question: str) -> bool:
 
 # ── main ───────────────────────────────────────────────────────────────────────
 
+
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Swap Caps Lock and Left Control keys on X11 (Linux Mint).",
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "state", nargs="?",
+        "state",
+        nargs="?",
         choices=["on", "off"],
         help="'on' to swap Caps ↔ Ctrl, 'off' to revert to default",
     )
     parser.add_argument(
-        "--persist", action="store_true",
+        "--persist",
+        action="store_true",
         help="Persist the setting across reboots via ~/.Xmodmap and ~/.xprofile",
     )
     return parser.parse_args()
@@ -234,7 +245,9 @@ def run() -> None:
         else:
             print("Usage:")
             print("  ww linux switch-keys on            Enable swap (runtime)")
-            print("  ww linux switch-keys on --persist  Enable and persist across reboots")
+            print(
+                "  ww linux switch-keys on --persist  Enable and persist across reboots"
+            )
         return
 
     # ── sanity check: already in requested state ────────────────────────────

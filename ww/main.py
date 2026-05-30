@@ -880,13 +880,14 @@ def main():
             print("Usage: ww md <command>")
             print("")
             print("Commands:")
-            print("  md2jpg         Convert markdown to JPG via HTML+PDF (Chrome)")
-        elif subcmd == "md2jpg":
-            from ww.md.md2jpg import main as m
+            print(
+                "  md2img         Convert markdown to JPG/PNG via HTML screenshot (Playwright)"
+            )
+        elif subcmd == "md2img":
+            from ww.md.md2img import main as m
 
             m()
         else:
-            print(f"Unknown md command: {subcmd}")
             sys.exit(1)
 
     elif group == "copilot":
