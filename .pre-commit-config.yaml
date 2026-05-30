@@ -8,6 +8,9 @@ repos:
       - id: check-toml
       - id: check-merge-conflict
       - id: debug-statements
+      - id: check-ast
+      - id: check-added-large-files
+        args: ['--maxkb=500']
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.9.10
@@ -38,3 +41,16 @@ repos:
           - "piexif"
           - "speedtest-cli"
           - "wandb"
+
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.9.4
+    hooks:
+      - id: bandit
+        args: ["-r", "ww/", "-c", "pyproject.toml"]
+        additional_dependencies: ["bandit[toml]"]
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']

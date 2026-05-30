@@ -57,3 +57,7 @@ ignore = [
 "ww/mmlu/*.py" = ["E402"]
 "ww/networkx/*.py" = ["E402"]
 "ww/social/*.py" = ["E402"]
+
+[tool.bandit]
+exclude_dirs = ["ww/ml", "tests"]
+skips = ["B113", "B602", "B605", "B301", "B314", "B310", "B108", "B104", "B307"]

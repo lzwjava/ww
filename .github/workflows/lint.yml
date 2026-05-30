@@ -1,0 +1,62 @@
+name: Lint & Security
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ww/**'
+      - 'pyproject.toml'
+      - '.pre-commit-config.yaml'
+  pull_request:
+    paths:
+      - 'ww/**'
+      - 'pyproject.toml'
+      - '.pre-commit-config.yaml'
+
+concurrency:
+  group: 'lint'
+  cancel-in-progress: true
+
+jobs:
+  ruff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv python install 3.13.2
+      - run: uv sync
+      - name: Ruff check
+        run: uv run ruff check ww/
+      - name: Ruff format check
+        run: uv run ruff format --check ww/
+
+  pyright:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv python install 3.13.2
+      - run: uv sync
+      - name: Pyright
+        run: uv run pyright
+
+  bandit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv python install 3.13.2
+      - run: uv pip install bandit[toml]
+      - name: Bandit security scan
+        run: uv run bandit -r ww/ -c pyproject.toml
+
+  pip-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv python install 3.13.2
+      - run: uv sync
+      - run: uv pip install pip-audit
+      - name: Dependency audit
+        run: uv run pip-audit
