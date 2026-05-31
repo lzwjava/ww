@@ -14,7 +14,13 @@
       "whisper-openai",
       "evals",
       "llama3",
-      "Kimi-k1.5"
+      "Kimi-k1.5",
+      "Qwen2-Audio",
+      "Qwen2.5-Math",
+      "llama",
+      "gemma",
+      "transformers",
+      "whisper.cpp"
     ],
     "ai-training": [
       "pytorch",
@@ -30,14 +36,25 @@
       "diffusers",
       "nanoVLM",
       "open-r1",
-      "tutorials"
+      "tutorials",
+      "ColossalAI",
+      "flash-attention",
+      "LlamaFactory",
+      "LLMs-from-scratch",
+      "minbpe",
+      "mamba"
     ],
     "ai-inference": [
       "llama.cpp",
       "sglang",
       "ktransformers",
       "dinov2",
-      "nougat"
+      "nougat",
+      "vllm",
+      "ollama",
+      "mlx",
+      "ggml",
+      "mlx-examples"
     ],
     "ai-apps": [
       "open-webui",
@@ -46,13 +63,24 @@
       "stable-diffusion-webui",
       "langfuse",
       "chatbox",
-      "aider"
+      "aider",
+      "LibreChat",
+      "litellm",
+      "anything-llm",
+      "Whisper",
+      "facefusion"
     ],
     "ai-agents": [
       "hermes-agent",
       "codex",
       "claw-code",
-      "gpt-researcher"
+      "gpt-researcher",
+      "OpenHands",
+      "autogen",
+      "markitdown",
+      "browser-use",
+      "opencode",
+      "gemini-cli"
     ],
     "dev-tools": [
       "git",
@@ -63,7 +91,10 @@
       "terminal",
       "alacritty",
       "uv",
-      "nmap"
+      "nmap",
+      "warp",
+      "iclaw",
+      "mcp"
     ],
     "infra-network": [
       "openwrt",
@@ -71,7 +102,13 @@
       "shadowsocks-rust",
       "greptimedb",
       "netty",
-      "clash-core"
+      "clash-core",
+      "mihomo",
+      "chroma",
+      "qdrant",
+      "localGPT",
+      "quivr",
+      "llm-app"
     ],
     "web-platforms": [
       "jekyll",

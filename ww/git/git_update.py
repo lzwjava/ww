@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -144,6 +145,7 @@ def main(argv=None):
         return 1
 
     print(f"Updating {len(paths)} repos (jobs={args.jobs})...\n")
+    start = time.monotonic()
     updated, failed = 0, 0
 
     # Validate paths first
@@ -167,7 +169,8 @@ def main(argv=None):
                 else:
                     failed += 1
 
-    print(f"\nUpdated {updated}, failed {failed}")
+    elapsed = time.monotonic() - start
+    print(f"\nUpdated {updated}, failed {failed} ({elapsed:.1f}s)")
     return 0 if failed == 0 else 1
 
 
