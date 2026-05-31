@@ -54,3 +54,12 @@ repos:
     hooks:
       - id: detect-secrets
         args: ['--baseline', '.secrets.baseline']
+
+  - repo: local
+    hooks:
+      - id: unit-tests
+        name: Unit tests
+        entry: uv run python -m pytest tests/ -x -q --tb=short
+        language: system
+        pass_filenames: false
+        always_run: true

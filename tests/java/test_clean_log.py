@@ -153,8 +153,9 @@ class TestCleanLog(unittest.TestCase):
         fake_stdin = StringIO(log_data)
         fake_stdout = StringIO()
 
-        with patch.object(sys, "stdin", fake_stdin), patch.object(
-            sys, "stdout", fake_stdout
+        with (
+            patch.object(sys, "stdin", fake_stdin),
+            patch.object(sys, "stdout", fake_stdout),
         ):
             clean_log(
                 input_path=None,

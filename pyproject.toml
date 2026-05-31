@@ -40,6 +40,13 @@ dependencies = [
 [project.scripts]
 ww = "ww.main:main"
 
+[dependency-groups]
+dev = [
+    "pytest>=9.0",
+    "pytest-xdist>=3.8",
+    "coverage>=7.0",
+]
+
 [tool.pyright]
 pythonVersion = "3.11"
 typeCheckingMode = "basic"

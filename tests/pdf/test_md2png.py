@@ -80,8 +80,9 @@ class TestChromePath(unittest.TestCase):
     def test_returns_which_result(self):
         from ww.pdf.md2png import _chrome_path
 
-        with patch("os.path.isfile", return_value=False), patch(
-            "shutil.which", return_value="/usr/bin/chromium"
+        with (
+            patch("os.path.isfile", return_value=False),
+            patch("shutil.which", return_value="/usr/bin/chromium"),
         ):
             result = _chrome_path()
             # _chrome_path returns the candidate string, not the which() result

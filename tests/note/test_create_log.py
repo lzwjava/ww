@@ -76,9 +76,10 @@ def test_create_normal_log_writes_file_with_log_extension():
     """create_normal_log defaults to .log extension when no ext specified."""
     tmpdir = tempfile.mkdtemp()
     try:
-        with patch(
-            "ww.note.create_normal_log.get_base_path", return_value=tmpdir
-        ), patch("ww.note.create_normal_log.gitmessageai"):
+        with (
+            patch("ww.note.create_normal_log.get_base_path", return_value=tmpdir),
+            patch("ww.note.create_normal_log.gitmessageai"),
+        ):
             create_normal_log(content=MARKDOWN_CONTENT)
 
         logs_dir = os.path.join(tmpdir, "logs")
@@ -102,9 +103,10 @@ def test_create_normal_log_with_custom_ext():
     """create_normal_log should use the provided ext."""
     tmpdir = tempfile.mkdtemp()
     try:
-        with patch(
-            "ww.note.create_normal_log.get_base_path", return_value=tmpdir
-        ), patch("ww.note.create_normal_log.gitmessageai"):
+        with (
+            patch("ww.note.create_normal_log.get_base_path", return_value=tmpdir),
+            patch("ww.note.create_normal_log.gitmessageai"),
+        ):
             create_normal_log(content=MARKDOWN_CONTENT, ext="md")
 
         logs_dir = os.path.join(tmpdir, "logs")
@@ -127,9 +129,10 @@ def test_create_normal_log_with_friendly_name(mock_llm):
     """create_normal_log with friendly_name=True uses LLM-generated filename."""
     tmpdir = tempfile.mkdtemp()
     try:
-        with patch(
-            "ww.note.create_normal_log.get_base_path", return_value=tmpdir
-        ), patch("ww.note.create_normal_log.gitmessageai"):
+        with (
+            patch("ww.note.create_normal_log.get_base_path", return_value=tmpdir),
+            patch("ww.note.create_normal_log.gitmessageai"),
+        ):
             create_normal_log(content=MARKDOWN_CONTENT, friendly_name=True)
 
         logs_dir = os.path.join(tmpdir, "logs")
