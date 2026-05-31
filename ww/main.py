@@ -175,6 +175,7 @@ def _print_help():
         "  ww macos charge-watch     Alert when charger is plugged in but not charging"
     )
     print("  ww macos dock             List apps currently pinned to the Dock (--json)")
+    print("  ww macos alarm <min> [label]  Set an alarm N minutes from now")
     print("  ww macos find-large-dirs  Find largest directories on disk")
     print("  ww macos install          Run macOS install tasks")
     print("  ww macos list-disks       List portable disks")
@@ -207,7 +208,11 @@ def _print_help():
     print("  ww network wifi-util          WiFi utility tools")
     print("")
     print("Note:")
-    print("  ww note                   Create a new note with git integration")
+    print("  ww note                   Quick: clipboard → queue (fast)")
+    print("  ww note --sync            Full pipeline: create, fix, commit, push")
+    print("  ww note process           Drain queue: create notes, commit, push")
+    print("  ww note status            Show queue status")
+    print("  ww note clear             Clear done/failed entries from queue")
     print("  ww note log               Create a new log entry")
     print("  ww note obfuscate <file>  Obfuscate sensitive data in a file")
     print("")
@@ -350,18 +355,47 @@ def _main_dispatch(raw_args: list):
 
     if group == "note":
         subcmd = _pop_subcmd()
-        if subcmd == "" or subcmd == "note":
-            print("Tip: Use '/note' in hermes-agent to save assistant responses.")
-            print("")
-            if os.environ.get("NOTE_ENTER_CONFIRM", "1") != "0":
-                try:
-                    input("Press Enter to continue, Ctrl+C to quit... ")
-                except KeyboardInterrupt:
-                    print()
-                    return
-            from ww.note.note_workflow import main as m
+        # If subcmd starts with '-', it's a flag (e.g. --sync), not a subcommand
+        if subcmd.startswith("-"):
+            if subcmd in ("--help", "-h"):
+                _print_help()
+                return
+            sys.argv.insert(1, subcmd)  # push back for argparse
+            subcmd = ""
 
-            m()
+        if subcmd == "" or subcmd == "note":
+            # Check if --sync flag is present → old behavior (full pipeline)
+            if "--sync" in sys.argv:
+                sys.argv.remove("--sync")
+                print("Tip: Use '/note' in hermes-agent to save assistant responses.")
+                print("")
+                if os.environ.get("NOTE_ENTER_CONFIRM", "1") != "0":
+                    try:
+                        input("Press Enter to continue, Ctrl+C to quit... ")
+                    except KeyboardInterrupt:
+                        print()
+                        return
+                from ww.note.note_workflow import main as m
+
+                m()
+            else:
+                # Fast path: read clipboard → queue → return instantly
+                from ww.note.note_queue import enqueue_clipboard
+
+                enqueue_clipboard()
+        elif subcmd == "process":
+            from ww.note.note_queue_process import main as process_main
+
+            process_main()
+        elif subcmd == "status":
+            from ww.note.note_queue import print_status
+
+            print_status()
+        elif subcmd == "clear":
+            from ww.note.note_queue import clear_done
+
+            removed = clear_done()
+            print(f"[ok] Cleared {removed} done/failed entries")
         elif subcmd == "log":
             from ww.note.create_log import create_log
 
@@ -518,6 +552,7 @@ def _main_dispatch(raw_args: list):
                 "  apps             Audit installed apps by size and age (--no-llm, --json)"
             )
             print("  dock             List apps currently pinned to the Dock (--json)")
+            print("  alarm <min> [label]  Set an alarm N minutes from now")
         elif subcmd == "find-large-dirs":
             from ww.macos.find_largest_directories import main as m
 
@@ -564,6 +599,10 @@ def _main_dispatch(raw_args: list):
             m()
         elif subcmd == "dock":
             from ww.macos.dock import main as m
+
+            m()
+        elif subcmd == "alarm":
+            from ww.macos.alarm import main as m
 
             m()
         else:

@@ -202,13 +202,12 @@ class TestNoteDispatch(unittest.TestCase):
 
     def test_note_empty_enter_proceeds(self):
         with patch.object(sys, "argv", ["ww", "note"]):
-            with patch("builtins.input", return_value=""):
-                with patch("builtins.print"):
-                    with patch("ww.note.note_workflow.main") as mock_m:
-                        from ww.main import main
+            with patch("builtins.print"):
+                with patch("ww.note.note_queue.enqueue_clipboard") as mock_q:
+                    from ww.main import main
 
-                        main()
-                        mock_m.assert_called_once()
+                    main()
+                    mock_q.assert_called_once()
 
     def test_note_unknown_subcmd_exits(self):
         with patch.object(sys, "argv", ["ww", "note", "bogus"]):
