@@ -30,7 +30,14 @@ def generate_image(prompt, model="imagen-3.0-generate-002"):
     except Exception as e:
         print(f"Error: image generation failed — {e}")
         sys.exit(1)
-    return response.generated_images[0].image.image_bytes
+    if not response.generated_images:
+        print("Error: no images generated")
+        sys.exit(1)
+    image = response.generated_images[0].image
+    if not image or not image.image_bytes:
+        print("Error: generated image is empty")
+        sys.exit(1)
+    return image.image_bytes
 
 
 def save_image(data, path):
