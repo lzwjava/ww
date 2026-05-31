@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 REPOS_BASE = Path.home() / "projects"
@@ -87,6 +88,13 @@ def main(argv=None):
         help="Repo names (from ~/projects), paths, or @category",
     )
     parser.add_argument(
+        "--jobs",
+        "-j",
+        type=int,
+        default=8,
+        help="Number of parallel git pull workers (default: 8)",
+    )
+    parser.add_argument(
         "--list",
         action="store_true",
         help="List configured repos and categories",
@@ -135,18 +143,29 @@ def main(argv=None):
         print("No repos to update.")
         return 1
 
-    print(f"Updating {len(paths)} repos...\n")
+    print(f"Updating {len(paths)} repos (jobs={args.jobs})...\n")
     updated, failed = 0, 0
+
+    # Validate paths first
+    valid_paths = []
     for path in paths:
         path = os.path.abspath(path)
         if not os.path.isdir(path):
             print(f"[skip] {path} is not a directory")
             failed += 1
-            continue
-        if not update_repo(path):
-            failed += 1
         else:
-            updated += 1
+            valid_paths.append(path)
+
+    # Parallel git pulls
+    if valid_paths:
+        max_workers = min(args.jobs, len(valid_paths))
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            futures = {pool.submit(update_repo, p): p for p in valid_paths}
+            for future in as_completed(futures):
+                if future.result():
+                    updated += 1
+                else:
+                    failed += 1
 
     print(f"\nUpdated {updated}, failed {failed}")
     return 0 if failed == 0 else 1
