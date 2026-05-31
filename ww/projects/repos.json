@@ -1,0 +1,81 @@
+{
+  "description": "Important open source repos to keep updated. Run: ww projects update",
+  "repos": {
+    "ai-models": [
+      "DeepSeek-V3",
+      "DeepSeek-R1",
+      "DeepSeek-Coder-V2",
+      "Janus",
+      "Qwen3",
+      "Qwen2.5-Coder",
+      "Qwen2.5-VL",
+      "gpt-2",
+      "CLIP",
+      "whisper-openai",
+      "evals",
+      "llama3",
+      "Kimi-k1.5"
+    ],
+    "ai-training": [
+      "pytorch",
+      "Megatron-LM",
+      "nanoGPT",
+      "modded-nanogpt",
+      "llm.c",
+      "nanochat",
+      "bitsandbytes",
+      "fairscale",
+      "fairseq",
+      "mistral-finetune",
+      "diffusers",
+      "nanoVLM",
+      "open-r1",
+      "tutorials"
+    ],
+    "ai-inference": [
+      "llama.cpp",
+      "sglang",
+      "ktransformers",
+      "dinov2",
+      "nougat"
+    ],
+    "ai-apps": [
+      "open-webui",
+      "dify",
+      "ComfyUI",
+      "stable-diffusion-webui",
+      "langfuse",
+      "chatbox",
+      "aider"
+    ],
+    "ai-agents": [
+      "hermes-agent",
+      "codex",
+      "claw-code",
+      "gpt-researcher"
+    ],
+    "dev-tools": [
+      "git",
+      "rust",
+      "jdk",
+      "react",
+      "vscode",
+      "terminal",
+      "alacritty",
+      "uv"
+    ],
+    "infra-network": [
+      "openwrt",
+      "searxng",
+      "shadowsocks-rust",
+      "greptimedb",
+      "netty"
+    ],
+    "web-platforms": [
+      "jekyll",
+      "kramdown",
+      "huggingface_hub",
+      "Telegram-iOS"
+    ]
+  }
+}

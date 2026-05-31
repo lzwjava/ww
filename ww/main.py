@@ -57,6 +57,13 @@ def _print_help():
     print("  ww copilot chat           Chat with a Copilot model")
     print("  ww copilot models         List available Copilot models")
     print("")
+    print("DB (Command History):")
+    print("  ww db errors              Show recent error commands (--limit N)")
+    print("  ww db recent              Show recent commands (--limit N)")
+    print("  ww db search <pattern>    Search command history")
+    print("  ww db stats               Show overall usage statistics")
+    print("  ww db top                 Show most frequently used commands (--limit N)")
+    print("")
     print("Degree (GDUFS Self-Study Exam):")
     print("  ww degree --pages N       Fetch N list pages (1-11, default 1)")
     print("  ww degree                 AI-categorize recent self-study notices")
@@ -225,7 +232,7 @@ def _print_help():
     print("")
     print("Projects:")
     print("  ww projects count         Count directories in ~/projects")
-    print("  ww projects update [name...]  Update git repos (default: updated_repos)")
+    print("  ww projects update [name|@cat...]  Update git repos (default: repos.json)")
     print("")
     print("Read (RAG):")
     print("  ww read index <dir>       Index documents in a directory (BGE + FAISS)")
@@ -301,13 +308,37 @@ def _pop_subcmd():
 
 
 def main():
-    import os
+    # Capture raw args before any popping for logging
+    raw_args = list(sys.argv)
+    exit_code = 0
 
     if len(sys.argv) < 2:
+        from ww.db import log_command, parse_command
+
+        group_name, subcmd = parse_command(raw_args)
+        log_command(raw_args, group_name, subcmd, 0)
         print("hello world")
         print("")
         _print_help()
         return
+
+    try:
+        _main_dispatch(raw_args)
+    except SystemExit as e:
+        exit_code = e.code if isinstance(e.code, int) else 1
+        raise
+    except Exception:
+        exit_code = 1
+        raise
+    finally:
+        from ww.db import log_command, parse_command
+
+        group_name, subcmd = parse_command(raw_args)
+        log_command(raw_args, group_name, subcmd, exit_code)
+
+
+def _main_dispatch(raw_args: list):
+    import os
 
     group = sys.argv.pop(1)
 
@@ -945,6 +976,11 @@ def main():
             print(f"Unknown copilot command: {subcmd}")
             sys.exit(1)
 
+    elif group == "db":
+        from ww.db_stats import main as m
+
+        m()
+
     elif group == "sync":
         subcmd = _pop_subcmd()
         if subcmd == "" or subcmd in ("--help", "-h"):
@@ -1373,7 +1409,7 @@ def main():
             print("")
             print("Commands:")
             print("  count    Count directories in ~/projects")
-            print("  update   Update git repos (default: updated_repos)")
+            print("  update   Update git repos (default: repos.json config)")
         elif subcmd == "count":
             from ww.projects.projects_count import main as m
 
@@ -1426,6 +1462,7 @@ def main():
             "cloudflare",
             "completion",
             "copilot",
+            "db",
             "degree",
             "display",
             "env",
