@@ -177,25 +177,27 @@ class TestNoteDispatch(unittest.TestCase):
         _dispatch(["ww", "note", "obfuscate"], "ww.note.obfuscate_log.obfuscate_log")
 
     def test_note_empty_prints_tip(self):
-        with patch.dict(os.environ, {"NOTE_ENTER_CONFIRM": "1"}):
-            with patch.object(sys, "argv", ["ww", "note"]):
-                with patch("builtins.input", side_effect=KeyboardInterrupt):
-                    with patch("builtins.print") as mock_print:
-                        from ww.main import main
+        def test_note_empty_prints_tip(self):
+            with patch.dict(os.environ, {"NOTE_ENTER_CONFIRM": "1"}):
+                with patch.object(sys, "argv", ["ww", "note"]):
+                    with patch("builtins.input", side_effect=KeyboardInterrupt):
+                        with patch("builtins.print") as mock_print:
+                            from ww.main import main
 
-                        main()
-                        mock_print.assert_any_call(
-                            "Tip: Use '/note' in hermes-agent to save assistant responses."
-                        )
+                            main()
+                            mock_print.assert_any_call(
+                                "Tip: Use '/note' in hermes-agent to save assistant responses."
+                            )
 
-    def test_note_empty_keyboard_interrupt_returns(self):
-        with patch.dict(os.environ, {"NOTE_ENTER_CONFIRM": "1"}):
-            with patch.object(sys, "argv", ["ww", "note"]):
-                with patch("builtins.input", side_effect=KeyboardInterrupt):
-                    with patch("builtins.print"):
-                        from ww.main import main
+        def test_note_empty_keyboard_interrupt_returns(self):
+            with patch.dict(os.environ, {"NOTE_ENTER_CONFIRM": "1"}):
+                with patch.object(sys, "argv", ["ww", "note"]):
+                    with patch("builtins.input", side_effect=KeyboardInterrupt):
+                        with patch("builtins.print"):
+                            from ww.main import main
 
-                        # Should return without error
+                            # Should return without error
+                            main()
                         main()
 
     def test_note_empty_enter_proceeds(self):
