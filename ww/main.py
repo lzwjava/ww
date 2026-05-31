@@ -8,68 +8,257 @@ load_env()
 def _print_help():
     print("Usage: ww <group> [command] [options]")
     print("")
-    print("Note:")
-    print("  ww note                   Create a new note with git integration")
-    print("  ww note log               Create a new log entry")
-    print("  ww note obfuscate <file>  Obfuscate sensitive data in a file")
+    print("Action:")
+    print("  ww action <workflow.yml>  Trigger a GitHub Actions workflow via gh CLI")
     print("")
-    print("Screenshot:")
-    print("  ww screenshot [DELAY]     Take a screenshot (macOS, --dir)")
-    print("  ww screenshot-linux       Take a screenshot (Linux)")
-    print("  ww screenshot note        Create a note from latest screenshot(s)")
+    print("Actions:")
     print(
-        "  ww screenshot interact-note  Interactively capture screenshots and create a note"
+        "  ww actions check          Check recent workflow runs (default: gh-pages.yml)"
     )
+    print("  ww actions check --repo R --count N  Specify repo and count")
+    print("")
+    print("AMD Dev Cloud:")
+    print(
+        "  ww amd-dev-cloud snapshots    List snapshots (requires AMD_DEV_CLOUD_API_KEY)"
+    )
+    print(
+        "  ww amd-dev-cloud start-train  Create GPU droplet from snapshot for training"
+    )
+    print("  ww amd-dev-cloud end-train    Snapshot and destroy a GPU droplet")
+    print("  ww amd-dev-cloud delete-snapshot  Delete a snapshot")
+    print("")
+    print("Clash:")
+    print("  ww clash query-dns [host]   Test AliDNS DoH resolution")
+    print("  ww clash gnome-proxy <set|unset>   Toggle GNOME proxy (Linux)")
+    print("  ww clash macos-proxy <set|unset>   Toggle macOS proxy (networksetup)")
+    print("  ww clash run                Full clash management with iterations")
+    print("  ww clash select-provider    Select best proxy provider")
+    print("  ww clash speed              Run speed test and select best proxy")
+    print("  ww clash speed-tiktok       Run speedtest + TikTok load time")
+    print("  ww clash top-proxies        Print top 5 fastest proxies (single-URL)")
+    print("  ww clash top-proxies-multi  Print top 10 fastest proxies (multi-URL)")
+    print("  ww clash wifi <on|off>      Toggle macOS Wi-Fi")
+    print("")
+    print("Cloudflare:")
+    print("  ww cloudflare datasets       List Web Analytics datasets")
+    print(
+        "  ww cloudflare monthly-visit  Monthly page views & visits from Web Analytics"
+    )
+    print("  ww cloudflare pdf <file>     Parse Cloudflare Analytics PDF export")
+    print("  ww cloudflare schema         Inspect GraphQL Account schema")
+    print("  ww cloudflare zones          List Cloudflare zones")
+    print("")
+    print("Completion:")
+    print("  ww completion install     Install zsh tab completion")
+    print("  ww completion script      Print completion script")
+    print("")
+    print("Copilot:")
+    print("  ww copilot auth           Authenticate via GitHub OAuth device flow")
+    print("  ww copilot chat           Chat with a Copilot model")
+    print("  ww copilot models         List available Copilot models")
+    print("")
+    print("Degree (GDUFS Self-Study Exam):")
+    print("  ww degree --pages N       Fetch N list pages (1-11, default 1)")
+    print("  ww degree                 AI-categorize recent self-study notices")
+    print("  ww degree list            Raw scraped list (no AI)")
+    print("  ww degree practical       Filter notices about practical exams / scores")
+    print("")
+    print("Display:")
+    print("  ww display <dark|light|auto|show>")
+    print(
+        "                        Switch macOS appearance (dark/light/auto) or show current"
+    )
+    print("")
+    print("Env:")
+    print(
+        "  ww env update             Pick a top Arena model and update MODEL= in .env"
+    )
+    print("")
+    print("Gen-image:")
+    print("  ww gen-image              Generate image from clipboard text (Imagen 3)")
     print("")
     print("GIF:")
     print("  ww gif                    Create GIF from images")
     print("")
+    print("Git:")
+    print("  ww git amend-push         Amend last commit and force push")
+    print("  ww git check-filenames    Check git filenames")
+    print("  ww git classify           Classify git commits")
+    print("  ww git delete-commit      Delete a git commit")
+    print("  ww git diff-tree          Show git diff tree")
+    print("  ww git find-commit        Find a git commit")
+    print("  ww git force-push         Force push to remote")
+    print("  ww git gca                AI commit, no push (gemini-flash)")
+    print("  ww git gpa                AI commit with pull+push (gemini-flash)")
+    print("  ww git show               Show git commit details")
+    print("  ww git squash             Squash git commits")
+    print("")
     print("GitHub:")
-    print("  ww github info            Account info, plan, rate limits")
-    print("  ww github repos           List your repos (recently pushed)")
-    print("  ww github starred         List starred repos")
     print("  ww github followers       List followers")
     print("  ww github following       List following")
+    print("  ww github gitmessageai    Generate AI commit message and commit")
+    print("  ww github info            Account info, plan, rate limits")
     print("  ww github notifications   List unread notifications")
     print("  ww github rate            Show rate limit details")
-    print("  ww github gitmessageai    Generate AI commit message and commit")
-    print()
+    print("  ww github repos           List your repos (recently pushed)")
+    print("  ww github starred         List starred repos")
+    print("")
+    print("Ghostty:")
+    print("  ww ghostty                Open a Ghostty window at a random position")
+    print("  ww ghostty close          Close all Ghostty windows")
+    print("  ww ghostty focus <N>      Focus a Ghostty window by index or title")
+    print("  ww ghostty list           List all open Ghostty windows")
+    print("")
+    print("Host:")
+    print("  ww host                   Show all hosts")
+    print("  ww host dmit              DMIT server")
+    print("  ww host local             Local machine")
+    print("  ww host workstation       Workstation (RTX 4070)")
+    print("")
+    print("HuggingFace:")
+    print("  ww hf [username]          Show HuggingFace profile (default: lzwjava)")
+    print(
+        "  ww hf news                Trending models, datasets, and spaces (--limit N, --json)"
+    )
+    print("")
+    print("Image:")
+    print("  ww image avatar           Process avatar image")
+    print("  ww image compress         Compress images")
+    print("  ww image crop             Crop an image")
+    print("  ww image exif             Scan images for EXIF GPS location data")
+    print("  ww image photo-compress   Compress photos")
+    print("  ww image remove-bg        Remove image background")
+    print("  ww image whatsapp         Download images from WhatsApp Web via Safari")
+    print("")
+    print("Java:")
+    print("  ww java analyze-deps      Analyze Java dependencies")
+    print("  ww java analyze-packages  Analyze Java packages")
+    print("  ww java analyze-poms      Analyze Maven POM files")
+    print("  ww java analyze-spring    Analyze Spring Boot project")
+    print("  ww java clean-log         Clean Java log files")
+    print("  ww java mvn               Maven project utilities")
+    print("")
+    print("Latest:")
+    print(
+        "  ww latest notes [N]        Show filename and title of latest N notes (default 10)"
+    )
+    print("")
+    print("Linux:")
+    print("  ww linux battery      Show battery status")
+    print("  ww linux disk         Show disk usage")
+    print("  ww linux gpu          Show GPU and CUDA details")
+    print("  ww linux proxy-setup  Interactively configure APT proxy")
+    print("  ww linux switch-keys  Swap Caps Lock and Left Control keys")
+    print("  ww linux system       Comprehensive system overview")
+    print("  ww linux terminal     Open a fullscreen terminal")
+    print("  ww linux wol          Send a Wake-on-LAN packet")
+    print("")
+    print("LLM:")
+    print(
+        "  ww llm compare            Compare 6 models on clipboard prompt, judge winner"
+    )
+    print("")
     print("macOS:")
-    print("  ww macos find-large-dirs  Find largest directories on disk")
-    print("  ww macos system-info      Show system information")
-    print("  ww macos install          Run macOS install tasks")
-    print("  ww macos list-fonts       List installed fonts")
-    print("  ww macos list-disks       List portable disks")
-    print("  ww macos open-terminal    Open a new terminal window")
-    print("  ww macos toast            Show macOS notification toast")
+    print(
+        "  ww macos apps             Audit installed apps by size and age (--no-llm, --json)"
+    )
     print(
         "  ww macos charge-watch     Alert when charger is plugged in but not charging"
     )
+    print("  ww macos dock             List apps currently pinned to the Dock (--json)")
+    print("  ww macos find-large-dirs  Find largest directories on disk")
+    print("  ww macos install          Run macOS install tasks")
+    print("  ww macos list-disks       List portable disks")
+    print("  ww macos list-fonts       List installed fonts")
+    print("  ww macos open-terminal    Open a new terminal window")
     print(
         "  ww macos process          Analyze running processes and suggest what to kill"
     )
     print(
         "  ww macos settings-proxy   Set system proxy (HTTP/HTTPS 7890, SOCKS 7891) with bypass list"
     )
-    print(
-        "  ww macos apps             Audit installed apps by size and age (--no-llm, --json)"
-    )
-    print("  ww macos dock             List apps currently pinned to the Dock (--json)")
+    print("  ww macos system-info      Show system information")
+    print("  ww macos toast            Show macOS notification toast")
     print("")
-    print("Image:")
-    print("  ww image avatar           Process avatar image")
-    print("  ww image crop             Crop an image")
-    print("  ww image remove-bg        Remove image background")
-    print("  ww image compress         Compress images")
-    print("  ww image photo-compress   Compress photos")
-    print("  ww image exif             Scan images for EXIF GPS location data")
-    print("  ww image whatsapp         Download images from WhatsApp Web via Safari")
+    print("Marp:")
+    print(
+        "  ww marp <file.md>         Watch a markdown file and regenerate PDF via marp"
+    )
+    print("")
+    print("Network:")
+    print("  ww network discover           Discover devices on local network")
+    print("  ww network get-wifi-list      Get list of WiFi networks")
+    print("  ww network hack-wifi          WiFi password utilities")
+    print("  ww network ip-scan            Scan IP addresses on network")
+    print("  ww network network-plot       Plot network topology")
+    print("  ww network port-scan          Scan open ports")
+    print("  ww network save-wifi-list     Save WiFi network list")
+    print("  ww network wifi-gen-password  Generate WiFi password")
+    print("  ww network wifi-scan          Scan for WiFi networks")
+    print("  ww network wifi-util          WiFi utility tools")
+    print("")
+    print("Note:")
+    print("  ww note                   Create a new note with git integration")
+    print("  ww note log               Create a new log entry")
+    print("  ww note obfuscate <file>  Obfuscate sensitive data in a file")
+    print("")
+    print("OpenRouter:")
+    print("  ww openrouter activity    Past week spend, requests, tokens (--days N)")
+    print("  ww openrouter credits     Show credits balance")
+    print("  ww openrouter info        Account summary: credits, usage, key details")
+    print("  ww openrouter models      List available models")
+    print("")
+    print("PDF:")
+    print("  ww pdf code2pdf           Convert code files in a directory to PDF")
+    print("  ww pdf markdown-pdf       Convert a markdown file to PDF")
+    print("  ww pdf md2png             Convert markdown to PNG via HTML+PDF (Chrome)")
+    print("  ww pdf pdf-pipeline       Batch convert markdown posts to PDFs")
+    print("  ww pdf scale-pdf          Scale a PDF using pdfjam")
+    print("  ww pdf test-latex         Test LaTeX/pandoc PDF generation")
+    print("  ww pdf update-pdf         Convert markdown files changed in last commit")
     print("")
     print("Process:")
+    print("  ww proc kill-jekyll       Kill Jekyll server")
     print("  ww proc kill-pattern      Kill processes matching a pattern")
     print("  ww proc kill-port         Kill process on a given port")
-    print("  ww proc kill-jekyll       Kill Jekyll server")
     print("  ww proc kill-proxy        Kill macOS proxy")
+    print("")
+    print("Projects:")
+    print("  ww projects count         Count directories in ~/projects")
+    print("  ww projects update [name...]  Update git repos (default: updated_repos)")
+    print("")
+    print("Read (RAG):")
+    print("  ww read index <dir>       Index documents in a directory (BGE + FAISS)")
+    print("  ww read query <question>  Ask a question over indexed documents")
+    print("  ww read query <q> --top-k N  Use N retrieved chunks (default 5)")
+    print("")
+    print("Screenshot:")
+    print("  ww screenshot [DELAY]     Take a screenshot (macOS, --dir)")
+    print(
+        "  ww screenshot interact-note  Interactively capture screenshots and create a note"
+    )
+    print("  ww screenshot note        Create a note from latest screenshot(s)")
+    print("  ww screenshot-linux       Take a screenshot (Linux)")
+    print("")
+    print("Search:")
+    print("  ww search                 Web search (multi-engine)")
+    print("  ww search bing            Search with Bing")
+    print("  ww search code            Search code")
+    print("  ww search ddg             Search with DuckDuckGo")
+    print("  ww search ecosia          Search with Ecosia")
+    print("  ww search filename        Search by filename")
+    print("  ww search startpage       Search with StartPage")
+    print("  ww search tavily          Search with Tavily API")
+    print("  ww search web --json      JSON output for LLM tool use")
+    print("")
+    print("Sync:")
+    print("  ww sync bashrc [back|forth] Sync .bashrc file")
+    print("  ww sync claude            Sync Claude Code settings (sanitized)")
+    print(
+        "  ww sync hermes [back|forth]  Sync config.yaml, SOUL.md, hooks/, plugins/, agent-hooks/ (forth: ~/.hermes/ -> project)"
+    )
+    print("  ww sync ssh [back|forth]    Sync .ssh directory")
+    print("  ww sync zprofile [back|forth] Sync .zprofile file")
     print("")
     print("Utils:")
     print("  ww utils base64           Encode/decode base64")
@@ -81,217 +270,28 @@ def _print_help():
     print("  ww utils smart-unzip      Smart unzip archives")
     print("  ww utils unzip            Unzip an archive")
     print("")
-    print("Java:")
-    print("  ww java mvn               Maven project utilities")
-    print("  ww java analyze-deps      Analyze Java dependencies")
-    print("  ww java analyze-packages  Analyze Java packages")
-    print("  ww java analyze-poms      Analyze Maven POM files")
-    print("  ww java analyze-spring    Analyze Spring Boot project")
-    print("  ww java clean-log         Clean Java log files")
-    print("")
-    print("Network:")
-    print("  ww network get-wifi-list      Get list of WiFi networks")
-    print("  ww network save-wifi-list     Save WiFi network list")
-    print("  ww network hack-wifi          WiFi password utilities")
-    print("  ww network wifi-gen-password  Generate WiFi password")
-    print("  ww network ip-scan            Scan IP addresses on network")
-    print("  ww network port-scan          Scan open ports")
-    print("  ww network wifi-scan          Scan for WiFi networks")
-    print("  ww network wifi-util          WiFi utility tools")
-    print("  ww network network-plot       Plot network topology")
-    print("  ww network discover           Discover devices on local network")
-    print("")
-    print("Git:")
-    print("  ww git amend-push         Amend last commit and force push")
-    print("  ww git classify           Classify git commits")
-    print("  ww git find-commit        Find a git commit")
-    print("  ww git delete-commit      Delete a git commit")
-    print("  ww git diff-tree          Show git diff tree")
-    print("  ww git check-filenames    Check git filenames")
-    print("  ww git force-push         Force push to remote")
-    print("  ww git show               Show git commit details")
-    print("  ww git squash             Squash git commits")
-    print("  ww git gca                AI commit, no push (gemini-flash)")
-    print("  ww git gpa                AI commit with pull+push (gemini-flash)")
-    print("")
-
-    print("Latest:")
-    print(
-        "  ww latest notes [N]        Show filename and title of latest N notes (default 10)"
-    )
-    print("")
-    print("  ww search                 Web search (multi-engine)")
-    print("  ww search bing            Search with Bing")
-    print("  ww search code            Search code")
-    print("  ww search ddg             Search with DuckDuckGo")
-    print("  ww search ecosia          Search with Ecosia")
-    print("  ww search filename        Search by filename")
-    print("  ww search startpage       Search with StartPage")
-    print("  ww search tavily          Search with Tavily API")
-    print("  ww search web --json      JSON output for LLM tool use")
-    print("")
-    print("PDF:")
-    print("  ww pdf markdown-pdf       Convert a markdown file to PDF")
-    print("  ww pdf pdf-pipeline       Batch convert markdown posts to PDFs")
-    print("  ww pdf update-pdf         Convert markdown files changed in last commit")
-    print("  ww pdf code2pdf           Convert code files in a directory to PDF")
-    print("  ww pdf scale-pdf          Scale a PDF using pdfjam")
-    print("  ww pdf test-latex         Test LaTeX/pandoc PDF generation")
-    print("  ww pdf md2png             Convert markdown to PNG via HTML+PDF (Chrome)")
-    print("")
-    print("Copilot:")
-    print("  ww copilot auth           Authenticate via GitHub OAuth device flow")
-    print("  ww copilot models         List available Copilot models")
-    print("  ww copilot chat           Chat with a Copilot model")
-    print("")
-    print("Sync:")
-    print("  ww sync claude            Sync Claude Code settings (sanitized)")
-    print("  ww sync bashrc [back|forth] Sync .bashrc file")
-    print("  ww sync zprofile [back|forth] Sync .zprofile file")
-    print("  ww sync ssh [back|forth]    Sync .ssh directory")
-    print(
-        "  ww sync hermes [back|forth]  Sync config.yaml, SOUL.md, hooks/, plugins/, agent-hooks/ (forth: ~/.hermes/ -> project)"
-    )
-    print("")
-    print("Read (RAG):")
-    print("  ww read index <dir>       Index documents in a directory (BGE + FAISS)")
-    print("  ww read query <question>  Ask a question over indexed documents")
-    print("  ww read query <q> --top-k N  Use N retrieved chunks (default 5)")
-    print("")
-    print("LLM:")
-    print(
-        "  ww llm compare            Compare 6 models on clipboard prompt, judge winner"
-    )
-    print("")
-    print("OpenRouter:")
-    print("  ww openrouter info        Account summary: credits, usage, key details")
-    print("  ww openrouter credits     Show credits balance")
-    print("  ww openrouter activity    Past week spend, requests, tokens (--days N)")
-    print("  ww openrouter models      List available models")
-    print("")
-    print("HuggingFace:")
-    print("  ww hf [username]          Show HuggingFace profile (default: lzwjava)")
-    print(
-        "  ww hf news                Trending models, datasets, and spaces (--limit N, --json)"
-    )
-    print("")
-    print("Env:")
-    print(
-        "  ww env update             Pick a top Arena model and update MODEL= in .env"
-    )
-    print("")
-    print("Display:")
-    print("  ww display <dark|light|auto|show>")
-    print(
-        "                        Switch macOS appearance (dark/light/auto) or show current"
-    )
-    print("")
-    print("Gen-image:")
-    print("  ww gen-image              Generate image from clipboard text (Imagen 3)")
-    print("")
-    print("Action:")
-    print("  ww action <workflow.yml>  Trigger a GitHub Actions workflow via gh CLI")
-    print("")
-    print("Actions:")
-    print(
-        "  ww actions check          Check recent workflow runs (default: gh-pages.yml)"
-    )
-    print("  ww actions check --repo R --count N  Specify repo and count")
-    print("")
-    print("Degree (GDUFS Self-Study Exam):")
-    print("  ww degree                 AI-categorize recent self-study notices")
-    print("  ww degree practical       Filter notices about practical exams / scores")
-    print("  ww degree list            Raw scraped list (no AI)")
-    print("  ww degree --pages N       Fetch N list pages (1-11, default 1)")
-    print("")
-    print("Marp:")
-    print(
-        "  ww marp <file.md>         Watch a markdown file and regenerate PDF via marp"
-    )
-    print("")
-    print("Whisper:")
-    print("  ww whisper <file.mp4>     Transcribe via whisper (Chinese, large, CUDA)")
-    print(
-        "  ww whisper refine <file.txt>  Refine transcription to .md via OpenRouter (deepseek-v4-flash)"
-    )
-    print(
-        "  ww whisper organize <file.txt>  Lightly clean: label speakers, fix grammar, keep content"
-    )
-    print("")
-    print("Zed:")
-    print(
-        "  ww zed [path]             Open Zed connected to remote workstation via SSH"
-    )
-    print("")
-    print("Host:")
-    print("  ww host                   Show all hosts")
-    print("  ww host local             Local machine")
-    print("  ww host workstation       Workstation (RTX 4070)")
-    print("  ww host dmit              DMIT server")
-    print("")
-    print("Linux:")
-    print("  ww linux gpu          Show GPU and CUDA details")
-    print("  ww linux system       Comprehensive system overview")
-    print("  ww linux disk         Show disk usage")
-    print("  ww linux battery      Show battery status")
-    print("  ww linux proxy-setup  Interactively configure APT proxy")
-    print("  ww linux wol          Send a Wake-on-LAN packet")
-    print("  ww linux terminal     Open a fullscreen terminal")
-    print("  ww linux switch-keys  Swap Caps Lock and Left Control keys")
-    print("")
-    print("Cloudflare:")
-    print(
-        "  ww cloudflare monthly-visit  Monthly page views & visits from Web Analytics"
-    )
-    print("  ww cloudflare zones          List Cloudflare zones")
-    print("  ww cloudflare datasets       List Web Analytics datasets")
-    print("  ww cloudflare schema         Inspect GraphQL Account schema")
-    print("  ww cloudflare pdf <file>     Parse Cloudflare Analytics PDF export")
-    print("")
-    print("Ghostty:")
-    print("  ww ghostty                Open a Ghostty window at a random position")
-    print("  ww ghostty list           List all open Ghostty windows")
-    print("  ww ghostty focus <N>      Focus a Ghostty window by index or title")
-    print("  ww ghostty close          Close all Ghostty windows")
-    print("")
-    print("Clash:")
-    print("  ww clash select-provider    Select best proxy provider")
-    print("  ww clash speed              Run speed test and select best proxy")
-    print("  ww clash run                Full clash management with iterations")
-    print("  ww clash top-proxies        Print top 5 fastest proxies (single-URL)")
-    print("  ww clash top-proxies-multi  Print top 10 fastest proxies (multi-URL)")
-    print("  ww clash speed-tiktok       Run speedtest + TikTok load time")
-    print("  ww clash query-dns [host]   Test AliDNS DoH resolution")
-    print("  ww clash gnome-proxy <set|unset>   Toggle GNOME proxy (Linux)")
-    print("  ww clash macos-proxy <set|unset>   Toggle macOS proxy (networksetup)")
-    print("  ww clash wifi <on|off>      Toggle macOS Wi-Fi")
-    print("")
     print("Weather:")
     print("  ww weather                Today's weather (auto-detect location)")
     print("  ww weather N              Today + next N days (1-3)")
     print("  ww weather <city>         Weather for a city")
     print("  ww weather N <city>       N days for a city")
     print("  ww weather --detail       With network/location details")
-    print("  ww weather --oneline      One-line summary")
     print("  ww weather --json         JSON output")
+    print("  ww weather --oneline      One-line summary")
     print("")
-    print("Projects:")
-    print("  ww projects count         Count directories in ~/projects")
-    print("  ww projects update [name...]  Update git repos (default: updated_repos)")
-    print("")
-    print("Completion:")
-    print("  ww completion install     Install zsh tab completion")
-    print("  ww completion script      Print completion script")
-    print("")
-    print("AMD Dev Cloud:")
+    print("Whisper:")
+    print("  ww whisper <file.mp4>     Transcribe via whisper (Chinese, large, CUDA)")
     print(
-        "  ww amd-dev-cloud snapshots    List snapshots (requires AMD_DEV_CLOUD_API_KEY)"
+        "  ww whisper organize <file.txt>  Lightly clean: label speakers, fix grammar, keep content"
     )
     print(
-        "  ww amd-dev-cloud start-train  Create GPU droplet from snapshot for training"
+        "  ww whisper refine <file.txt>  Refine transcription to .md via OpenRouter (deepseek-v4-flash)"
     )
-    print("  ww amd-dev-cloud end-train    Snapshot and destroy a GPU droplet")
-    print("  ww amd-dev-cloud delete-snapshot  Delete a snapshot")
+    print("")
+    print("Zed:")
+    print(
+        "  ww zed [path]             Open Zed connected to remote workstation via SSH"
+    )
 
 
 def _pop_subcmd():
@@ -1419,46 +1419,46 @@ def main():
     else:
         # Suggest similar commands when exact match fails
         all_groups = [
-            "note",
-            "screenshot",
-            "screenshot-linux",
-            "gif",
-            "github",
-            "macos",
-            "image",
-            "proc",
-            "utils",
-            "java",
-            "network",
-            "git",
-            "search",
-            "pdf",
-            "md",
-            "copilot",
-            "sync",
-            "linux",
-            "host",
-            "cloudflare",
-            "ghostty",
-            "clash",
-            "display",
-            "gen-image",
             "action",
             "actions",
-            "openrouter",
-            "llm",
-            "hf",
-            "env",
-            "read",
-            "marp",
-            "whisper",
-            "degree",
-            "latest",
-            "weather",
-            "completion",
-            "zed",
-            "projects",
             "amd-dev-cloud",
+            "clash",
+            "cloudflare",
+            "completion",
+            "copilot",
+            "degree",
+            "display",
+            "env",
+            "gen-image",
+            "gif",
+            "git",
+            "github",
+            "ghostty",
+            "hf",
+            "host",
+            "image",
+            "java",
+            "latest",
+            "linux",
+            "llm",
+            "macos",
+            "marp",
+            "md",
+            "network",
+            "note",
+            "openrouter",
+            "pdf",
+            "proc",
+            "projects",
+            "read",
+            "screenshot",
+            "screenshot-linux",
+            "search",
+            "sync",
+            "utils",
+            "weather",
+            "whisper",
+            "zed",
         ]
         matches = [g for g in all_groups if g.startswith(group)]
         if matches:
