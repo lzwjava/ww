@@ -62,14 +62,16 @@
       "vscode",
       "terminal",
       "alacritty",
-      "uv"
+      "uv",
+      "nmap"
     ],
     "infra-network": [
       "openwrt",
       "searxng",
       "shadowsocks-rust",
       "greptimedb",
-      "netty"
+      "netty",
+      "clash-core"
     ],
     "web-platforms": [
       "jekyll",
