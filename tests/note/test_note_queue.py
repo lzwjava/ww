@@ -261,5 +261,49 @@ class TestWatcherFileHash(unittest.TestCase):
             path.unlink()
 
 
+class TestProcessQueueAutoClean(unittest.TestCase):
+    """Test that process_queue auto-cleans done/failed entries."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.queue_file = Path(self.tmpdir) / "note_queue.json"
+
+    def _patch_queue_file(self):
+        return patch("ww.note.note_queue._queue_file", return_value=self.queue_file)
+
+    @patch("ww.note.note_queue_process._git_toplevel", return_value="/repo")
+    @patch("ww.note.note_queue_process._check_uncommitted")
+    @patch("ww.note.note_queue_process._git_pull_rebase")
+    @patch("ww.note.note_queue_process._git_commit_push")
+    @patch("ww.note.note_queue_process.create_note_from_content")
+    @patch("ww.note.note_queue_process.fix_mathjax_in_file")
+    @patch("ww.note.note_queue_process.process_tables_in_file")
+    def test_auto_cleans_after_processing(
+        self,
+        mock_tables,
+        mock_mathjax,
+        mock_create,
+        mock_push,
+        mock_pull,
+        mock_check,
+        mock_toplevel,
+    ):
+        from ww.note.note_queue_process import process_queue
+        from ww.note.note_queue import _save_queue, _load_queue
+
+        mock_create.return_value = "/notes/test.md"
+
+        entries = [
+            {"id": "a", "status": "pending", "content": "note 1"},
+            {"id": "b", "status": "pending", "content": "note 2"},
+        ]
+        with self._patch_queue_file(), patch("os.path.exists", return_value=True):
+            _save_queue(entries)
+            process_queue()
+            queue = _load_queue()
+            # All entries processed and cleaned
+            self.assertEqual(len(queue), 0)
+
+
 if __name__ == "__main__":
     unittest.main()
