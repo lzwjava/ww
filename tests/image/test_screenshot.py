@@ -6,7 +6,22 @@ from unittest.mock import MagicMock, patch
 
 os.environ.setdefault("OPENROUTER_API_KEY", "test-fake-key")
 
+try:
+    import importlib.util
 
+    _HAS_DEPS = importlib.util.find_spec("Quartz") is not None
+    if _HAS_DEPS:
+        from ww.image.screenshot import capture_screenshot  # noqa: F401
+except ImportError:
+    _HAS_DEPS = False
+
+
+def setUpModule():
+    if not _HAS_DEPS:
+        raise unittest.SkipTest("Missing optional dependency: pyobjc (macOS only)")
+
+
+@unittest.skipUnless(_HAS_DEPS, "Missing optional dependency: pyobjc (macOS only)")
 class TestCaptureScreenshot(unittest.TestCase):
     @patch("ww.image.screenshot.ImageGrab")
     @patch("ww.image.screenshot.Quartz")
@@ -74,6 +89,7 @@ class TestCaptureScreenshot(unittest.TestCase):
             shutil.rmtree(tmpdir)
 
 
+@unittest.skipUnless(_HAS_DEPS, "Missing optional dependency: pyobjc (macOS only)")
 class TestMain(unittest.TestCase):
     @patch("ww.image.screenshot.capture_screenshot")
     @patch("ww.image.screenshot.load_dotenv")

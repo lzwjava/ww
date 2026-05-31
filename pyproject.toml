@@ -50,6 +50,7 @@ exclude = [
     ".venv/",
     "ww/ml/",
     "tests/",
+    "ww/macos/",
     "ww/trading/",
     "ww/wandbrun/",
     "ww/agent/speech_to_text_agent.py",
@@ -81,6 +82,7 @@ ignore = [
 exclude_dirs = ["ww/ml", "tests"]
 skips = [
     "B101",  # assert_used — intentional in tests and validation
+    "B104",  # hardcoded_bind_all_interfaces — network tools need 0.0.0.0
     "B105",  # hardcoded_password_string — config defaults, not real secrets
     "B106",  # hardcoded_password_funcarg — config defaults
     "B107",  # hardcoded_password_default — config defaults

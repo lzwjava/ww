@@ -98,7 +98,8 @@ class TestMain(unittest.TestCase):
         ]
         with patch("builtins.print"):
             with patch("os.path.exists", return_value=True):
-                result = main()
+                with patch("pyperclip.copy"):
+                    result = main()
         self.assertEqual(result, 0)
 
     @patch("subprocess.check_output")
