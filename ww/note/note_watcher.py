@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 def _queue_file() -> Path:
-    return Path.home() / ".ww" / "note_queue.json"
+    return Path.home() / ".config" / "ww" / "note_queue.json"
 
 
 def _file_hash(path: Path) -> str:

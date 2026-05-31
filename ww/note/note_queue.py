@@ -9,7 +9,7 @@ from typing import Optional
 
 
 def _queue_dir() -> Path:
-    d = Path.home() / ".ww"
+    d = Path.home() / ".config" / "ww"
     d.mkdir(parents=True, exist_ok=True)
     return d
 
