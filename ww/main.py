@@ -213,6 +213,7 @@ def _print_help():
     print("  ww note process           Drain queue: create notes, commit, push")
     print("  ww note status            Show queue status")
     print("  ww note clear             Clear done/failed entries from queue")
+    print("  ww note watch             Auto-process queue when new notes arrive")
     print("  ww note log               Create a new log entry")
     print("  ww note obfuscate <file>  Obfuscate sensitive data in a file")
     print("")
@@ -396,6 +397,10 @@ def _main_dispatch(raw_args: list):
 
             removed = clear_done()
             print(f"[ok] Cleared {removed} done/failed entries")
+        elif subcmd == "watch":
+            from ww.note.note_watcher import main as watch_main
+
+            watch_main()
         elif subcmd == "log":
             from ww.note.create_log import create_log
 
