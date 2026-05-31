@@ -9,7 +9,9 @@ def _print_help():
     print("Usage: ww <group> [command] [options]")
     print("")
     print("Action:")
-    print("  ww action <workflow.yml>  Trigger a GitHub Actions workflow via gh CLI")
+    print(
+        "  ww action [workflow.yml]  Trigger a GitHub Actions workflow (default: gh-pages.yml)"
+    )
     print("")
     print("Actions:")
     print(
@@ -175,7 +177,7 @@ def _print_help():
         "  ww macos charge-watch     Alert when charger is plugged in but not charging"
     )
     print("  ww macos dock             List apps currently pinned to the Dock (--json)")
-    print("  ww macos alarm <min> [label]  Set an alarm N minutes from now")
+    print("  ww alarm [clear|list|<min>] Clock alarms: set, list, or remove all")
     print("  ww macos find-large-dirs  Find largest directories on disk")
     print("  ww macos install          Run macOS install tasks")
     print("  ww macos list-disks       List portable disks")
@@ -557,7 +559,6 @@ def _main_dispatch(raw_args: list):
                 "  apps             Audit installed apps by size and age (--no-llm, --json)"
             )
             print("  dock             List apps currently pinned to the Dock (--json)")
-            print("  alarm <min> [label]  Set an alarm N minutes from now")
         elif subcmd == "find-large-dirs":
             from ww.macos.find_largest_directories import main as m
 
@@ -604,10 +605,6 @@ def _main_dispatch(raw_args: list):
             m()
         elif subcmd == "dock":
             from ww.macos.dock import main as m
-
-            m()
-        elif subcmd == "alarm":
-            from ww.macos.alarm import main as m
 
             m()
         else:
@@ -1486,6 +1483,11 @@ def _main_dispatch(raw_args: list):
         else:
             print(f"Unknown projects command: {subcmd}")
             sys.exit(1)
+
+    elif group == "alarm":
+        from ww.alarm.alarm import main as m
+
+        m()
 
     elif group == "amd-dev-cloud":
         subcmd = _pop_subcmd()
