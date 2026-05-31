@@ -41,6 +41,7 @@ reportAttributeAccessIssue = false
 exclude = [
     ".venv/",
     "ww/ml/",
+    "tests/",
 ]
 
 [tool.ruff]
@@ -58,6 +59,7 @@ ignore = [
 "ww/mmlu/*.py" = ["E402"]
 "ww/networkx/*.py" = ["E402"]
 "ww/social/*.py" = ["E402"]
+"tests/*.py" = ["E402"]
 
 [tool.bandit]
 exclude_dirs = ["ww/ml", "tests"]
