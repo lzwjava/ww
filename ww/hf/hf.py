@@ -155,6 +155,81 @@ def cmd_news(limit=10):
         print()
 
 
+def cmd_top30():
+    """Show top 30 most-followed HuggingFace users from Weyaxi leaderboard dataset."""
+    import csv
+    import io
+    from datetime import datetime, timedelta
+
+    # Find latest dataset directory name (format: "DD-MM-YYYY HH-MM")
+    # Try recent dates — dataset updates daily around 04:00 UTC
+    now = datetime.utcnow()
+    dataset_base = (
+        "https://huggingface.co/datasets/Weyaxi/followers-leaderboard/resolve/main"
+    )
+
+    csv_url = None
+    for days_back in range(3):
+        dt = now - timedelta(days=days_back)
+        for hour in [4, 3, 5, 2]:
+            for minute in [0, 8, 3, 5, 10, 15, 20, 30, 40, 50]:
+                dirname = f"{dt.strftime('%d-%m-%Y')} {hour:02d}-{minute:02d}"
+                url = f"{dataset_base}/{dirname}/data.csv?download=true"
+                try:
+                    resp = requests.head(url, timeout=5)
+                    if resp.ok:
+                        csv_url = url
+                        break
+                except Exception:
+                    continue
+            if csv_url:
+                break
+        if csv_url:
+            break
+
+    if not csv_url:
+        print("Error: Could not find latest leaderboard data. Try again later.")
+        sys.exit(1)
+
+    # Download CSV
+    resp = requests.get(csv_url, timeout=30)
+    if not resp.ok:
+        print(f"Error downloading leaderboard: {resp.status_code}")
+        sys.exit(1)
+
+    # Parse and sort
+    reader = csv.DictReader(io.StringIO(resp.text))
+    rows = []
+    for row in reader:
+        try:
+            followers = int(row["Number of Followers"])
+            following = int(row["Number of Following"])
+            rows.append((row["Author"], followers, following))
+        except (ValueError, KeyError):
+            continue
+
+    rows.sort(key=lambda x: x[1], reverse=True)
+    top = rows[:30]
+
+    # Parse date from URL for display
+    date_str = (
+        csv_url.split("/resolve/main/")[1].split("/")[0]
+        if "/resolve/main/" in csv_url
+        else "unknown"
+    )
+
+    print("Top 30 HuggingFace Users by Followers")
+    print(f"Source: Weyaxi/followers-leaderboard ({date_str})")
+    print("=" * 60)
+    print(f"{'#':>3}  {'Username':<25} {'Followers':>10}  {'Following':>9}")
+    print("-" * 60)
+    for i, (author, followers, following) in enumerate(top, 1):
+        print(f"{i:>3}. {author:<25} {followers:>10,}  {following:>9,}")
+    print("-" * 60)
+    print(f"Total users in dataset: {len(rows):,}")
+    print("\nhttps://huggingface.co/spaces/Weyaxi/followers-leaderboard")
+
+
 def main():
     username = sys.argv[1] if len(sys.argv) > 1 else None
     cmd_info(username)

@@ -277,6 +277,9 @@ def _print_help():
     print("  ww weather --oneline      One-line summary")
     print("  ww weather --json         JSON output")
     print("")
+    print("Projects:")
+    print("  ww projects count         Count directories in ~/projects")
+    print("")
     print("Completion:")
     print("  ww completion install     Install zsh tab completion")
     print("  ww completion script      Print completion script")
@@ -288,12 +291,8 @@ def _print_help():
     print(
         "  ww amd-dev-cloud start-train  Create GPU droplet from snapshot for training"
     )
-    print(
-        "  ww amd-dev-cloud end-train    Snapshot and destroy a GPU droplet"
-    )
-    print(
-        "  ww amd-dev-cloud delete-snapshot  Delete a snapshot"
-    )
+    print("  ww amd-dev-cloud end-train    Snapshot and destroy a GPU droplet")
+    print("  ww amd-dev-cloud delete-snapshot  Delete a snapshot")
 
 
 def _pop_subcmd():
@@ -1244,6 +1243,10 @@ def main():
             from ww.hf.hf import cmd_news
 
             cmd_news()
+        elif subcmd == "top30":
+            from ww.hf.hf import cmd_top30
+
+            cmd_top30()
         elif subcmd in ("", "--help", "-h"):
             from ww.hf.hf import main as m
 
@@ -1369,6 +1372,21 @@ def main():
 
         m()
 
+    elif group == "projects":
+        subcmd = _pop_subcmd()
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww projects <command>")
+            print("")
+            print("Commands:")
+            print("  count    Count directories in ~/projects")
+        elif subcmd == "count":
+            from ww.projects.projects_count import main as m
+
+            m()
+        else:
+            print(f"Unknown projects command: {subcmd}")
+            sys.exit(1)
+
     elif group == "amd-dev-cloud":
         subcmd = _pop_subcmd()
         if subcmd == "" or subcmd in ("--help", "-h"):
@@ -1400,5 +1418,54 @@ def main():
             sys.exit(1)
 
     else:
-        print(f"Unknown command: {group}")
+        # Suggest similar commands when exact match fails
+        all_groups = [
+            "note",
+            "screenshot",
+            "screenshot-linux",
+            "gif",
+            "github",
+            "macos",
+            "image",
+            "proc",
+            "utils",
+            "java",
+            "network",
+            "git",
+            "search",
+            "pdf",
+            "md",
+            "copilot",
+            "sync",
+            "linux",
+            "host",
+            "cloudflare",
+            "ghostty",
+            "clash",
+            "display",
+            "gen-image",
+            "action",
+            "actions",
+            "openrouter",
+            "llm",
+            "hf",
+            "env",
+            "read",
+            "marp",
+            "whisper",
+            "update",
+            "degree",
+            "latest",
+            "weather",
+            "completion",
+            "zed",
+            "projects",
+            "amd-dev-cloud",
+        ]
+        matches = [g for g in all_groups if g.startswith(group)]
+        if matches:
+            print(f"Unknown command: {group}")
+            print(f"Did you mean: {', '.join(matches)}?")
+        else:
+            print(f"Unknown command: {group}")
         sys.exit(1)
