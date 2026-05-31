@@ -57,6 +57,65 @@ def _get_all_pages(path, params=None, auth=True, max_pages=10):
     return results
 
 
+def _fetch_commit_counts(username):
+    """Fetch commit counts per repo via GraphQL (single API call)."""
+    token = os.getenv("GITHUB_PAT_TOKEN")
+    if not token:
+        return {}
+
+    query = """
+    query($login: String!) {
+      user(login: $login) {
+        repositories(first: 100, orderBy: {field: PUSHED_AT, direction: DESC}) {
+          nodes {
+            name
+            defaultBranchRef {
+              target {
+                ... on Commit {
+                  history(first: 0) {
+                    totalCount
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    """
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
+
+    try:
+        resp = requests.post(
+            "https://api.github.com/graphql",
+            json={"query": query, "variables": {"login": username}},
+            headers=headers,
+            timeout=15,
+        )
+        if not resp.ok:
+            return {}
+        data = resp.json()
+        repos = (
+            data.get("data", {})
+            .get("user", {})
+            .get("repositories", {})
+            .get("nodes", [])
+        )
+        result = {}
+        for r in repos:
+            name = r.get("name", "")
+            target = r.get("defaultBranchRef", {}).get("target", {})
+            commits = target.get("history", {}).get("totalCount", 0) if target else 0
+            result[name] = commits
+        return result
+    except Exception:
+        return {}
+
+
 def _fetch_user_profile(username):
     """Fetch public profile + repos + starred for any user."""
     # Use auth if available to avoid 60 req/hr unauthenticated rate limit
@@ -102,6 +161,7 @@ def _analyze_user(username):
         "starred": starred,
         "lang_counts": lang_counts,
         "topics": Counter(topics),
+        "commit_counts": _fetch_commit_counts(username),
     }
 
 
@@ -135,14 +195,16 @@ def _print_user_report(profile):
 
     # Topics
     if p["topics"]:
-        print(f"\n  Repo Topics:")
+        print("\n  Repo Topics:")
         for topic, count in p["topics"].most_common(20):
             print(f"    {topic:<25} {count} repos")
 
     # Top repos by stars
-    top_repos = sorted(p["repos"], key=lambda r: r.get("stargazers_count", 0), reverse=True)[:10]
+    top_repos = sorted(
+        p["repos"], key=lambda r: r.get("stargazers_count", 0), reverse=True
+    )[:10]
     if top_repos:
-        print(f"\n  Top Repos (by stars):")
+        print("\n  Top Repos (by stars):")
         for r in top_repos:
             stars = r.get("stargazers_count", 0)
             lang = r.get("language") or "?"
@@ -151,10 +213,31 @@ def _print_user_report(profile):
             if desc:
                 print(f"           {desc}")
 
+    # Top repos by commits
+    commit_counts = p.get("commit_counts", {})
+    if commit_counts:
+        repos_by_commits = sorted(
+            [(name, commits) for name, commits in commit_counts.items() if commits > 0],
+            key=lambda x: x[1],
+            reverse=True,
+        )[:10]
+        if repos_by_commits:
+            print("\n  Top Repos (by commits):")
+            repo_lang_map = {r["name"]: r.get("language") or "?" for r in p["repos"]}
+            repo_desc_map = {
+                r["name"]: (r.get("description") or "")[:55] for r in p["repos"]
+            }
+            for name, commits in repos_by_commits:
+                lang = repo_lang_map.get(name, "?")
+                desc = repo_desc_map.get(name, "")
+                print(f"    {commits:>5}  {name:<30} [{lang}]")
+                if desc:
+                    print(f"           {desc}")
+
     # Recent repos
     recent = p["repos"][:5]
     if recent:
-        print(f"\n  Recently Active:")
+        print("\n  Recently Active:")
         for r in recent:
             pushed = (r.get("pushed_at") or "?")[:10]
             lang = r.get("language") or "?"
@@ -170,7 +253,7 @@ def _print_user_report(profile):
             if lang:
                 star_langs[lang] += 1
         if star_langs:
-            print(f"  Starred languages:")
+            print("  Starred languages:")
             for lang, count in star_langs.most_common(10):
                 print(f"    {lang:<15} {count} repos")
 
@@ -215,10 +298,18 @@ def cmd_interests(user1, user2):
     # Mutual followers/following
     use_auth = bool(os.getenv("GITHUB_PAT_TOKEN"))
     try:
-        followers1 = {u["login"] for u in _get(f"users/{user1}/followers", auth=use_auth)[0]}
-        following1 = {u["login"] for u in _get(f"users/{user1}/following", auth=use_auth)[0]}
-        followers2 = {u["login"] for u in _get(f"users/{user2}/followers", auth=use_auth)[0]}
-        following2 = {u["login"] for u in _get(f"users/{user2}/following", auth=use_auth)[0]}
+        followers1 = {
+            u["login"] for u in _get(f"users/{user1}/followers", auth=use_auth)[0]
+        }
+        following1 = {
+            u["login"] for u in _get(f"users/{user1}/following", auth=use_auth)[0]
+        }
+        followers2 = {
+            u["login"] for u in _get(f"users/{user2}/followers", auth=use_auth)[0]
+        }
+        following2 = {
+            u["login"] for u in _get(f"users/{user2}/following", auth=use_auth)[0]
+        }
         mutual_followers = (followers1 | following1) & (followers2 | following2)
     except Exception:
         mutual_followers = set()
@@ -267,7 +358,7 @@ def cmd_interests(user1, user2):
     # Language comparison
     all_langs = sorted(langs1 | langs2)
     if all_langs:
-        print(f"\n  LANGUAGE COMPARISON:")
+        print("\n  LANGUAGE COMPARISON:")
         print(f"    {'Language':<15} {user1:>12}  {user2:>12}")
         print(f"    {'-' * 42}")
         for lang in all_langs:
@@ -278,7 +369,7 @@ def cmd_interests(user1, user2):
             print(f"    {lang:<15} {c1:>3} {bar1:<8}  {c2:>3} {bar2:<8}")
 
     # Summary
-    print(f"\n  SUMMARY:")
+    print("\n  SUMMARY:")
     overlap = len(mutual_starred)
     total = len(starred1 | starred2)
     if total > 0:
@@ -412,8 +503,6 @@ def cmd_rate():
 
 
 def main():
-    import sys
-
     args = sys.argv[1:]
 
     if not args or args[0] in ("--help", "-h"):
