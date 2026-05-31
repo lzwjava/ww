@@ -42,7 +42,10 @@
       "LlamaFactory",
       "LLMs-from-scratch",
       "minbpe",
-      "mamba"
+      "mamba",
+      "keras",
+      "simpletransformers",
+      "FlagEmbedding"
     ],
     "ai-inference": [
       "llama.cpp",
@@ -68,7 +71,10 @@
       "litellm",
       "anything-llm",
       "Whisper",
-      "facefusion"
+      "facefusion",
+      "claude-relay-service",
+      "voice-changer",
+      "h2ogpt"
     ],
     "ai-agents": [
       "hermes-agent",
@@ -94,7 +100,16 @@
       "nmap",
       "warp",
       "iclaw",
-      "mcp"
+      "mcp",
+      "ROCm",
+      "Chat2DB",
+      "git-credential-manager",
+      "ChezScheme",
+      "dubbo",
+      "coding-interview-university",
+      "Bodhi-AI",
+      "Axono",
+      "fineract"
     ],
     "infra-network": [
       "openwrt",
@@ -108,7 +123,9 @@
       "qdrant",
       "localGPT",
       "quivr",
-      "llm-app"
+      "llm-app",
+      "v2rayN",
+      "seeker"
     ],
     "web-platforms": [
       "jekyll",
