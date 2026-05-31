@@ -68,11 +68,11 @@ def _format_catalog(entries):
 def _analyze_practical(entries, model=None):
     catalog = _format_catalog(entries)
     prompt = (
-        "You are helping a self-study (自学考试 / zikao) student at Guangdong "
+        "You are helping a self-study exam (zikao) student at Guangdong "
         "University of Foreign Studies. The student cares specifically about "
-        "**practical exam (实践考核) registration, seat numbers, schedules, "
-        "syllabi, and results/scores (成绩)** — NOT about thesis defense "
-        "(论文答辩), bachelor's degree application (学士学位申请), graduation "
+        "**practical exam registration, seat numbers, schedules, "
+        "syllabi, and results/scores** — NOT about thesis defense, "
+        "bachelor's degree application, graduation "
         "certificate pickup, or general non-practical-exam topics.\n\n"
         "From the article list below, pick only entries that are relevant to "
         "the practical exam or its scores. For each relevant article output a "
@@ -89,14 +89,14 @@ def _analyze_practical(entries, model=None):
 def _analyze_overview(entries, model=None):
     catalog = _format_catalog(entries)
     prompt = (
-        "You are helping a self-study (自学考试 / zikao) student at Guangdong "
+        "You are helping a self-study exam (zikao) student at Guangdong "
         "University of Foreign Studies understand recent official notices.\n\n"
         "Group the articles below into these categories, in this order:\n"
-        "1. 实践考核 (Practical exam: registration, seat numbers, scores, syllabi)\n"
-        "2. 笔试 / 报考 (Written-exam registration & schedules)\n"
-        "3. 学位 / 论文 (Bachelor's degree & thesis)\n"
-        "4. 毕业 / 证书 (Graduation & certificates)\n"
-        "5. 其他 (Other)\n\n"
+        "1. Practical exams (registration, seat numbers, scores, syllabi)\n"
+        "2. Written exams (registration & schedules)\n"
+        "3. Degree & thesis (bachelor's degree & thesis defense)\n"
+        "4. Graduation & certificates\n"
+        "5. Other\n\n"
         "Under each non-empty category, list articles as Markdown bullets:\n"
         "- [YYYY-MM-DD] [Title](URL)\n\n"
         "Then end with a `### Top picks` section: up to 5 articles the student "
@@ -115,7 +115,7 @@ def _print_list(entries):
 def main():
     parser = argparse.ArgumentParser(
         prog="ww degree",
-        description="Scrape GDUFS self-study (自考) notice page and let an LLM "
+        description="Scrape GDUFS self-study exam notice page and let an LLM "
         "surface practical-exam-related articles.",
     )
     parser.add_argument(
@@ -123,7 +123,7 @@ def main():
         nargs="?",
         default="overview",
         choices=["overview", "practical", "list"],
-        help="overview (default): AI-categorize. practical: filter for 实践考核. "
+        help="overview (default): AI-categorize. practical: filter for practical exams. "
         "list: raw scraped list with no AI.",
     )
     parser.add_argument(
