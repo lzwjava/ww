@@ -107,6 +107,13 @@ def process_queue(dry_run: bool = False) -> None:
     else:
         print("\n[warn] No notes were created successfully")
 
+    # Auto-clean: remove done/failed entries from queue
+    from ww.note.note_queue import clear_done
+
+    removed = clear_done()
+    if removed:
+        print(f"[ok] Cleaned {removed} processed entry/entries from queue")
+
 
 def main():
     """CLI entry point for 'ww note process'."""
