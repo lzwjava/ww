@@ -52,11 +52,15 @@ class TestGitPullRebase(unittest.TestCase):
     def test_calls_git_pull_rebase(self, mock_toplevel, mock_run):
         from ww.note.note_workflow import git_pull_rebase
 
-        mock_run.return_value = MagicMock()
+        mock_run.side_effect = [
+            MagicMock(returncode=0),  # fetch
+            MagicMock(returncode=0, stdout="3\n"),  # rev-list: behind 3
+            MagicMock(returncode=0),  # pull --rebase
+        ]
         git_pull_rebase()
-        cmd = mock_run.call_args[0][0]
-        self.assertIn("pull", cmd)
-        self.assertIn("--rebase", cmd)
+        pull_call = mock_run.call_args_list[2][0][0]
+        self.assertIn("pull", pull_call)
+        self.assertIn("--rebase", pull_call)
 
     @patch("subprocess.run", side_effect=Exception("fail"))
     @patch("ww.note.note_workflow._git_toplevel", return_value="/repo")

@@ -41,18 +41,69 @@ def load_config_repos():
     return repos, categories
 
 
-def update_repo(repo_path):
-    print(f"[pulling] {repo_path} ...", flush=True)
+def _get_current_branch(repo_path):
+    """Get the current branch name, or None if detached."""
+    result = subprocess.run(
+        ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+        cwd=repo_path,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode == 0:
+        branch = result.stdout.strip()
+        if branch != "HEAD":
+            return branch
+    return None
+
+
+def _has_upstream(repo_path, branch):
+    """Check if the branch has an upstream tracking ref."""
+    result = subprocess.run(
+        ["git", "rev-parse", "--abbrev-ref", f"{branch}@{{u}}"],
+        cwd=repo_path,
+        capture_output=True,
+        text=True,
+    )
+    return result.returncode == 0
+
+
+def fetch_repo(repo_path):
+    """Fetch remote refs. Returns (repo_path, needs_pull, fetch_ok)."""
+    branch = _get_current_branch(repo_path)
+    if branch and not _has_upstream(repo_path, branch):
+        # No upstream — skip entirely (local-only branch)
+        return repo_path, False, True
+
+    result = subprocess.run(
+        ["git", "fetch"],
+        cwd=repo_path,
+        capture_output=True,
+    )
+    if result.returncode != 0:
+        return repo_path, False, False
+
+    # Check if local is behind remote
+    if branch:
+        count_result = subprocess.run(
+            ["git", "rev-list", "--count", "HEAD..@{u}"],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+        )
+        if count_result.returncode == 0:
+            behind = int(count_result.stdout.strip())
+            return repo_path, behind > 0, True
+
+    return repo_path, False, True
+
+
+def pull_repo(repo_path):
+    """Pull (fetch + merge) a repo that needs updating."""
     result = subprocess.run(
         ["git", "pull", "--verbose"],
         cwd=repo_path,
     )
-    if result.returncode == 0:
-        print(f"[updated] {repo_path}")
-        return True
-    else:
-        print(f"[failed]  {repo_path}")
-        return False
+    return result.returncode == 0
 
 
 def resolve_repos(names_or_paths):
@@ -146,7 +197,6 @@ def main(argv=None):
 
     print(f"Updating {len(paths)} repos (jobs={args.jobs})...\n")
     start = time.monotonic()
-    updated, failed = 0, 0
 
     # Validate paths first
     valid_paths = []
@@ -154,24 +204,57 @@ def main(argv=None):
         path = os.path.abspath(path)
         if not os.path.isdir(path):
             print(f"[skip] {path} is not a directory")
-            failed += 1
         else:
             valid_paths.append(path)
 
-    # Parallel git pulls
-    if valid_paths:
-        max_workers = min(args.jobs, len(valid_paths))
+    if not valid_paths:
+        print("No valid repos.")
+        return 1
+
+    # Phase 1: Fetch all repos in parallel (lightweight — just check for changes)
+    needs_pull = []
+    fetch_failed = []
+    up_to_date = 0
+    max_workers = min(args.jobs, len(valid_paths))
+
+    print(f"[phase 1] Fetching {len(valid_paths)} repos...")
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        futures = {pool.submit(fetch_repo, p): p for p in valid_paths}
+        for future in as_completed(futures):
+            repo_path, should_pull, ok = future.result()
+            if not ok:
+                fetch_failed.append(repo_path)
+            elif should_pull:
+                needs_pull.append(repo_path)
+            else:
+                up_to_date += 1
+
+    print(
+        f"  {up_to_date} up-to-date, {len(needs_pull)} need update, {len(fetch_failed)} failed\n"
+    )
+
+    # Phase 2: Pull only repos that need updating
+    updated, pull_failed = 0, 0
+    if needs_pull:
+        print(f"[phase 2] Pulling {len(needs_pull)} repos...")
         with ThreadPoolExecutor(max_workers=max_workers) as pool:
-            futures = {pool.submit(update_repo, p): p for p in valid_paths}
+            futures = {pool.submit(pull_repo, p): p for p in needs_pull}
             for future in as_completed(futures):
                 if future.result():
                     updated += 1
                 else:
-                    failed += 1
+                    pull_failed += 1
 
+    total_failed = len(fetch_failed) + pull_failed
     elapsed = time.monotonic() - start
-    print(f"\nUpdated {updated}, failed {failed} ({elapsed:.1f}s)")
-    return 0 if failed == 0 else 1
+
+    for p in fetch_failed:
+        print(f"[failed]  {p}")
+
+    print(
+        f"\nDone: {up_to_date} current, {updated} updated, {total_failed} failed ({elapsed:.1f}s)"
+    )
+    return 0 if total_failed == 0 else 1
 
 
 if __name__ == "__main__":

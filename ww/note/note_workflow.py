@@ -44,8 +44,19 @@ def check_uncommitted_changes() -> None:
 def git_pull_rebase() -> None:
     try:
         toplevel = _git_toplevel()
-        print(f"[info] Running 'git pull --rebase' in {toplevel}...")
-        subprocess.run(["git", "-C", toplevel, "pull", "--rebase"], check=True)
+        print(f"[info] Fetching in {toplevel}...")
+        subprocess.run(["git", "-C", toplevel, "fetch"], check=True)
+        # Check if local is behind remote
+        count_result = subprocess.run(
+            ["git", "-C", toplevel, "rev-list", "--count", "HEAD..@{u}"],
+            capture_output=True,
+            text=True,
+        )
+        if count_result.returncode == 0 and int(count_result.stdout.strip()) > 0:
+            print("[info] Remote has new commits, running 'git pull --rebase'...")
+            subprocess.run(["git", "-C", toplevel, "pull", "--rebase"], check=True)
+        else:
+            print("[info] Already up-to-date, skipping pull.")
     except Exception as e:
         print(f"[error] git pull --rebase failed: {e}")
         raise
