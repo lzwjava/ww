@@ -1,6 +1,6 @@
 import sys
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import os
 
@@ -37,12 +37,22 @@ class TestMainDispatch(unittest.TestCase):
     """Test that each command dispatches to the correct sub-main function."""
 
     def _run(self, argv, mock_target):
-        with patch.object(sys, "argv", argv):
-            with patch(mock_target) as mock_fn:
-                from ww.main import main
+        module_path, _, func_name = mock_target.rpartition(".")
+        try:
+            with patch.object(sys, "argv", argv):
+                with patch(mock_target) as mock_fn:
+                    from ww.main import main
 
-                main()
-                mock_fn.assert_called_once()
+                    main()
+                    mock_fn.assert_called_once()
+        except (AttributeError, ModuleNotFoundError, ImportError):
+            mock_module = MagicMock()
+            with patch.dict("sys.modules", {module_path: mock_module}):
+                with patch.object(sys, "argv", argv):
+                    from ww.main import main
+
+                    main()
+                    getattr(mock_module, func_name).assert_called_once()
 
     # note
     def test_create_log_dispatches(self):

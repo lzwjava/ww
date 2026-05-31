@@ -4,7 +4,22 @@ import os
 
 os.environ.setdefault("OPENROUTER_API_KEY", "test-fake-key")
 
+try:
+    import importlib.util
 
+    _HAS_TITLE_AGENT = importlib.util.find_spec("frontmatter") is not None
+    if _HAS_TITLE_AGENT:
+        from ww.agent import title_agent as _title_agent_mod  # noqa: F401
+except ImportError:
+    _HAS_TITLE_AGENT = False
+
+
+def setUpModule():
+    if not _HAS_TITLE_AGENT:
+        raise unittest.SkipTest("Missing optional dependency: frontmatter")
+
+
+@unittest.skipUnless(_HAS_TITLE_AGENT, "Missing optional dependency: frontmatter")
 class TestTitleAgent(unittest.TestCase):
     @patch("ww.agent.title_agent.call_openrouter_api")
     def test_generate_title_with_ai_success(self, mock_api):

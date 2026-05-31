@@ -4,7 +4,22 @@ import os
 
 os.environ.setdefault("OPENROUTER_API_KEY", "test-fake-key")
 
+try:
+    import importlib.util
 
+    _HAS_DEPS = importlib.util.find_spec("selenium") is not None
+    if _HAS_DEPS:
+        from ww.crawler.weibo import scrape_weibo  # noqa: F401
+except ImportError:
+    _HAS_DEPS = False
+
+
+def setUpModule():
+    if not _HAS_DEPS:
+        raise unittest.SkipTest("Missing optional dependency: selenium")
+
+
+@unittest.skipUnless(_HAS_DEPS, "Missing optional dependency: selenium")
 class TestScrapeWeibo(unittest.TestCase):
     @patch("ww.crawler.weibo.webdriver.Chrome")
     @patch("builtins.open", new_callable=mock_open, read_data="{}")
@@ -178,8 +193,9 @@ class TestScrapeWeibo(unittest.TestCase):
         mock_soup = MagicMock()
         mock_soup.find_all.return_value = [mock_post]
 
-        with patch("ww.crawler.weibo.WebDriverWait") as mock_wait, patch(
-            "ww.crawler.weibo.BeautifulSoup", return_value=mock_soup
+        with (
+            patch("ww.crawler.weibo.WebDriverWait") as mock_wait,
+            patch("ww.crawler.weibo.BeautifulSoup", return_value=mock_soup),
         ):
             mock_wait_instance = MagicMock()
             mock_wait.return_value = mock_wait_instance

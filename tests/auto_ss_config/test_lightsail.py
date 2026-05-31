@@ -5,9 +5,21 @@ import os
 
 os.environ.setdefault("OPENROUTER_API_KEY", "test-fake-key")
 
-from ww.auto_ss_config import lightsail
+try:
+    from ww.auto_ss_config import lightsail
+
+    _HAS_DEPS = True
+except ImportError:
+    _HAS_DEPS = False
+    lightsail = MagicMock()
 
 
+def setUpModule():
+    if not _HAS_DEPS:
+        raise unittest.SkipTest("Missing optional dependency: PyYAML")
+
+
+@unittest.skipUnless(_HAS_DEPS, "Missing optional dependency: PyYAML")
 class TestGetLightsailInstances(unittest.TestCase):
     @patch.object(lightsail, "subprocess")
     @patch.object(lightsail, "yaml")

@@ -8,9 +8,21 @@ from pathlib import Path
 
 os.environ.setdefault("OPENROUTER_API_KEY", "test-fake-key")
 
-from ww.bot import punch_bot
+try:
+    from ww.bot import punch_bot
+
+    _HAS_DEPS = True
+except ImportError:
+    _HAS_DEPS = False
+    punch_bot = MagicMock()
 
 
+def setUpModule():
+    if not _HAS_DEPS:
+        raise unittest.SkipTest("Missing optional dependency: pytz")
+
+
+@unittest.skipUnless(_HAS_DEPS, "Missing optional dependency: pytz")
 class TestSendTelegramMessage(unittest.TestCase):
     @patch.object(punch_bot, "requests")
     def test_send_success(self, mock_requests):

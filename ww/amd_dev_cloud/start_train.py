@@ -108,7 +108,9 @@ def main():
     for i, snap in enumerate(gpu_snapshots, 1):
         created = snap.get("created_at", "")[:19].replace("T", " ")
         print(f"  [{i}] {snap.get('name', '')}")
-        print(f"      ID: {snap['id']} | Size: {snap.get('size_gigabytes', 0)} GB | Created: {created}")
+        print(
+            f"      ID: {snap['id']} | Size: {snap.get('size_gigabytes', 0)} GB | Created: {created}"
+        )
 
     # Select snapshot
     print()
@@ -139,7 +141,7 @@ def main():
     region = selected.get("regions", ["atl1"])[0]
 
     # Confirm
-    print(f"\n--- Creating ---")
+    print("\n--- Creating ---")
     print(f"Snapshot: {selected.get('name')}")
     print(f"Name: {name} | Region: {region} | Size: {GPU_SIZE}")
     if input("Proceed? [y/N]: ").strip().lower() != "y":

@@ -8,14 +8,29 @@ os.environ.setdefault("OPENROUTER_API_KEY", "test-fake-key")
 
 
 def _dispatch(argv, mock_target):
-    """Helper: run main() with given argv while mocking the target path."""
-    with patch.object(sys, "argv", argv):
-        with patch(mock_target) as mock_fn:
-            from ww.main import main
+    """Helper: run main() with given argv while mocking the target path.
 
-            main()
-            mock_fn.assert_called_once()
-            return mock_fn
+    Falls back to sys.modules injection if the target module can't be imported
+    (e.g., macOS-only modules on Linux).
+    """
+    module_path, _, func_name = mock_target.rpartition(".")
+    try:
+        with patch.object(sys, "argv", argv):
+            with patch(mock_target) as mock_fn:
+                from ww.main import main
+
+                main()
+                mock_fn.assert_called_once()
+                return mock_fn
+    except (AttributeError, ModuleNotFoundError, ImportError):
+        mock_module = MagicMock()
+        with patch.dict("sys.modules", {module_path: mock_module}):
+            with patch.object(sys, "argv", argv):
+                from ww.main import main
+
+                main()
+                getattr(mock_module, func_name).assert_called_once()
+                return getattr(mock_module, func_name)
 
 
 def _dispatch_print(argv):
@@ -162,24 +177,26 @@ class TestNoteDispatch(unittest.TestCase):
         _dispatch(["ww", "note", "obfuscate"], "ww.note.obfuscate_log.obfuscate_log")
 
     def test_note_empty_prints_tip(self):
-        with patch.object(sys, "argv", ["ww", "note"]):
-            with patch("builtins.input", side_effect=KeyboardInterrupt):
-                with patch("builtins.print") as mock_print:
-                    from ww.main import main
+        with patch.dict(os.environ, {"NOTE_ENTER_CONFIRM": "1"}):
+            with patch.object(sys, "argv", ["ww", "note"]):
+                with patch("builtins.input", side_effect=KeyboardInterrupt):
+                    with patch("builtins.print") as mock_print:
+                        from ww.main import main
 
-                    main()
-                    mock_print.assert_any_call(
-                        "Tip: Use '/note' in hermes-agent to save assistant responses."
-                    )
+                        main()
+                        mock_print.assert_any_call(
+                            "Tip: Use '/note' in hermes-agent to save assistant responses."
+                        )
 
     def test_note_empty_keyboard_interrupt_returns(self):
-        with patch.object(sys, "argv", ["ww", "note"]):
-            with patch("builtins.input", side_effect=KeyboardInterrupt):
-                with patch("builtins.print"):
-                    from ww.main import main
+        with patch.dict(os.environ, {"NOTE_ENTER_CONFIRM": "1"}):
+            with patch.object(sys, "argv", ["ww", "note"]):
+                with patch("builtins.input", side_effect=KeyboardInterrupt):
+                    with patch("builtins.print"):
+                        from ww.main import main
 
-                    # Should return without error
-                    main()
+                        # Should return without error
+                        main()
 
     def test_note_empty_enter_proceeds(self):
         with patch.object(sys, "argv", ["ww", "note"]):
@@ -1234,7 +1251,7 @@ class TestWhisperDispatch(unittest.TestCase):
 # ---------------------------------------------------------------------------
 class TestUpdateDispatch(unittest.TestCase):
     def test_update(self):
-        _dispatch(["ww", "update"], "ww.git.git_update.main")
+        _dispatch(["ww", "projects", "update"], "ww.git.git_update.main")
 
 
 # ---------------------------------------------------------------------------

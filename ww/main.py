@@ -105,7 +105,9 @@ def _print_help():
     print("  ww github following       List following")
     print("  ww github gitmessageai    Generate AI commit message and commit")
     print("  ww github info            Account info, plan, rate limits")
+    print("  ww github interests <u1> <u2>  Compare GitHub interests between two users")
     print("  ww github notifications   List unread notifications")
+    print("  ww github profile <user>  Detailed profile report for any GitHub user")
     print("  ww github rate            Show rate limit details")
     print("  ww github repos           List your repos (recently pushed)")
     print("  ww github starred         List starred repos")
@@ -417,6 +419,8 @@ def _main_dispatch(raw_args: list):
             print("  notifications   List unread notifications")
             print("  rate            Show rate limit details")
             print("  gitmessageai    Generate AI commit message and commit")
+            print("  interests <u1> <u2>  Compare GitHub interests between two users")
+            print("  profile <user>  Detailed profile report for any GitHub user")
         elif subcmd == "info":
             from ww.github.github_mgmt import cmd_info
 
@@ -469,6 +473,23 @@ def _main_dispatch(raw_args: list):
                 allow_pull_push=args.allow_pull_push,
                 type=args.type,
             )
+        elif subcmd == "profile":
+            from ww.github.github_mgmt import cmd_profile
+
+            username = _pop_subcmd()
+            if not username:
+                print("Usage: ww github profile <username>")
+                sys.exit(1)
+            cmd_profile(username)
+        elif subcmd == "interests":
+            from ww.github.github_mgmt import cmd_interests
+
+            user1 = _pop_subcmd()
+            user2 = _pop_subcmd()
+            if not user1 or not user2:
+                print("Usage: ww github interests <user1> <user2>")
+                sys.exit(1)
+            cmd_interests(user1, user2)
         else:
             print(f"Unknown github command: {subcmd}")
             sys.exit(1)

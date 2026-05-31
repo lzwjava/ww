@@ -4,21 +4,32 @@ import unittest
 
 os.environ.setdefault("OPENROUTER_API_KEY", "test-fake-key")
 
-import numpy as np
+try:
+    import numpy as np
 
-# word_vectors.py uses bare 'from w2v_utils import *' (not relative),
-# so we need to add the package directory to sys.path for it to resolve.
-_wv_dir = os.path.join(
-    os.path.dirname(__file__), "..", "..", "ww", "ml", "word_vectors"
-)
-_wv_dir = os.path.abspath(_wv_dir)
-if _wv_dir not in sys.path:
-    sys.path.insert(0, _wv_dir)
+    # word_vectors.py uses bare 'from w2v_utils import *' (not relative),
+    # so we need to add the package directory to sys.path for it to resolve.
+    _wv_dir = os.path.join(
+        os.path.dirname(__file__), "..", "..", "ww", "ml", "word_vectors"
+    )
+    _wv_dir = os.path.abspath(_wv_dir)
+    if _wv_dir not in sys.path:
+        sys.path.insert(0, _wv_dir)
 
-# Import the module - it handles missing files gracefully by creating sample vectors
-import ww.ml.word_vectors.word_vectors as wv_module
+    # Import the module - it handles missing files gracefully by creating sample vectors
+    import ww.ml.word_vectors.word_vectors as wv_module
+
+    _HAS_DEPS = True
+except ImportError:
+    _HAS_DEPS = False
 
 
+def setUpModule():
+    if not _HAS_DEPS:
+        raise unittest.SkipTest("Missing optional dependency: torch")
+
+
+@unittest.skipUnless(_HAS_DEPS, "Missing optional dependency: torch")
 class TestCosineSimilarity(unittest.TestCase):
     def test_same_vector_returns_1(self):
         a = np.array([1.0, 2.0, 3.0])

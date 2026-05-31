@@ -33,9 +33,13 @@ def create_snapshot(token, droplet_id, name):
     """Create a snapshot of a droplet via API."""
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
     payload = {"type": "snapshot", "name": name}
-    resp = requests.post(f"{API_BASE}/droplets/{droplet_id}/actions", headers=headers, json=payload)
+    resp = requests.post(
+        f"{API_BASE}/droplets/{droplet_id}/actions", headers=headers, json=payload
+    )
     if resp.status_code != 201:
-        print(f"Error creating snapshot: {resp.status_code} {resp.text}", file=sys.stderr)
+        print(
+            f"Error creating snapshot: {resp.status_code} {resp.text}", file=sys.stderr
+        )
         return None
     return resp.json().get("action", {})
 
@@ -47,7 +51,9 @@ def wait_for_snapshot(token, droplet_id, timeout=600):
     start = time.time()
 
     while time.time() - start < timeout:
-        resp = requests.get(f"{API_BASE}/droplets/{droplet_id}/actions?per_page=5", headers=headers)
+        resp = requests.get(
+            f"{API_BASE}/droplets/{droplet_id}/actions?per_page=5", headers=headers
+        )
         if resp.status_code == 200:
             actions = resp.json().get("actions", [])
             for a in actions:
@@ -110,7 +116,9 @@ def main():
                 break
         created = d.get("created_at", "")[:19].replace("T", " ")
         print(f"  [{i}] {name}")
-        print(f"      ID: {d['id']} | Status: {status} | Size: {size} | IP: {ip} | Created: {created}")
+        print(
+            f"      ID: {d['id']} | Status: {status} | Size: {size} | IP: {ip} | Created: {created}"
+        )
 
     # Select droplet
     print()

@@ -4,9 +4,21 @@ from unittest.mock import patch, MagicMock
 
 os.environ.setdefault("OPENROUTER_API_KEY", "test-fake-key")
 
-from ww.cloud import ec2
+try:
+    from ww.cloud import ec2
+
+    _HAS_DEPS = True
+except ImportError:
+    _HAS_DEPS = False
+    ec2 = MagicMock()
 
 
+def setUpModule():
+    if not _HAS_DEPS:
+        raise unittest.SkipTest("Missing optional dependency: PyYAML")
+
+
+@unittest.skipUnless(_HAS_DEPS, "Missing optional dependency: PyYAML")
 class TestGetEc2Instances(unittest.TestCase):
     @patch("ww.cloud.ec2.subprocess.run")
     def test_success(self, mock_run):
@@ -46,6 +58,7 @@ class TestGetEc2Instances(unittest.TestCase):
         self.assertIsNone(result)
 
 
+@unittest.skipUnless(_HAS_DEPS, "Missing optional dependency: PyYAML")
 class TestGetEc2Instance(unittest.TestCase):
     @patch("ww.cloud.ec2.subprocess.run")
     def test_success(self, mock_run):
@@ -109,6 +122,7 @@ class TestGetEc2Instance(unittest.TestCase):
             self.assertIsNone(result)
 
 
+@unittest.skipUnless(_HAS_DEPS, "Missing optional dependency: PyYAML")
 class TestCreateEc2Instance(unittest.TestCase):
     @patch("ww.cloud.ec2.subprocess.run")
     def test_success_with_name(self, mock_run):
@@ -165,6 +179,7 @@ class TestCreateEc2Instance(unittest.TestCase):
             self.assertEqual(result, "i-t")
 
 
+@unittest.skipUnless(_HAS_DEPS, "Missing optional dependency: PyYAML")
 class TestDeleteAllEc2Instances(unittest.TestCase):
     @patch("ww.cloud.ec2.subprocess.run")
     def test_delete_specific_instance(self, mock_run):
@@ -213,6 +228,7 @@ class TestDeleteAllEc2Instances(unittest.TestCase):
         ec2.delete_all_ec2_instances()
 
 
+@unittest.skipUnless(_HAS_DEPS, "Missing optional dependency: PyYAML")
 class TestInstallOutlineServer(unittest.TestCase):
     @patch("ww.cloud.ec2.subprocess.run")
     @patch("ww.cloud.ec2._get_ec2_instance")
@@ -239,6 +255,7 @@ class TestInstallOutlineServer(unittest.TestCase):
         ec2.install_outline_server("i-1")
 
 
+@unittest.skipUnless(_HAS_DEPS, "Missing optional dependency: PyYAML")
 class TestOpenFirewallPorts(unittest.TestCase):
     @patch("ww.cloud.ec2.subprocess.run")
     @patch("ww.cloud.ec2._get_ec2_instance")

@@ -4,19 +4,30 @@ from unittest.mock import patch, MagicMock
 
 os.environ.setdefault("OPENROUTER_API_KEY", "test-fake-key")
 
-import numpy as np
-import torch
-from ww.ml.word_vectors.w2v_utils import (
-    build_dataset,
-    read_glove_vecs,
-    Word2VecModel,
-    SkipGramDataset,
-    relu,
-    softmax,
-    SimilarityCallback,
-)
+try:
+    import numpy as np
+    import torch
+    from ww.ml.word_vectors.w2v_utils import (
+        build_dataset,
+        read_glove_vecs,
+        Word2VecModel,
+        SkipGramDataset,
+        relu,
+        softmax,
+        SimilarityCallback,
+    )
+
+    _HAS_DEPS = True
+except ImportError:
+    _HAS_DEPS = False
 
 
+def setUpModule():
+    if not _HAS_DEPS:
+        raise unittest.SkipTest("Missing optional dependency: torch")
+
+
+@unittest.skipUnless(_HAS_DEPS, "Missing optional dependency: torch")
 class TestBuildDataset(unittest.TestCase):
     def test_basic_build(self):
         words = ["the", "cat", "sat", "the", "dog", "the", "cat"]
