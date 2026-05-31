@@ -114,9 +114,7 @@ def _print_help():
     print("  ww git gca                AI commit, no push (gemini-flash)")
     print("  ww git gpa                AI commit with pull+push (gemini-flash)")
     print("")
-    print("Update:")
-    print("  ww update [name...]        Update git repos (default: updated_repos)")
-    print("")
+
     print("Latest:")
     print(
         "  ww latest notes [N]        Show filename and title of latest N notes (default 10)"
@@ -200,9 +198,9 @@ def _print_help():
     )
     print("  ww actions check --repo R --count N  Specify repo and count")
     print("")
-    print("Degree (GDUFS 自考):")
+    print("Degree (GDUFS Self-Study Exam):")
     print("  ww degree                 AI-categorize recent self-study notices")
-    print("  ww degree practical       Filter notices about 实践考核 / scores")
+    print("  ww degree practical       Filter notices about practical exams / scores")
     print("  ww degree list            Raw scraped list (no AI)")
     print("  ww degree --pages N       Fetch N list pages (1-11, default 1)")
     print("")
@@ -279,6 +277,7 @@ def _print_help():
     print("")
     print("Projects:")
     print("  ww projects count         Count directories in ~/projects")
+    print("  ww projects update [name...]  Update git repos (default: updated_repos)")
     print("")
     print("Completion:")
     print("  ww completion install     Install zsh tab completion")
@@ -1298,11 +1297,6 @@ def main():
 
             m()
 
-    elif group == "update":
-        from ww.git.git_update import main as m
-
-        m()
-
     elif group == "degree":
         from ww.degree.degree import main as m
 
@@ -1379,8 +1373,13 @@ def main():
             print("")
             print("Commands:")
             print("  count    Count directories in ~/projects")
+            print("  update   Update git repos (default: updated_repos)")
         elif subcmd == "count":
             from ww.projects.projects_count import main as m
+
+            m()
+        elif subcmd == "update":
+            from ww.git.git_update import main as m
 
             m()
         else:
@@ -1453,7 +1452,6 @@ def main():
             "read",
             "marp",
             "whisper",
-            "update",
             "degree",
             "latest",
             "weather",
