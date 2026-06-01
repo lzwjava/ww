@@ -1,7 +1,9 @@
 """Background watcher for note queue — auto-processes pending entries when queue file changes."""
 
+import atexit
 import hashlib
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -9,6 +11,10 @@ from pathlib import Path
 
 def _queue_file() -> Path:
     return Path.home() / ".config" / "ww" / "note_queue.json"
+
+
+def _pid_file() -> Path:
+    return Path.home() / ".config" / "ww" / "note_watch.pid"
 
 
 def _file_hash(path: Path) -> str:
@@ -24,12 +30,46 @@ def _print(msg: str) -> None:
     print(msg, flush=True)
 
 
+def _acquire_lock() -> bool:
+    """Try to acquire a PID lock. Returns True if lock acquired, False if another instance is running."""
+    pf = _pid_file()
+    if pf.exists():
+        try:
+            old_pid = int(pf.read_text().strip())
+            # Check if the process is still alive (kill -0)
+            os.kill(old_pid, 0)
+            _print(f"[watch] Another instance is already running (pid={old_pid})")
+            return False
+        except (ValueError, ProcessLookupError, PermissionError):
+            # Stale PID file — process no longer exists
+            pass
+        except OSError:
+            pass
+
+    pf.write_text(str(os.getpid()))
+    atexit.register(_release_lock)
+    return True
+
+
+def _release_lock() -> None:
+    """Remove PID file on exit."""
+    pf = _pid_file()
+    try:
+        if pf.exists() and pf.read_text().strip() == str(os.getpid()):
+            pf.unlink()
+    except OSError:
+        pass
+
+
 def watch(interval: float = 2.0) -> None:
     """Watch queue file for changes and auto-process pending entries.
 
     Args:
         interval: Seconds between checks (default: 2.0)
     """
+    if not _acquire_lock():
+        sys.exit(1)
+
     qf = _queue_file()
     last_hash = _file_hash(qf)
     _print(f"[watch] Monitoring {qf} (interval={interval}s)")
