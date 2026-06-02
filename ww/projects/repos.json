@@ -45,7 +45,13 @@
       "mamba",
       "keras",
       "simpletransformers",
-      "FlagEmbedding"
+      "FlagEmbedding",
+      "trl",
+      "peft",
+      "torchtitan",
+      "ao",
+      "minGPT",
+      "ng-video-lecture"
     ],
     "ai-inference": [
       "llama.cpp",
@@ -57,7 +63,10 @@
       "ollama",
       "mlx",
       "ggml",
-      "mlx-examples"
+      "mlx-examples",
+      "text-generation-webui",
+      "llamafile",
+      "nexa-sdk"
     ],
     "ai-apps": [
       "open-webui",
@@ -74,7 +83,11 @@
       "facefusion",
       "claude-relay-service",
       "voice-changer",
-      "h2ogpt"
+      "h2ogpt",
+      "langchain",
+      "openai-cookbook",
+      "anthropic-cookbook",
+      "llama_index"
     ],
     "ai-agents": [
       "hermes-agent",
@@ -86,7 +99,12 @@
       "markitdown",
       "browser-use",
       "opencode",
-      "gemini-cli"
+      "gemini-cli",
+      "claude-code",
+      "AutoGPT",
+      "mem0",
+      "crewAI",
+      "langgraph"
     ],
     "dev-tools": [
       "git",
@@ -110,7 +128,16 @@
       "Bodhi-AI",
       "Axono",
       "fineract",
-      "desktop"
+      "desktop",
+      "lazygit",
+      "bat",
+      "fd",
+      "ripgrep",
+      "zoxide",
+      "ruff",
+      "yazi",
+      "glow",
+      "delta"
     ],
     "infra-network": [
       "openwrt",
@@ -126,7 +153,8 @@
       "quivr",
       "llm-app",
       "v2rayN",
-      "seeker"
+      "seeker",
+      "weaviate"
     ],
     "web-platforms": [
       "jekyll",

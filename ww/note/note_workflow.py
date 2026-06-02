@@ -159,7 +159,14 @@ def main():
 
     if not args.no_push:
         base = get_base_path()
-        gitmessageai(allow_pull_push=True, directory=None if base == "." else base)
+        commit_files = (
+            [created_path] if created_path and os.path.exists(created_path) else None
+        )
+        gitmessageai(
+            allow_pull_push=True,
+            directory=None if base == "." else base,
+            files=commit_files,
+        )
 
     if args.open:
         try:

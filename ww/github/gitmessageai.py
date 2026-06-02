@@ -79,10 +79,14 @@ def gitmessageai(
     type="file",
     directory=None,
     model=None,
+    files=None,
 ):
     git = ["git", "-C", directory] if directory else ["git"]
 
-    subprocess.run([*git, "add", "-A"], check=True)
+    if files:
+        subprocess.run([*git, "add", *files], check=True)
+    else:
+        subprocess.run([*git, "add", "-A"], check=True)
 
     diff_process = subprocess.run(
         [*git, "diff", "--staged", "--unified=0"],

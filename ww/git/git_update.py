@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -97,13 +98,72 @@ def fetch_repo(repo_path):
     return repo_path, False, True
 
 
+def _get_short_stats(repo_path, old_head, new_head):
+    """Get short diff stats between two commits. Returns (commits, files, ins, dels) or None."""
+    # Commit count
+    r = subprocess.run(
+        ["git", "rev-list", "--count", f"{old_head}..{new_head}"],
+        cwd=repo_path,
+        capture_output=True,
+        text=True,
+    )
+    if r.returncode != 0:
+        return None
+    commits = int(r.stdout.strip())
+    # Shortstat
+    r = subprocess.run(
+        ["git", "diff", "--shortstat", old_head, new_head],
+        cwd=repo_path,
+        capture_output=True,
+        text=True,
+    )
+    files, ins, dels = 0, 0, 0
+    if r.returncode == 0 and r.stdout.strip():
+        s = r.stdout.strip()
+        m = re.search(r"(\d+) files? changed", s)
+        if m:
+            files = int(m.group(1))
+        m = re.search(r"(\d+) insertions?", s)
+        if m:
+            ins = int(m.group(1))
+        m = re.search(r"(\d+) deletions?", s)
+        if m:
+            dels = int(m.group(1))
+    return commits, files, ins, dels
+
+
 def pull_repo(repo_path):
-    """Pull (fetch + merge) a repo that needs updating."""
+    """Pull (fetch + merge) a repo that needs updating.
+    Returns (repo_path, success, stats_dict_or_None).
+    """
+    # Record HEAD before pull
+    r = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=repo_path,
+        capture_output=True,
+        text=True,
+    )
+    old_head = r.stdout.strip() if r.returncode == 0 else None
+
     result = subprocess.run(
         ["git", "pull", "--verbose"],
         cwd=repo_path,
+        capture_output=True,
+        text=True,
     )
-    return result.returncode == 0
+    ok = result.returncode == 0
+    stats = None
+    if ok and old_head:
+        r = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+        )
+        new_head = r.stdout.strip()
+        if r.returncode == 0 and new_head != old_head:
+            stats = _get_short_stats(repo_path, old_head, new_head)
+    return repo_path, ok, stats
 
 
 def resolve_repos(names_or_paths):
@@ -235,13 +295,18 @@ def main(argv=None):
 
     # Phase 2: Pull only repos that need updating
     updated, pull_failed = 0, 0
+    pull_stats = []  # (repo_name, (commits, files, ins, dels))
     if needs_pull:
         print(f"[phase 2] Pulling {len(needs_pull)} repos...")
         with ThreadPoolExecutor(max_workers=max_workers) as pool:
             futures = {pool.submit(pull_repo, p): p for p in needs_pull}
             for future in as_completed(futures):
-                if future.result():
+                repo_path, ok, stats = future.result()
+                if ok:
                     updated += 1
+                    if stats:
+                        name = os.path.basename(repo_path)
+                        pull_stats.append((name, stats))
                 else:
                     pull_failed += 1
 
@@ -254,6 +319,26 @@ def main(argv=None):
     print(
         f"\nDone: {up_to_date} current, {updated} updated, {total_failed} failed ({elapsed:.1f}s)"
     )
+
+    # Summary table
+    if pull_stats:
+        pull_stats.sort(key=lambda x: x[0])
+        total_c = sum(s[0] for _, s in pull_stats)
+        total_f = sum(s[1] for _, s in pull_stats)
+        total_i = sum(s[2] for _, s in pull_stats)
+        total_d = sum(s[3] for _, s in pull_stats)
+        # Column widths
+        nw = max(len(n) for n, _ in pull_stats)
+        nw = max(nw, 6)  # min "Repo" width
+        print(f"\n{'Repo':<{nw}}  commits  files changed  insertions(+)  deletions(-)")
+        print(f"{'─' * nw}  ───────  ─────────────  ─────────────  ───────────")
+        for name, (c, f, i, d) in pull_stats:
+            print(f"{name:<{nw}}  {c:>7}  {f:>13}  {i:>13}  {d:>11}")
+        print(f"{'─' * nw}  ───────  ─────────────  ─────────────  ───────────")
+        print(
+            f"{'TOTAL':<{nw}}  {total_c:>7}  {total_f:>13}  {total_i:>13}  {total_d:>11}"
+        )
+
     return 0 if total_failed == 0 else 1
 
 

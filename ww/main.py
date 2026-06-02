@@ -1571,3 +1571,7 @@ def _main_dispatch(raw_args: list):
         else:
             print(f"Unknown command: {group}")
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

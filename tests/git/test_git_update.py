@@ -10,32 +10,39 @@ class TestPullRepo(unittest.TestCase):
     def test_returns_true_on_success(self, mock_run):
         from ww.git.git_update import pull_repo
 
-        mock_run.return_value = MagicMock(returncode=0)
-        result = pull_repo("/tmp/repo")
-        self.assertTrue(result)
+        mock_run.return_value = MagicMock(returncode=0, stdout="abc123\n")
+        repo_path, ok, stats = pull_repo("/tmp/repo")
+        self.assertTrue(ok)
+        self.assertEqual(repo_path, "/tmp/repo")
 
     @patch("subprocess.run")
     def test_returns_false_on_failure(self, mock_run):
         from ww.git.git_update import pull_repo
 
-        mock_run.return_value = MagicMock(returncode=1)
-        result = pull_repo("/tmp/repo")
-        self.assertFalse(result)
+        # First call: rev-parse HEAD succeeds, pull fails
+        mock_run.side_effect = [
+            MagicMock(returncode=0, stdout="abc123\n"),  # old HEAD
+            MagicMock(returncode=1, stdout=""),  # pull fails
+        ]
+        _, ok, stats = pull_repo("/tmp/repo")
+        self.assertFalse(ok)
+        self.assertIsNone(stats)
 
     @patch("subprocess.run")
     def test_calls_git_pull_verbose(self, mock_run):
         from ww.git.git_update import pull_repo
 
-        mock_run.return_value = MagicMock(returncode=0)
+        mock_run.return_value = MagicMock(returncode=0, stdout="abc123\n")
         pull_repo("/tmp/repo")
-        cmd = mock_run.call_args[0][0]
+        # Second call should be git pull
+        cmd = mock_run.call_args_list[1][0][0]
         self.assertEqual(cmd, ["git", "pull", "--verbose"])
 
     @patch("subprocess.run")
     def test_passes_repo_path_as_cwd(self, mock_run):
         from ww.git.git_update import pull_repo
 
-        mock_run.return_value = MagicMock(returncode=0)
+        mock_run.return_value = MagicMock(returncode=0, stdout="abc123\n")
         pull_repo("/my/repo")
         _, kwargs = mock_run.call_args
         self.assertEqual(kwargs["cwd"], "/my/repo")
@@ -121,7 +128,7 @@ class TestResolveRepos(unittest.TestCase):
 
 
 class TestMain(unittest.TestCase):
-    @patch("ww.git.git_update.pull_repo", return_value=True)
+    @patch("ww.git.git_update.pull_repo", return_value=("/tmp/repo", True, None))
     @patch("ww.git.git_update.fetch_repo", return_value=("/tmp/repo", True, True))
     def test_main_with_specific_target(self, mock_fetch, mock_pull):
         from ww.git.git_update import main
@@ -131,7 +138,7 @@ class TestMain(unittest.TestCase):
                 result = main(["/tmp/repo"])
         self.assertEqual(result, 0)
 
-    @patch("ww.git.git_update.pull_repo", return_value=False)
+    @patch("ww.git.git_update.pull_repo", return_value=("/tmp/repo", False, None))
     @patch("ww.git.git_update.fetch_repo", return_value=("/tmp/repo", True, True))
     def test_main_returns_1_on_failure(self, mock_fetch, mock_pull):
         from ww.git.git_update import main
@@ -152,7 +159,7 @@ class TestMain(unittest.TestCase):
                     result = main(["/nonexistent"])
         self.assertEqual(result, 1)
 
-    @patch("ww.git.git_update.pull_repo", return_value=True)
+    @patch("ww.git.git_update.pull_repo", return_value=("/tmp/repo", True, None))
     @patch("ww.git.git_update.fetch_repo", return_value=("/tmp/repo", True, True))
     def test_main_no_targets_uses_defaults(self, mock_fetch, mock_pull):
         from ww.git.git_update import main

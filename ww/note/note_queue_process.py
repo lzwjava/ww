@@ -28,12 +28,14 @@ def _check_uncommitted() -> None:
     check_uncommitted_changes()
 
 
-def _git_commit_push() -> None:
+def _git_commit_push(files=None) -> None:
     """AI-powered commit + push via gitmessageai."""
     from ww.github.gitmessageai import gitmessageai
 
     base = get_base_path()
-    gitmessageai(allow_pull_push=True, directory=None if base == "." else base)
+    gitmessageai(
+        allow_pull_push=True, directory=None if base == "." else base, files=files
+    )
 
 
 def process_queue(dry_run: bool = False) -> None:
@@ -98,7 +100,7 @@ def process_queue(dry_run: bool = False) -> None:
     if created_paths:
         print(f"\n[info] Committing and pushing {len(created_paths)} note(s)...")
         try:
-            _git_commit_push()
+            _git_commit_push(files=created_paths)
             print("[ok] All notes committed and pushed")
         except Exception as e:
             print(f"[error] Git commit/push failed: {e}")
