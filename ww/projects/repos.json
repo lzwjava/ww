@@ -154,7 +154,8 @@
       "llm-app",
       "v2rayN",
       "seeker",
-      "weaviate"
+      "weaviate",
+      "wireguard-linux"
     ],
     "web-platforms": [
       "jekyll",
