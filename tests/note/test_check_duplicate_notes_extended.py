@@ -34,12 +34,15 @@ class TestAreNotesQuickSimilarExtended(unittest.TestCase):
 
     def test_long_strings_with_many_differences(self):
         base = "a" * 500
-        modified = "a" * 400 + "b" * 100  # 400 matches < 450
-        self.assertFalse(self.func(base, modified))
+        modified = (
+            "a" * 200 + "b" * 100 + "a" * 200
+        )  # different middle, same first/last 200
+        # First 200 match, last 200 match → detected as duplicate
+        self.assertTrue(self.func(base, modified))
 
-    def test_different_first_250_chars_returns_false(self):
+    def test_different_first_and_last_chars_returns_false(self):
         content1 = "a" * 250 + "x" * 250
-        content2 = "b" * 250 + "x" * 250
+        content2 = "b" * 250 + "y" * 250
         self.assertFalse(self.func(content1, content2))
 
     def test_length_difference_exceeds_5_percent(self):

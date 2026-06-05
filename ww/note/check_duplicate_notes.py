@@ -9,25 +9,53 @@ from ww.note.create_note_utils import (
 )
 
 
+def _char_similarity(text1, text2):
+    """Character-by-character similarity ratio between two strings."""
+    if not text1 or not text2:
+        return 0.0
+    matches = sum(c1 == c2 for c1, c2 in zip(text1, text2))
+    return matches / max(len(text1), len(text2))
+
+
 def _are_notes_quick_similar(content1, content2):
+    """Fast similarity check between two note contents.
+
+    Checks both the first N and last N characters.
+    If either region matches, the notes are considered duplicates.
+    """
     if not content1 or not content2:
         return False
 
     len1 = len(content1)
     len2 = len(content2)
+    if max(len1, len2) == 0:
+        return False
+
+    # Quick length check within 5% tolerance
     if abs(len1 - len2) / max(len1, len2) > 0.05:
         return False
 
-    first500_1 = content1[:500]
-    first500_2 = content2[:500]
+    # Short content: exact match
+    if len1 < 100 or len2 < 100:
+        return content1.strip() == content2.strip()
 
-    if len(first500_1) >= 250 and len(first500_2) >= 250:
-        if first500_1[:250] != first500_2[:250]:
-            return False
-        matches = sum(c1 == c2 for c1, c2 in zip(first500_1[:500], first500_2[:500]))
-        return matches >= 450
+    # Check first 200 chars
+    first_match = False
+    first200_1 = content1[:200]
+    first200_2 = content2[:200]
+    if first200_1[:100] == first200_2[:100]:
+        if _char_similarity(first200_1, first200_2) >= 0.90:
+            first_match = True
 
-    return content1.strip() == content2.strip()
+    # Check last 200 chars
+    last_match = False
+    last200_1 = content1[-200:]
+    last200_2 = content2[-200:]
+    if last200_1[-100:] == last200_2[-100:]:
+        if _char_similarity(last200_1, last200_2) >= 0.90:
+            last_match = True
+
+    return first_match or last_match
 
 
 def _extract_content_without_frontmatter(file_path):
