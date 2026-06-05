@@ -284,6 +284,7 @@ ww <group> [command] [options]
 | `ww degree practical` | Filter notices about practical exams / scores |
 | `ww degree list` | Raw scraped list (no AI) |
 | `ww degree --pages N` | Fetch N list pages (1-11, default 1) |
+| `ww degree --months N` | Only articles from last N months (default 3, 0=all) |
 
 ### Marp
 

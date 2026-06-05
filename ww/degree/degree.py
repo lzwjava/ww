@@ -1,10 +1,12 @@
 import argparse
 import re
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timedelta
 
 import requests
 
-from ww.llm.openrouter_client import call_openrouter_api
+from ww.llm.openrouter_client import stream_openrouter_api
 
 
 BASE_HOST = "https://jxjy.gdufs.edu.cn"
@@ -51,13 +53,19 @@ def _page_url(page):
 def fetch_entries(pages=1):
     seen = set()
     out = []
-    for p in range(1, pages + 1):
+
+    def _fetch_page(p):
         url = _page_url(p)
-        for entry in _parse_entries(_fetch_html(url)):
-            if entry["id"] in seen:
-                continue
-            seen.add(entry["id"])
-            out.append(entry)
+        return _parse_entries(_fetch_html(url))
+
+    with ThreadPoolExecutor(max_workers=min(pages, 5)) as pool:
+        futures = {pool.submit(_fetch_page, p): p for p in range(1, pages + 1)}
+        for future in as_completed(futures):
+            for entry in future.result():
+                if entry["id"] in seen:
+                    continue
+                seen.add(entry["id"])
+                out.append(entry)
     return out
 
 
@@ -83,7 +91,9 @@ def _analyze_practical(entries, model=None):
         "`No practical-exam articles found.`\n\n"
         f"Articles:\n{catalog}\n"
     )
-    return call_openrouter_api(prompt, model=model)
+    for chunk in stream_openrouter_api(prompt, model=model):
+        print(chunk, end="", flush=True)
+    print()
 
 
 def _analyze_overview(entries, model=None):
@@ -103,7 +113,9 @@ def _analyze_overview(entries, model=None):
         "should read first, with a one-line reason each.\n\n"
         f"Articles:\n{catalog}\n"
     )
-    return call_openrouter_api(prompt, model=model)
+    for chunk in stream_openrouter_api(prompt, model=model):
+        print(chunk, end="", flush=True)
+    print()
 
 
 def _print_list(entries):
@@ -139,6 +151,12 @@ def main():
         default=None,
         help="Override OpenRouter model (else uses MODEL env var).",
     )
+    parser.add_argument(
+        "--months",
+        type=int,
+        default=3,
+        help="Only show articles from the last N months (default 3). Use 0 to disable.",
+    )
     args = parser.parse_args()
 
     if args.pages < 1 or args.pages > 11:
@@ -146,6 +164,13 @@ def main():
         sys.exit(1)
 
     entries = fetch_entries(pages=args.pages)
+
+    if args.months > 0:
+        cutoff = (datetime.now() - timedelta(days=args.months * 30)).strftime(
+            "%Y-%m-%d"
+        )
+        entries = [e for e in entries if e["date"] >= cutoff]
+
     print(
         f"Fetched {len(entries)} entries across {args.pages} page(s).\n",
         file=sys.stderr,
@@ -156,7 +181,6 @@ def main():
         return
 
     if args.subcmd == "practical":
-        result = _analyze_practical(entries, model=args.model)
+        _analyze_practical(entries, model=args.model)
     else:
-        result = _analyze_overview(entries, model=args.model)
-    print(result)
+        _analyze_overview(entries, model=args.model)

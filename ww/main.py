@@ -68,6 +68,9 @@ def _print_help():
     print("")
     print("Degree (GDUFS Self-Study Exam):")
     print("  ww degree --pages N       Fetch N list pages (1-11, default 1)")
+    print(
+        "  ww degree --months N      Only articles from last N months (default 3, 0=all)"
+    )
     print("  ww degree                 AI-categorize recent self-study notices")
     print("  ww degree list            Raw scraped list (no AI)")
     print("  ww degree practical       Filter notices about practical exams / scores")

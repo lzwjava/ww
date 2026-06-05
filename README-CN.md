@@ -281,6 +281,7 @@ ww <命令组> [命令] [选项]
 | `ww degree practical` | 筛选关于实践考试/成绩的通知 |
 | `ww degree list` | 原始抓取列表（无 AI） |
 | `ww degree --pages N` | 抓取 N 个列表页（1-11，默认 1） |
+| `ww degree --months N` | 只显示最近 N 个月的文章（默认 3，0=全部） |
 
 ### Marp
 
