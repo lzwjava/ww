@@ -30,12 +30,23 @@ def _check_uncommitted() -> None:
 
 def _git_commit_push(files=None) -> None:
     """AI-powered commit + push via gitmessageai."""
+    import subprocess
+
     from ww.github.gitmessageai import gitmessageai
 
     base = get_base_path()
-    gitmessageai(
-        allow_pull_push=True, directory=None if base == "." else base, files=files
-    )
+    directory = None if base == "." else base
+    git = ["git", "-C", directory] if directory else ["git"]
+    try:
+        gitmessageai(allow_pull_push=True, directory=directory, files=files)
+    except subprocess.CalledProcessError:
+        # Pre-commit hooks may have modified files (e.g. end-of-file-fixer).
+        # Re-stage them so the index matches the working tree, then retry once.
+        if files:
+            subprocess.run([*git, "add", *files], check=True)
+        else:
+            subprocess.run([*git, "add", "-A"], check=True)
+        gitmessageai(allow_pull_push=True, directory=directory, files=files)
 
 
 def process_queue(dry_run: bool = False) -> None:
