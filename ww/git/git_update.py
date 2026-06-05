@@ -322,7 +322,7 @@ def main(argv=None):
 
     # Summary table
     if pull_stats:
-        pull_stats.sort(key=lambda x: x[0])
+        pull_stats.sort(key=lambda x: x[1][2], reverse=True)
         total_c = sum(s[0] for _, s in pull_stats)
         total_f = sum(s[1] for _, s in pull_stats)
         total_i = sum(s[2] for _, s in pull_stats)
