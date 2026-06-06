@@ -135,7 +135,7 @@ def cmd_pull():
             print()
             print("Options:")
             print("  user/repo           HuggingFace repo ID (default: inferred)")
-            print("  local_path          Local directory (default: ./<repo-name>)")
+            print("  local_path          Local directory (default: current directory)")
             print("  --revision branch   Branch, tag, or commit to pull (default: main)")
             return
         elif not args[i].startswith("-"):
@@ -161,10 +161,9 @@ def cmd_pull():
 
     token = _get_token()
 
-    # Default local_path to repo name
+    # Default local_path to current directory (like push)
     if not local_path:
-        repo_name = repo_id.split("/")[-1]
-        local_path = os.path.join(os.getcwd(), repo_name)
+        local_path = os.getcwd()
 
     local_path = os.path.abspath(local_path)
 
