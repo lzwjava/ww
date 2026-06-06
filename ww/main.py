@@ -135,7 +135,7 @@ def _print_help():
         "  ww hf news                Trending models, datasets, and spaces (--limit N, --json)"
     )
     print(
-        "  ww hf pull <repo> [path]  Download a HF model repo to local dir (--revision branch)"
+        "  ww hf pull [repo] [path]  Download a HF model repo to local dir (--revision branch)"
     )
     print(
         "  ww hf push [path]         Upload local dir to HF model repo (--repo id, --message)"

@@ -128,12 +128,13 @@ def cmd_pull():
             revision = args[i + 1]
             i += 2
         elif args[i] in ("--help", "-h"):
-            print("Usage: ww hf pull <user/repo> [local_path] [--revision branch]")
+            print("Usage: ww hf pull [user/repo] [local_path] [--revision branch]")
             print()
             print("Download a HuggingFace model repo to a local directory.")
+            print("Defaults to <username>/<dirname> inferred from HF token + cwd.")
             print()
             print("Options:")
-            print("  user/repo           HuggingFace repo ID (required)")
+            print("  user/repo           HuggingFace repo ID (default: inferred)")
             print("  local_path          Local directory (default: ./<repo-name>)")
             print("  --revision branch   Branch, tag, or commit to pull (default: main)")
             return
@@ -147,8 +148,16 @@ def cmd_pull():
             i += 1
 
     if not repo_id:
-        print("Error: repo_id required. Usage: ww hf pull <user/repo> [local_path]")
-        sys.exit(1)
+        token = _get_token()
+        if not token:
+            print("Error: No HF token found. Run 'huggingface-cli login' or set HF_TOKEN.")
+            sys.exit(1)
+        from huggingface_hub import HfApi
+        api = HfApi(token=token)
+        whoami = api.whoami()
+        username = whoami.get("name", "unknown")
+        dirname = os.path.basename(os.getcwd())
+        repo_id = f"{username}/{dirname}"
 
     token = _get_token()
 
