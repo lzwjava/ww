@@ -210,6 +210,7 @@ def _print_help():
     print("  ww network save-wifi-list     Save WiFi network list")
     print("  ww network wifi-gen-password  Generate WiFi password")
     print("  ww network wifi-scan          Scan for WiFi networks")
+    print("  ww network wifi-scan-best     Scan WiFi and recommend best signal")
     print("  ww network wifi-util          WiFi utility tools")
     print("")
     print("Note:")
@@ -792,6 +793,7 @@ def _main_dispatch(raw_args: list):
             print("  ip-scan            Scan IP addresses on network")
             print("  port-scan          Scan open ports")
             print("  wifi-scan          Scan for WiFi networks")
+            print("  wifi-scan-best     Scan WiFi and recommend best signal")
             print("  wifi-util          WiFi utility tools")
             print("  network-plot       Plot network topology")
             print("  discover           Discover devices on local network")
@@ -821,6 +823,10 @@ def _main_dispatch(raw_args: list):
             m()
         elif subcmd == "wifi-scan":
             from ww.network.wifi_scan import main as m
+
+            m()
+        elif subcmd == "wifi-scan-best":
+            from ww.network.wifi_scan_best import main as m
 
             m()
         elif subcmd == "wifi-util":
