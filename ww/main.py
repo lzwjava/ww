@@ -200,6 +200,18 @@ def _print_help():
         "  ww marp <file.md>         Watch a markdown file and regenerate PDF via marp"
     )
     print("")
+    print("Maps:")
+    print("  ww maps geocode <address>              Address to lat/lng")
+    print("  ww maps reverse <lat,lng>              Lat/lng to address")
+    print("  ww maps search <query> [--near L] [--radius M]  Places text search")
+    print("  ww maps nearby <lat,lng> [radius] [type]        Nearby places")
+    print("  ww maps directions <from> <to> [--mode M]       Route directions")
+    print("  ww maps place <place_id>               Place details")
+    print("  ww maps timezone <lat,lng>             Timezone for location")
+    print("  ww maps elevation <lat,lng>            Elevation for location")
+    print("  ww maps ip <address>                   Geolocate an IP")
+    print("  ww maps test                           Test all Google Maps APIs")
+    print("")
     print("Network:")
     print("  ww network discover           Discover devices on local network")
     print("  ww network get-wifi-list      Get list of WiFi networks")
@@ -1385,6 +1397,11 @@ def _main_dispatch(raw_args: list):
 
     elif group == "marp":
         from ww.marp.marp_watch import main as m
+
+        m()
+
+    elif group == "maps":
+        from ww.maps.maps import main as m
 
         m()
 

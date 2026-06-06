@@ -4,13 +4,187 @@ WiFi Signal Scanner — scan available networks, compare signal strength,
 and recommend the best network. macOS uses CoreWLAN (PyObjC), Linux uses nmcli.
 
 Does NOT disconnect from current WiFi.
+
+On macOS, SSIDs are hidden by Location Services privacy. To reveal them:
+  System Settings > Privacy & Security > Location Services > enable for Terminal/iTerm
+Or use --identify to scan known preferred networks and match by signal.
 """
 
 import platform
 import sys
 
 
-def _macos_scan():
+def _get_preferred_ssids():
+    """Get saved preferred WiFi network names (macOS)."""
+    import subprocess
+
+    try:
+        result = subprocess.run(
+            ["networksetup", "-listpreferredwirelessnetworks", "en0"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        ssids = []
+        for line in result.stdout.strip().split("\n"):
+            s = line.strip()
+            if s and not s.startswith("Preferred"):
+                ssids.append(s)
+        return ssids
+    except Exception:
+        return []
+
+
+def _get_current_ssid_scd():
+    """Try to get current SSID from SystemConfiguration CachedScanRecord."""
+    try:
+        import SystemConfiguration  # type: ignore[reportMissingImports]
+        import re
+
+        store = SystemConfiguration.SCDynamicStoreCreate(None, "wifi", None, None)
+        val = SystemConfiguration.SCDynamicStoreCopyValue(
+            store, "State:/Network/Interface/en0/AirPort"
+        )
+        if not val:
+            return None
+        cached = val.get("CachedScanRecord")
+        if not cached:
+            return None
+        raw = bytes(cached)
+        # Extract readable strings and look for known SSIDs
+        ssids_found = []
+        for m in re.finditer(rb"[\x20-\x7e]{3,32}", raw):
+            s = m.group().decode("ascii", errors="ignore")
+            if len(s) >= 3:
+                noise_patterns = (
+                    "NSKeyed",
+                    "archiver",
+                    "NSMutableArray",
+                    "NSMutableDictionary",
+                    "NSDictionary",
+                    "NSArray",
+                    "NSObject",
+                    "NSString",
+                    "NSNumber",
+                    "NSData",
+                    "SCAN_RESULT",
+                    "IE_KEY",
+                    "CHANNEL_FLAGS",
+                    "BSS_TRANS",
+                    "PRIVATE_MAC",
+                    "HT_",
+                    "WPA_",
+                    "RSN_",
+                    "WEPOPEN",
+                    "MCS_SET",
+                    "AMPDU",
+                    "TXBF",
+                    "ASEL",
+                    "CAPABILITIES",
+                    "BEACON",
+                    "RSSI_",
+                    "NOISE_",
+                    "SNR",
+                    "TIMESTAMP",
+                    "SSID_STR",
+                    "Smart",
+                    "Bluetooth",
+                    "Auto",
+                    "Busy",
+                    "Power",
+                    "Profile",
+                    "UserMode",
+                    "Cached",
+                    "WEP40",
+                    "PHY_MODE",
+                    "QBSS_",
+                    "RATES",
+                    "TRANS_DISABLED",
+                    "Assoc",
+                    "BC^",
+                    "b2/",
+                    "ray",
+                    "Troot",
+                    "EACON_",
+                    "EP40_",
+                    "HAN_UTIL",
+                    "375DE_",
+                    "AGS_",
+                    "COLOCATED",
+                    "AMPDU_PARAM",
+                    "TXBF_CAPS",
+                    "ASEL_CAPS",
+                    "HT_STA",
+                    "HT_PRIMARY",
+                    "HT_NON",
+                    "HT_SECONDARY",
+                    "HT_OP",
+                    "HT_TX",
+                    "HT_PSMP",
+                    "HT_OBSS",
+                    "HT_PCO",
+                    "HT_DUAL",
+                    "HT_LSIG",
+                    "HT_BASIC",
+                    "HT_RIFS",
+                    "HT_SERVICE",
+                    "BEACON_INT",
+                    "HT_CAPS",
+                    "EXT_CAP",
+                    "BSSID",
+                    "CHANNEL",
+                    "UAGE",
+                    "bplist",
+                )
+                if not any(p in s for p in noise_patterns):
+                    ssids_found.append(s)
+        # Return the first plausible SSID
+        for s in ssids_found:
+            if not s.startswith("#") and not s.startswith(")") and ":" not in s[:3]:
+                return s
+    except Exception:
+        pass
+    return None
+
+
+def _scan_preferred_to_match(iface, scan_entries, max_scan=50):
+    """Scan preferred networks and match to scan entries by (rssi, ch, bw)."""
+    preferred = _get_preferred_ssids()
+    if not preferred:
+        return {}
+
+    # Build lookup: (rssi, ch, bw) -> list of scan indices
+    sig_map = {}
+    for i, entry in enumerate(scan_entries):
+        key = (entry[1], entry[3], entry[4])  # rssi, ch, bw
+        sig_map.setdefault(key, []).append(i)
+
+    matched = {}
+    scanned = 0
+    for ssid_name in preferred:
+        if scanned >= max_scan:
+            break
+        try:
+            nets, _ = iface.scanForNetworksWithName_error_(ssid_name, None)
+            scanned += 1
+            if nets:
+                for n in nets:
+                    rssi = n.rssiValue()
+                    ch = n.wlanChannel()
+                    ch_num = ch.channelNumber() if ch else 0
+                    bw = int(ch.channelWidth()) if ch else 0
+                    key = (rssi, ch_num, bw)
+                    if key in sig_map:
+                        for idx in sig_map[key]:
+                            if idx not in matched:
+                                matched[idx] = ssid_name
+        except Exception:
+            pass
+
+    return matched
+
+
+def _macos_scan(identify=False):
     """Scan WiFi using CoreWLAN framework (macOS)."""
     try:
         from CoreWLAN import CWWiFiClient  # type: ignore[reportMissingImports]
@@ -26,7 +200,7 @@ def _macos_scan():
         return
 
     iface = client.interfaceWithName_(names[0])
-    cur_ssid = iface.ssid()
+    cur_ssid = iface.ssid() or _get_current_ssid_scd()
     cur_rssi = iface.rssiValue()
     cur_noise = iface.noiseMeasurement()
     cur_ch = iface.wlanChannel()
@@ -36,6 +210,10 @@ def _macos_scan():
         f"Current: {cur_ssid or '(hidden)'}  RSSI: {cur_rssi} dBm  "
         f"Noise: {cur_noise} dBm  SNR: {cur_rssi - cur_noise} dB  Ch: {cur_ch_num}"
     )
+    if not iface.ssid():
+        print(
+            "  (SSID hidden by macOS — enable Location Services for Terminal to reveal)"
+        )
     print()
 
     networks, err = iface.scanForNetworksWithName_error_(None, None)
@@ -47,8 +225,8 @@ def _macos_scan():
         print("No networks found.")
         return
 
-    five_ghz = []
-    two_4_ghz = []
+    # Build scan entries: (ssid, rssi, noise, ch, bw)
+    scan_entries = []
     for n in networks:
         ssid = n.ssid() or "(hidden)"
         rssi = n.rssiValue()
@@ -56,11 +234,29 @@ def _macos_scan():
         ch = n.wlanChannel()
         ch_num = ch.channelNumber() if ch else 0
         bw = int(ch.channelWidth()) if ch else 0
-        entry = (ssid, rssi, noise, ch_num, bw)
-        if ch_num > 14:
-            five_ghz.append(entry)
+        scan_entries.append((ssid, rssi, noise, ch_num, bw))
+
+    scan_entries.sort(key=lambda x: x[1], reverse=True)
+
+    # Try to identify hidden SSIDs by scanning preferred networks
+    if identify:
+        print("Identifying networks by scanning preferred list...")
+        matched = _scan_preferred_to_match(iface, scan_entries)
+        if matched:
+            entries_list = list(scan_entries)
+            for idx, ssid_name in matched.items():
+                old = entries_list[idx]
+                entries_list[idx] = (ssid_name, old[1], old[2], old[3], old[4])
+            scan_entries = tuple(entries_list)
+            print(f"  Identified {len(matched)} networks.")
         else:
-            two_4_ghz.append(entry)
+            print("  No matches found.")
+        print()
+
+    five_ghz = [e for e in scan_entries if e[3] > 14]
+    two_4_ghz = [e for e in scan_entries if e[3] <= 14]
+
+    BW_LABELS = {0: "?", 1: "20MHz", 2: "40MHz", 3: "80MHz", 4: "160MHz"}
 
     def _is_current(entry):
         if cur_ssid and entry[0] == cur_ssid:
@@ -68,11 +264,6 @@ def _macos_scan():
         if not cur_ssid and entry[1] == cur_rssi:
             return True
         return False
-
-    five_ghz.sort(key=lambda x: x[1], reverse=True)
-    two_4_ghz.sort(key=lambda x: x[1], reverse=True)
-
-    BW_LABELS = {0: "?", 1: "20MHz", 2: "40MHz", 3: "80MHz", 4: "160MHz"}
 
     def _print_table(title, rows):
         print(f"=== {title} ===")
@@ -216,9 +407,21 @@ def _linux_scan():
 
 
 def main():
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Scan WiFi networks and recommend the best signal"
+    )
+    parser.add_argument(
+        "--identify",
+        action="store_true",
+        help="Identify hidden SSIDs by scanning saved preferred networks (slower)",
+    )
+    args = parser.parse_args()
+
     system = platform.system()
     if system == "Darwin":
-        _macos_scan()
+        _macos_scan(identify=args.identify)
     elif system == "Linux":
         _linux_scan()
     else:
