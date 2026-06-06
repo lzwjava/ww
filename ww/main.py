@@ -134,6 +134,13 @@ def _print_help():
     print(
         "  ww hf news                Trending models, datasets, and spaces (--limit N, --json)"
     )
+    print(
+        "  ww hf pull <repo> [path]  Download a HF model repo to local dir (--revision branch)"
+    )
+    print(
+        "  ww hf push [path]         Upload local dir to HF model repo (--repo id, --message)"
+    )
+    print("  ww hf top30               Top 30 most-followed HF users")
     print("")
     print("Image:")
     print("  ww image avatar           Process avatar image")
@@ -1365,6 +1372,14 @@ def _main_dispatch(raw_args: list):
             from ww.hf.hf import cmd_top30
 
             cmd_top30()
+        elif subcmd == "push":
+            from ww.hf.push import cmd_push
+
+            cmd_push()
+        elif subcmd == "pull":
+            from ww.hf.push import cmd_pull
+
+            cmd_pull()
         elif subcmd in ("", "--help", "-h"):
             from ww.hf.hf import main as m
 
