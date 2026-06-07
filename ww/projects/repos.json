@@ -54,19 +54,20 @@
       "ng-video-lecture"
     ],
     "ai-inference": [
-      "llama.cpp",
-      "sglang",
-      "ktransformers",
+      "TensorRT-LLM",
       "dinov2",
-      "nougat",
-      "vllm",
-      "ollama",
-      "mlx",
       "ggml",
-      "mlx-examples",
-      "text-generation-webui",
+      "ktransformers",
+      "llama.cpp",
       "llamafile",
-      "nexa-sdk"
+      "mlx",
+      "mlx-examples",
+      "nexa-sdk",
+      "nougat",
+      "ollama",
+      "sglang",
+      "text-generation-webui",
+      "vllm"
     ],
     "ai-apps": [
       "open-webui",
