@@ -121,6 +121,7 @@
       "iclaw",
       "mcp",
       "ROCm",
+      "rocBLAS",
       "Chat2DB",
       "git-credential-manager",
       "ChezScheme",
