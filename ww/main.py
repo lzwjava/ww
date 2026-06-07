@@ -307,6 +307,9 @@ def _print_help():
     print("  ww sync ssh [back|forth]    Sync .ssh directory")
     print("  ww sync zprofile [back|forth] Sync .zprofile file")
     print("")
+    print("Torch:")
+    print("  ww torch                  Find all Pythons and check which have PyTorch")
+    print("")
     print("Utils:")
     print("  ww utils base64           Encode/decode base64")
     print("  ww utils ccr              CCR utility")
@@ -1485,6 +1488,11 @@ def _main_dispatch(raw_args: list):
 
         m()
 
+    elif group == "torch":
+        from ww.torch.detect import run
+
+        run()
+
     elif group == "completion":
         import os
         import shutil
@@ -1622,6 +1630,7 @@ def _main_dispatch(raw_args: list):
             "screenshot-linux",
             "search",
             "sync",
+            "torch",
             "utils",
             "weather",
             "whisper",
