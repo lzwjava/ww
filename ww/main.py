@@ -1305,6 +1305,11 @@ def _main_dispatch(raw_args: list):
 
         m()
 
+    elif group == "appearance":
+        from ww.display.appearance import main as m
+
+        m()
+
     elif group == "gen-image":
         from ww.image.gen_image import main as m
 
