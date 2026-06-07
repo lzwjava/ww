@@ -11,13 +11,19 @@ class TestEncodeImageToBase64(unittest.TestCase):
     def test_encodes_png_file(self):
         from ww.note.screenshot_log import _encode_image_to_base64
 
+        from PIL import Image
+
         tmpfile = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
-        tmpfile.write(b"\x89PNG\r\n\x1a\n" + b"\x00" * 100)
         tmpfile.close()
+        # Create a real small PNG so PIL can open it
+        img = Image.new("RGB", (10, 10), color="red")
+        img.save(tmpfile.name)
         try:
-            result = _encode_image_to_base64(tmpfile.name)
-            decoded = base64.b64decode(result)
-            self.assertTrue(decoded.startswith(b"\x89PNG"))
+            b64_str, mime = _encode_image_to_base64(tmpfile.name)
+            self.assertEqual(mime, "image/jpeg")
+            decoded = base64.b64decode(b64_str)
+            # JPEG starts with FF D8
+            self.assertTrue(decoded[:2] == b"\xff\xd8")
         finally:
             os.unlink(tmpfile.name)
 

@@ -17,9 +17,31 @@ from ww.note.create_note_utils import (
 )
 
 
+VISION_MAX_WIDTH = 1600
+VISION_JPG_QUALITY = 60
+
+
 def _encode_image_to_base64(image_path):
-    with open(image_path, "rb") as f:
-        return base64.b64encode(f.read()).decode("utf-8")
+    """Convert image to optimized JPG and return (base64_str, mime_type).
+
+    Resizes retina/large screenshots down to VISION_MAX_WIDTH and compresses
+    to JPG at VISION_JPG_QUALITY — far smaller payloads for LLM vision APIs
+    with negligible perceptual quality loss.
+    """
+    from PIL import Image
+
+    img = Image.open(image_path)
+    if img.mode == "RGBA":
+        img = img.convert("RGB")
+    # Resize if wider than max (preserves aspect ratio)
+    if img.width > VISION_MAX_WIDTH:
+        ratio = VISION_MAX_WIDTH / img.width
+        img = img.resize((VISION_MAX_WIDTH, int(img.height * ratio)), Image.LANCZOS)
+    import io
+
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=VISION_JPG_QUALITY, optimize=True)
+    return base64.b64encode(buf.getvalue()).decode("utf-8"), "image/jpeg"
 
 
 def _get_screenshot_dir():
@@ -56,9 +78,7 @@ def _get_vision_model():
 def _vision_describe(image_paths, prompt_text=None):
     content_parts = []
     for path in image_paths:
-        b64 = _encode_image_to_base64(path)
-        ext = os.path.splitext(path)[1].lstrip(".").lower()
-        mime = "image/jpeg" if ext in ("jpg", "jpeg") else "image/png"
+        b64, mime = _encode_image_to_base64(path)
         content_parts.append(
             {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}}
         )
