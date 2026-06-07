@@ -408,6 +408,180 @@ def cmd_ip(args):
         print(f"Error: {e}")
 
 
+def _haversine_km(lat1, lon1, lat2, lon2):
+    """Calculate straight-line distance in km between two coordinates."""
+    import math
+
+    R = 6371.0
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = (
+        math.sin(dlat / 2) ** 2
+        + math.cos(math.radians(lat1))
+        * math.cos(math.radians(lat2))
+        * math.sin(dlon / 2) ** 2
+    )
+    return R * 2 * math.asin(math.sqrt(a))
+
+
+def cmd_office(args):
+    """Show distance and driving time to OneLink office (万菱汇).
+
+    Usage: ww maps office [lat,lng]
+    Example: ww maps office 22.838889,114.498969
+             ww maps office          # uses OFFICE_LAT_LNG from .env
+    """
+    if args:
+        origin = args[0]
+    else:
+        origin = os.environ.get("OFFICE_LAT_LNG", "").strip()
+        if not origin:
+            print("Usage: ww maps office <lat,lng>")
+            print("Example: ww maps office 22.838889,114.498969")
+            print()
+            print("Or set OFFICE_LAT_LNG in .env to use without arguments.")
+            return
+
+    key = _get_key()
+
+    # OneLink office (万菱国际中心), Tianhe, Guangzhou
+    office_lat, office_lng = 23.1327559, 113.3290462
+    office_dest = f"{office_lat},{office_lng}"
+
+    # Parse origin coords for straight-line calc
+    parts = origin.split(",")
+    if len(parts) != 2:
+        print("Error: format must be lat,lng (e.g. 22.838889,114.498969)")
+        return
+    try:
+        olat, olng = float(parts[0]), float(parts[1])
+    except ValueError:
+        print("Error: invalid coordinates")
+        return
+
+    # 1. Reverse geocode origin
+    rev_url = "https://maps.googleapis.com/maps/api/geocode/json?" + urllib.parse.urlencode(
+        {"latlng": origin, "key": key}
+    )
+    rev_data = _api_get(rev_url)
+    origin_addr = origin
+    if rev_data.get("status") == "OK" and rev_data.get("results"):
+        origin_addr = rev_data["results"][0].get("formatted_address", origin)
+
+    # 2. Get driving directions
+    dir_url = "https://maps.googleapis.com/maps/api/directions/json?" + urllib.parse.urlencode(
+        {
+            "origin": origin,
+            "destination": office_dest,
+            "mode": "driving",
+            "key": key,
+        }
+    )
+    dir_data = _api_get(dir_url)
+    if dir_data.get("status") != "OK":
+        print(f"Error: {dir_data.get('status')} — {dir_data.get('error_message', '')}")
+        return
+
+    routes = dir_data.get("routes", [])
+    if not routes:
+        print("No routes found.")
+        return
+
+    leg = routes[0]["legs"][0]
+    route_dist = leg["distance"]["value"]
+    route_dur = leg["duration"]["value"]
+
+    # 3. Also try transit if available
+    transit_url = "https://maps.googleapis.com/maps/api/directions/json?" + urllib.parse.urlencode(
+        {
+            "origin": origin,
+            "destination": office_dest,
+            "mode": "transit",
+            "key": key,
+        }
+    )
+    transit_data = _api_get(transit_url)
+    transit_dur = None
+    transit_dist = None
+    if transit_data.get("status") == "OK" and transit_data.get("routes"):
+        tleg = transit_data["routes"][0]["legs"][0]
+        transit_dur = tleg["duration"]["value"]
+        transit_dist = tleg["distance"]["value"]
+
+    # 4. Straight-line distance
+    straight_km = _haversine_km(olat, olng, office_lat, office_lng)
+
+    # 5. Print report
+    print("=" * 56)
+    print("  YOUR LOCATION -> ONE LINK OFFICE (万菱汇)")
+    print("=" * 56)
+    print()
+    print(f"FROM: {origin_addr}")
+    print(f"TO:   Wan Ling International Center (万菱国际中心)")
+    print(f"      Tianhe Rd 230-232, Tianhe, Guangzhou")
+    print()
+
+    print("-" * 56)
+    print("  STRAIGHT-LINE (direct) DISTANCE")
+    print("-" * 56)
+    print(f"  {straight_km:.1f} km ({straight_km * 1000:.0f} m)")
+    print()
+
+    print("-" * 56)
+    print("  DRIVING ROUTE")
+    print("-" * 56)
+    print(f"  Distance:  {_fmt_distance(route_dist)}")
+    print(f"  Est. time: {_fmt_duration(route_dur)}  (without traffic)")
+    print()
+
+    if transit_dur is not None:
+        print("-" * 56)
+        print("  TRANSIT (public transport)")
+        print("-" * 56)
+        print(f"  Distance:  {_fmt_distance(transit_dist)}")
+        print(f"  Est. time: {_fmt_duration(transit_dur)}")
+        print()
+
+    # Route summary — extract highway names from steps
+    import re
+
+    highways = []
+    for step in leg.get("steps", []):
+        instr = re.sub(r"<[^>]+>", " ", step.get("html_instructions", ""))
+        instr = re.sub(r"\s+", " ", instr).strip()
+        # Look for highway/expressway mentions
+        for m in re.findall(r"[A-Z]\d+[/\w]*|[\u4e00-\u9fff]+(?:高速|快速|大道)", instr):
+            if m not in highways:
+                highways.append(m)
+
+    print("-" * 56)
+    print("  ROUTE OVERVIEW")
+    print("-" * 56)
+    if highways:
+        print(f"  {' -> '.join(highways)}")
+    # Show first 5 and last 3 steps
+    steps = leg.get("steps", [])
+    print()
+    shown = set()
+    for si, step in enumerate(steps):
+        instr = re.sub(r"<[^>]+>", " ", step.get("html_instructions", ""))
+        instr = re.sub(r"\s+", " ", instr).strip()
+        sd = step["distance"]["value"]
+        if si < 5 or si >= len(steps) - 3:
+            print(f"  {si + 1}. {instr} ({_fmt_distance(sd)})")
+        elif si == 5:
+            remaining = len(steps) - 6
+            print(f"  ... ({remaining} more steps) ...")
+    print()
+
+    ratio = route_dist / (straight_km * 1000) if straight_km > 0 else 0
+    print("-" * 56)
+    print("  SUMMARY")
+    print("-" * 56)
+    print(f"  Driving distance / straight-line = {ratio:.2f}x")
+    print("=" * 56)
+
+
 def cmd_test(_args):
     """Test the Google Maps API key with a simple geocode."""
     key = _get_key()
@@ -517,6 +691,7 @@ COMMANDS = {
     "search": cmd_search,
     "nearby": cmd_nearby,
     "directions": cmd_directions,
+    "office": cmd_office,
     "place": cmd_place,
     "timezone": cmd_timezone,
     "elevation": cmd_elevation,
@@ -529,16 +704,17 @@ def _print_help():
     print("Usage: ww maps <command> [args]")
     print()
     print("Commands:")
+    print("  directions <from> <to> [--mode M]       Route directions")
+    print("  elevation <lat,lng>            Elevation for location")
     print("  geocode <address>              Address to lat/lng")
+    print("  ip <address>                   Geolocate an IP address")
+    print("  nearby <lat,lng> [radius] [type]        Nearby places")
+    print("  office [lat,lng]               Distance/time to OneLink office")
+    print("  place <place_id>               Place details")
     print("  reverse <lat,lng>              Lat/lng to address")
     print("  search <query> [--near L] [--radius M]  Places text search")
-    print("  nearby <lat,lng> [radius] [type]        Nearby places")
-    print("  directions <from> <to> [--mode M]       Route directions")
-    print("  place <place_id>               Place details")
-    print("  timezone <lat,lng>             Timezone for location")
-    print("  elevation <lat,lng>            Elevation for location")
-    print("  ip <address>                   Geolocate an IP address")
     print("  test                           Test all Google Maps APIs")
+    print("  timezone <lat,lng>             Timezone for location")
 
 
 def main():
