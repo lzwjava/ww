@@ -101,7 +101,16 @@ def smart_auto(threshold=80):
       - Luminance >= threshold -> light mode (bright environment)
 
     Default threshold=80 (on 0-255 scale). Typical indoor with lights: ~80-120.
+    Skips webcam capture if a video conferencing app is running.
     """
+    # Skip if a video conferencing app is using the webcam
+    video_apps = ["zoom.us", "Google Meet", "Microsoft Teams", "FaceTime", "Webex"]
+    for app in video_apps:
+        result = subprocess.run(["pgrep", "-x", app], capture_output=True, text=True)
+        if result.returncode == 0:
+            print(f"Skipping — {app} is running")
+            return
+
     import numpy as np
     from PIL import Image
 
