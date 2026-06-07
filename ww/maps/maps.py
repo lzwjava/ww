@@ -576,9 +576,9 @@ def cmd_home(args):
              ww maps home            # uses HOME_LAT_LNG from .env
     """
     _cmd_trip_report(
-        "Qiaojian Yuxigo (侨建御溪谷)",
-        "Guangshan Rd 399, Zengcheng, Guangzhou, 511365",
-        23.284131, 113.60894,
+        "Qiaojian Yu Xigu Phase 1 (侨建御溪谷一期)",
+        "Zhongxinzhen Fengguang Rd 399, Zengcheng, Guangzhou",
+        23.283489, 113.607298,
         "HOME_LAT_LNG", args,
     )
 
