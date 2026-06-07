@@ -211,6 +211,7 @@ def _print_help():
     print("  ww maps directions <from> <to> [--mode M]       Route directions")
     print("  ww maps elevation <lat,lng>            Elevation for location")
     print("  ww maps geocode <address>              Address to lat/lng")
+    print("  ww maps home [lat,lng]                 Distance/time to home")
     print("  ww maps ip <address>                   Geolocate an IP")
     print("  ww maps nearby <lat,lng> [radius] [type]        Nearby places")
     print("  ww maps office [lat,lng]               Distance/time to OneLink office")

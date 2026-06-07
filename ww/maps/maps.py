@@ -424,37 +424,21 @@ def _haversine_km(lat1, lon1, lat2, lon2):
     return R * 2 * math.asin(math.sqrt(a))
 
 
-def cmd_office(args):
-    """Show distance and driving time to OneLink office (万菱汇).
-
-    Usage: ww maps office [lat,lng]
-    Example: ww maps office 22.838889,114.498969
-             ww maps office          # uses OFFICE_LAT_LNG from .env
-    """
-    if args:
-        origin = args[0]
-    else:
-        origin = os.environ.get("OFFICE_LAT_LNG", "").strip()
-        if not origin:
-            print("Usage: ww maps office <lat,lng>")
-            print("Example: ww maps office 22.838889,114.498969")
-            print()
-            print("Or set OFFICE_LAT_LNG in .env to use without arguments.")
-            return
-
+def _cmd_trip_report(dest_name, dest_addr, dest_lat, dest_lng, origin_label, args):
+    """Shared logic for office/home trip reports."""
     key = _get_key()
+    origin = args[0] if args else os.environ.get(origin_label, "").strip()
+    if not origin:
+        print(f"Usage: ww maps <office|home> [lat,lng]")
+        print(f"Or set {origin_label} in .env to use without arguments.")
+        return
 
-    # OneLink office (万菱国际中心), Tianhe, Guangzhou
-    office_lat, office_lng = 23.1327559, 113.3290462
-    office_dest = f"{office_lat},{office_lng}"
-
-    # Parse origin coords for straight-line calc
-    parts = origin.split(",")
-    if len(parts) != 2:
+    origin_parts = origin.split(",")
+    if len(origin_parts) != 2:
         print("Error: format must be lat,lng (e.g. 22.838889,114.498969)")
         return
     try:
-        olat, olng = float(parts[0]), float(parts[1])
+        olat, olng = float(origin_parts[0]), float(origin_parts[1])
     except ValueError:
         print("Error: invalid coordinates")
         return
@@ -469,19 +453,14 @@ def cmd_office(args):
         origin_addr = rev_data["results"][0].get("formatted_address", origin)
 
     # 2. Get driving directions
+    dest = f"{dest_lat},{dest_lng}"
     dir_url = "https://maps.googleapis.com/maps/api/directions/json?" + urllib.parse.urlencode(
-        {
-            "origin": origin,
-            "destination": office_dest,
-            "mode": "driving",
-            "key": key,
-        }
+        {"origin": origin, "destination": dest, "mode": "driving", "key": key}
     )
     dir_data = _api_get(dir_url)
     if dir_data.get("status") != "OK":
         print(f"Error: {dir_data.get('status')} — {dir_data.get('error_message', '')}")
         return
-
     routes = dir_data.get("routes", [])
     if not routes:
         print("No routes found.")
@@ -491,34 +470,32 @@ def cmd_office(args):
     route_dist = leg["distance"]["value"]
     route_dur = leg["duration"]["value"]
 
-    # 3. Also try transit if available
+    # 3. Transit
     transit_url = "https://maps.googleapis.com/maps/api/directions/json?" + urllib.parse.urlencode(
-        {
-            "origin": origin,
-            "destination": office_dest,
-            "mode": "transit",
-            "key": key,
-        }
+        {"origin": origin, "destination": dest, "mode": "transit", "key": key}
     )
     transit_data = _api_get(transit_url)
-    transit_dur = None
-    transit_dist = None
+    transit_dur = transit_dist = None
     if transit_data.get("status") == "OK" and transit_data.get("routes"):
         tleg = transit_data["routes"][0]["legs"][0]
         transit_dur = tleg["duration"]["value"]
         transit_dist = tleg["distance"]["value"]
 
     # 4. Straight-line distance
-    straight_km = _haversine_km(olat, olng, office_lat, office_lng)
+    straight_km = _haversine_km(olat, olng, dest_lat, dest_lng)
 
     # 5. Print report
+    import re
+
+    label = dest_name.split("(")[0].strip()
     print("=" * 56)
-    print("  YOUR LOCATION -> ONE LINK OFFICE (万菱汇)")
+    print(f"  YOUR LOCATION -> {label.upper()}")
     print("=" * 56)
     print()
     print(f"FROM: {origin_addr}")
-    print(f"TO:   Wan Ling International Center (万菱国际中心)")
-    print(f"      Tianhe Rd 230-232, Tianhe, Guangzhou")
+    print(f"TO:   {dest_name}")
+    if dest_addr:
+        print(f"      {dest_addr}")
     print()
 
     print("-" * 56)
@@ -542,14 +519,11 @@ def cmd_office(args):
         print(f"  Est. time: {_fmt_duration(transit_dur)}")
         print()
 
-    # Route summary — extract highway names from steps
-    import re
-
+    # Route overview
     highways = []
     for step in leg.get("steps", []):
         instr = re.sub(r"<[^>]+>", " ", step.get("html_instructions", ""))
         instr = re.sub(r"\s+", " ", instr).strip()
-        # Look for highway/expressway mentions
         for m in re.findall(r"[A-Z]\d+[/\w]*|[\u4e00-\u9fff]+(?:高速|快速|大道)", instr):
             if m not in highways:
                 highways.append(m)
@@ -559,10 +533,8 @@ def cmd_office(args):
     print("-" * 56)
     if highways:
         print(f"  {' -> '.join(highways)}")
-    # Show first 5 and last 3 steps
     steps = leg.get("steps", [])
     print()
-    shown = set()
     for si, step in enumerate(steps):
         instr = re.sub(r"<[^>]+>", " ", step.get("html_instructions", ""))
         instr = re.sub(r"\s+", " ", instr).strip()
@@ -570,8 +542,7 @@ def cmd_office(args):
         if si < 5 or si >= len(steps) - 3:
             print(f"  {si + 1}. {instr} ({_fmt_distance(sd)})")
         elif si == 5:
-            remaining = len(steps) - 6
-            print(f"  ... ({remaining} more steps) ...")
+            print(f"  ... ({len(steps) - 6} more steps) ...")
     print()
 
     ratio = route_dist / (straight_km * 1000) if straight_km > 0 else 0
@@ -580,6 +551,36 @@ def cmd_office(args):
     print("-" * 56)
     print(f"  Driving distance / straight-line = {ratio:.2f}x")
     print("=" * 56)
+
+
+def cmd_office(args):
+    """Show distance and driving time to OneLink office (万菱汇).
+
+    Usage: ww maps office [lat,lng]
+    Example: ww maps office 22.838889,114.498969
+             ww maps office          # uses OFFICE_LAT_LNG from .env
+    """
+    _cmd_trip_report(
+        "Wan Ling International Center (万菱国际中心)",
+        "Tianhe Rd 230-232, Tianhe, Guangzhou",
+        23.1327559, 113.3290462,
+        "OFFICE_LAT_LNG", args,
+    )
+
+
+def cmd_home(args):
+    """Show distance and driving time to home (侨建御溪谷).
+
+    Usage: ww maps home [lat,lng]
+    Example: ww maps home 22.838889,114.498969
+             ww maps home            # uses HOME_LAT_LNG from .env
+    """
+    _cmd_trip_report(
+        "Qiaojian Yuxigo (侨建御溪谷)",
+        "Guangshan Rd 399, Zengcheng, Guangzhou, 511365",
+        23.284131, 113.60894,
+        "HOME_LAT_LNG", args,
+    )
 
 
 def cmd_test(_args):
@@ -691,6 +692,7 @@ COMMANDS = {
     "search": cmd_search,
     "nearby": cmd_nearby,
     "directions": cmd_directions,
+    "home": cmd_home,
     "office": cmd_office,
     "place": cmd_place,
     "timezone": cmd_timezone,
@@ -707,6 +709,7 @@ def _print_help():
     print("  directions <from> <to> [--mode M]       Route directions")
     print("  elevation <lat,lng>            Elevation for location")
     print("  geocode <address>              Address to lat/lng")
+    print("  home [lat,lng]                 Distance/time to home")
     print("  ip <address>                   Geolocate an IP address")
     print("  nearby <lat,lng> [radius] [type]        Nearby places")
     print("  office [lat,lng]               Distance/time to OneLink office")
