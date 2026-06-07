@@ -114,6 +114,19 @@ def smart_auto(threshold=80):
     import numpy as np
     from PIL import Image
 
+    # Load threshold from env if not explicitly passed
+    if threshold == 80:
+        from ww.env import load_env
+
+        load_env()
+        env_val = os.environ.get("APPEARANCE_THRESHOLD", "").strip()
+        if env_val:
+            try:
+                threshold = int(env_val)
+            except ValueError:
+                print(f"Invalid APPEARANCE_THRESHOLD: {env_val}, using default 80")
+                threshold = 80
+
     # Find imagesnap (preferred) or ffmpeg
     capture_cmd = None
     if os.path.isfile("/opt/homebrew/bin/imagesnap") or shutil.which("imagesnap"):
