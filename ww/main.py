@@ -230,6 +230,10 @@ def _print_help():
     print("  ww network network-plot       Plot network topology")
     print("  ww network port-scan          Scan open ports")
     print("  ww network save-wifi-list     Save WiFi network list")
+    print(
+        "  ww network speed              Internet speed test (ping, jitter, bandwidth)"
+    )
+    print("  ww network physical-speed     Estimate speed via EM Doppler shift")
     print("  ww network wifi-gen-password  Generate WiFi password")
     print("  ww network wifi-scan          Scan for WiFi networks")
     print("  ww network wifi-scan-best     Scan WiFi and recommend best signal")
@@ -819,6 +823,8 @@ def _main_dispatch(raw_args: list):
             print("  wifi-util          WiFi utility tools")
             print("  network-plot       Plot network topology")
             print("  discover           Discover devices on local network")
+            print("  speed              Internet speed test (ping, jitter, bandwidth)")
+            print("  physical-speed     Estimate speed via EM Doppler shift")
         elif subcmd == "get-wifi-list":
             from ww.network.get_wifi_list import main as m
 
@@ -861,6 +867,14 @@ def _main_dispatch(raw_args: list):
             m()
         elif subcmd == "discover":
             from ww.network.discover import main as m
+
+            m()
+        elif subcmd == "speed":
+            from ww.network.speed import main as m
+
+            m()
+        elif subcmd == "physical-speed":
+            from ww.network.physical_speed import main as m
 
             m()
         else:
