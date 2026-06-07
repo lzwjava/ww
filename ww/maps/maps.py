@@ -583,6 +583,120 @@ def cmd_home(args):
     )
 
 
+def _parse_maps_url(url):
+    """Parse a maps URL and return (lat, lng, name, address) or None."""
+    import re
+    from urllib.parse import urlparse, parse_qs, unquote
+
+    url = url.strip()
+
+    # Apple Maps: https://maps.apple.com/place?coordinate=23.28,113.60&name=...
+    if "maps.apple.com" in url:
+        qs = parse_qs(urlparse(url).query)
+        coord = qs.get("coordinate", [""])[0]
+        name = unquote(qs.get("name", [""])[0])
+        address = unquote(qs.get("address", [""])[0])
+        if coord:
+            parts = coord.split(",")
+            if len(parts) == 2:
+                return float(parts[0]), float(parts[1]), name, address
+
+    # Google Maps: https://maps.google.com/?q=23.28,113.60 or @23.28,113.60
+    if "google.com/maps" in url or "goo.gl" in url:
+        # Try @lat,lng
+        m = re.search(r"@(-?\d+\.\d+),(-?\d+\.\d+)", url)
+        if m:
+            return float(m.group(1)), float(m.group(2)), "", ""
+        # Try q=lat,lng
+        qs = parse_qs(urlparse(url).query)
+        q = qs.get("q", [""])[0]
+        if q:
+            parts = q.split(",")
+            if len(parts) >= 2:
+                try:
+                    return float(parts[0]), float(parts[1]), "", ""
+                except ValueError:
+                    pass
+
+    # Generic URL with lat/lng query params
+    qs = parse_qs(urlparse(url).query)
+    for key in ("coordinate", "ll", "sll"):
+        val = qs.get(key, [""])[0]
+        if val:
+            parts = val.split(",")
+            if len(parts) >= 2:
+                try:
+                    return float(parts[0]), float(parts[1]), "", ""
+                except ValueError:
+                    pass
+
+    return None
+
+
+def cmd_location(args):
+    """Show distance/time to a maps URL from clipboard or argument.
+
+    Usage: ww maps location --paste [origin_lat,lng]
+           ww maps location <maps_url> [origin_lat,lng]
+
+    Reads destination from clipboard (--paste) or a maps URL argument.
+    Parses Apple Maps / Google Maps URLs for coordinates.
+    Origin defaults to OFFICE_LAT_LNG from .env.
+    """
+    import subprocess
+
+    if not args:
+        print("Usage: ww maps location --paste [origin_lat,lng]")
+        print("       ww maps location <maps_url> [origin_lat,lng]")
+        print()
+        print("Reads a maps URL (Apple Maps, Google Maps) and shows trip report.")
+        print("Use --paste to read from clipboard, or pass the URL directly.")
+        return
+
+    origin = None
+    maps_url = None
+
+    if args[0] == "--paste":
+        # Read clipboard
+        try:
+            result = subprocess.run(["pbpaste"], capture_output=True, text=True, timeout=5)
+            maps_url = result.stdout.strip()
+        except Exception:
+            # Linux fallback
+            try:
+                result = subprocess.run(
+                    ["xclip", "-selection", "clipboard", "-o"],
+                    capture_output=True, text=True, timeout=5,
+                )
+                maps_url = result.stdout.strip()
+            except Exception:
+                print("Error: could not read clipboard (pbpaste/xclip not available)")
+                return
+        if not maps_url:
+            print("Error: clipboard is empty")
+            return
+        origin = args[1] if len(args) > 1 else None
+    else:
+        maps_url = args[0]
+        origin = args[1] if len(args) > 1 else None
+
+    parsed = _parse_maps_url(maps_url)
+    if not parsed:
+        print(f"Error: could not parse coordinates from URL:")
+        print(f"  {maps_url[:120]}")
+        print()
+        print("Supported: Apple Maps, Google Maps URLs with coordinates.")
+        return
+
+    dest_lat, dest_lng, name, address = parsed
+    dest_name = name or f"Location ({dest_lat}, {dest_lng})"
+    dest_addr = address or ""
+
+    # Build args for _cmd_trip_report: [origin] or []
+    trip_args = [origin] if origin else []
+    _cmd_trip_report(dest_name, dest_addr, dest_lat, dest_lng, "OFFICE_LAT_LNG", trip_args)
+
+
 def cmd_test(_args):
     """Test the Google Maps API key with a simple geocode."""
     key = _get_key()
@@ -693,6 +807,7 @@ COMMANDS = {
     "nearby": cmd_nearby,
     "directions": cmd_directions,
     "home": cmd_home,
+    "location": cmd_location,
     "office": cmd_office,
     "place": cmd_place,
     "timezone": cmd_timezone,
@@ -711,6 +826,7 @@ def _print_help():
     print("  geocode <address>              Address to lat/lng")
     print("  home [lat,lng]                 Distance/time to home")
     print("  ip <address>                   Geolocate an IP address")
+    print("  location --paste [origin]      Trip report from clipboard URL")
     print("  nearby <lat,lng> [radius] [type]        Nearby places")
     print("  office [lat,lng]               Distance/time to OneLink office")
     print("  place <place_id>               Place details")

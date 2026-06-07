@@ -213,6 +213,7 @@ def _print_help():
     print("  ww maps geocode <address>              Address to lat/lng")
     print("  ww maps home [lat,lng]                 Distance/time to home")
     print("  ww maps ip <address>                   Geolocate an IP")
+    print("  ww maps location --paste [origin]      Trip report from clipboard URL")
     print("  ww maps nearby <lat,lng> [radius] [type]        Nearby places")
     print("  ww maps office [lat,lng]               Distance/time to OneLink office")
     print("  ww maps place <place_id>               Place details")
