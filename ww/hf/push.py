@@ -2,6 +2,7 @@
 
 import os
 import sys
+from typing import Any
 
 
 def _get_token():
@@ -12,6 +13,7 @@ def _get_token():
     # Fall back to cached token from `huggingface-cli login`
     try:
         from huggingface_hub import get_token
+
         return get_token()
     except Exception:
         return None
@@ -42,14 +44,18 @@ def cmd_push():
             private = True
             i += 1
         elif args[i] in ("--help", "-h"):
-            print("Usage: ww hf push [local_path] [--repo user/repo] [--message msg] [--private]")
+            print(
+                "Usage: ww hf push [local_path] [--repo user/repo] [--message msg] [--private]"
+            )
             print()
             print("Push a local directory to a HuggingFace model repository.")
             print("Defaults to current directory and infers repo from directory name.")
             print()
             print("Options:")
             print("  local_path          Local directory to push (default: .)")
-            print("  --repo user/repo    HuggingFace repo ID (default: <username>/<dirname>)")
+            print(
+                "  --repo user/repo    HuggingFace repo ID (default: <username>/<dirname>)"
+            )
             print("  --message msg       Commit message (default: 'Upload model')")
             print("  --private           Create repo as private if it doesn't exist")
             return
@@ -88,7 +94,9 @@ def cmd_push():
     print()
 
     try:
-        api.create_repo(repo_id=repo_id, repo_type="model", exist_ok=True, private=private)
+        api.create_repo(
+            repo_id=repo_id, repo_type="model", exist_ok=True, private=private
+        )
         print(f"Repo ensured: https://huggingface.co/{repo_id}")
     except Exception as e:
         print(f"Error creating repo: {e}")
@@ -136,7 +144,9 @@ def cmd_pull():
             print("Options:")
             print("  user/repo           HuggingFace repo ID (default: inferred)")
             print("  local_path          Local directory (default: current directory)")
-            print("  --revision branch   Branch, tag, or commit to pull (default: main)")
+            print(
+                "  --revision branch   Branch, tag, or commit to pull (default: main)"
+            )
             return
         elif not args[i].startswith("-"):
             if repo_id is None:
@@ -150,9 +160,12 @@ def cmd_pull():
     if not repo_id:
         token = _get_token()
         if not token:
-            print("Error: No HF token found. Run 'huggingface-cli login' or set HF_TOKEN.")
+            print(
+                "Error: No HF token found. Run 'huggingface-cli login' or set HF_TOKEN."
+            )
             sys.exit(1)
         from huggingface_hub import HfApi
+
         api = HfApi(token=token)
         whoami = api.whoami()
         username = whoami.get("name", "unknown")
@@ -176,7 +189,7 @@ def cmd_pull():
     print("Downloading...")
 
     try:
-        kwargs = {
+        kwargs: dict[str, Any] = {
             "repo_id": repo_id,
             "repo_type": "model",
             "local_dir": local_path,

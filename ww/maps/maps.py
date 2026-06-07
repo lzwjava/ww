@@ -429,7 +429,7 @@ def _cmd_trip_report(dest_name, dest_addr, dest_lat, dest_lng, origin_label, arg
     key = _get_key()
     origin = args[0] if args else os.environ.get(origin_label, "").strip()
     if not origin:
-        print(f"Usage: ww maps <office|home> [lat,lng]")
+        print("Usage: ww maps <office|home> [lat,lng]")
         print(f"Or set {origin_label} in .env to use without arguments.")
         return
 
@@ -444,8 +444,9 @@ def _cmd_trip_report(dest_name, dest_addr, dest_lat, dest_lng, origin_label, arg
         return
 
     # 1. Reverse geocode origin
-    rev_url = "https://maps.googleapis.com/maps/api/geocode/json?" + urllib.parse.urlencode(
-        {"latlng": origin, "key": key}
+    rev_url = (
+        "https://maps.googleapis.com/maps/api/geocode/json?"
+        + urllib.parse.urlencode({"latlng": origin, "key": key})
     )
     rev_data = _api_get(rev_url)
     origin_addr = origin
@@ -454,8 +455,11 @@ def _cmd_trip_report(dest_name, dest_addr, dest_lat, dest_lng, origin_label, arg
 
     # 2. Get driving directions
     dest = f"{dest_lat},{dest_lng}"
-    dir_url = "https://maps.googleapis.com/maps/api/directions/json?" + urllib.parse.urlencode(
-        {"origin": origin, "destination": dest, "mode": "driving", "key": key}
+    dir_url = (
+        "https://maps.googleapis.com/maps/api/directions/json?"
+        + urllib.parse.urlencode(
+            {"origin": origin, "destination": dest, "mode": "driving", "key": key}
+        )
     )
     dir_data = _api_get(dir_url)
     if dir_data.get("status") != "OK":
@@ -471,8 +475,11 @@ def _cmd_trip_report(dest_name, dest_addr, dest_lat, dest_lng, origin_label, arg
     route_dur = leg["duration"]["value"]
 
     # 3. Transit
-    transit_url = "https://maps.googleapis.com/maps/api/directions/json?" + urllib.parse.urlencode(
-        {"origin": origin, "destination": dest, "mode": "transit", "key": key}
+    transit_url = (
+        "https://maps.googleapis.com/maps/api/directions/json?"
+        + urllib.parse.urlencode(
+            {"origin": origin, "destination": dest, "mode": "transit", "key": key}
+        )
     )
     transit_data = _api_get(transit_url)
     transit_dur = transit_dist = None
@@ -524,7 +531,9 @@ def _cmd_trip_report(dest_name, dest_addr, dest_lat, dest_lng, origin_label, arg
     for step in leg.get("steps", []):
         instr = re.sub(r"<[^>]+>", " ", step.get("html_instructions", ""))
         instr = re.sub(r"\s+", " ", instr).strip()
-        for m in re.findall(r"[A-Z]\d+[/\w]*|[\u4e00-\u9fff]+(?:高速|快速|大道)", instr):
+        for m in re.findall(
+            r"[A-Z]\d+[/\w]*|[\u4e00-\u9fff]+(?:高速|快速|大道)", instr
+        ):
             if m not in highways:
                 highways.append(m)
 
@@ -563,8 +572,10 @@ def cmd_office(args):
     _cmd_trip_report(
         "Wan Ling International Center (万菱国际中心)",
         "Tianhe Rd 230-232, Tianhe, Guangzhou",
-        23.1327559, 113.3290462,
-        "OFFICE_LAT_LNG", args,
+        23.1327559,
+        113.3290462,
+        "OFFICE_LAT_LNG",
+        args,
     )
 
 
@@ -578,8 +589,10 @@ def cmd_home(args):
     _cmd_trip_report(
         "Qiaojian Yu Xigu Phase 1 (侨建御溪谷一期)",
         "Zhongxinzhen Fengguang Rd 399, Zengcheng, Guangzhou",
-        23.283489, 113.607298,
-        "HOME_LAT_LNG", args,
+        23.283489,
+        113.607298,
+        "HOME_LAT_LNG",
+        args,
     )
 
 
@@ -659,14 +672,18 @@ def cmd_location(args):
     if args[0] == "--paste":
         # Read clipboard
         try:
-            result = subprocess.run(["pbpaste"], capture_output=True, text=True, timeout=5)
+            result = subprocess.run(
+                ["pbpaste"], capture_output=True, text=True, timeout=5
+            )
             maps_url = result.stdout.strip()
         except Exception:
             # Linux fallback
             try:
                 result = subprocess.run(
                     ["xclip", "-selection", "clipboard", "-o"],
-                    capture_output=True, text=True, timeout=5,
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
                 )
                 maps_url = result.stdout.strip()
             except Exception:
@@ -682,7 +699,7 @@ def cmd_location(args):
 
     parsed = _parse_maps_url(maps_url)
     if not parsed:
-        print(f"Error: could not parse coordinates from URL:")
+        print("Error: could not parse coordinates from URL:")
         print(f"  {maps_url[:120]}")
         print()
         print("Supported: Apple Maps, Google Maps URLs with coordinates.")
@@ -694,7 +711,9 @@ def cmd_location(args):
 
     # Build args for _cmd_trip_report: [origin] or []
     trip_args = [origin] if origin else []
-    _cmd_trip_report(dest_name, dest_addr, dest_lat, dest_lng, "OFFICE_LAT_LNG", trip_args)
+    _cmd_trip_report(
+        dest_name, dest_addr, dest_lat, dest_lng, "OFFICE_LAT_LNG", trip_args
+    )
 
 
 def cmd_test(_args):
