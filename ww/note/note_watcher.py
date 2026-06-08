@@ -46,6 +46,7 @@ def _acquire_lock() -> bool:
         except OSError:
             pass
 
+    pf.parent.mkdir(parents=True, exist_ok=True)
     pf.write_text(str(os.getpid()))
     atexit.register(_release_lock)
     return True
