@@ -1467,6 +1467,36 @@ def _main_dispatch(raw_args: list):
 
         m()
 
+    elif group == "headphone":
+        subcmd = _pop_subcmd()
+        if subcmd.startswith("-"):
+            if subcmd in ("--help", "-h"):
+                print("Usage: ww headphone [command] [options]")
+                print("")
+                print("Commands:")
+                print(
+                    "  test        List audio devices, play test tone, record and playback (default)"
+                )
+                print("  list        Only list connected audio devices")
+                print("")
+                print("Options:")
+                print("  --output-device N   Specify output device index")
+                print("  --input-device N    Specify input device index")
+                return
+            sys.argv.insert(1, subcmd)  # push back for argparse
+            from ww.audio.headphone import main as headphone_main
+
+            headphone_main()
+        elif subcmd == "list":
+            from ww.audio.headphone import main as headphone_main
+
+            sys.argv.insert(1, "--list-only")
+            headphone_main()
+        else:
+            from ww.audio.headphone import main as headphone_main
+
+            headphone_main()
+
     elif group == "whisper":
         if len(sys.argv) > 1 and sys.argv[1] == "refine":
             sys.argv.pop(1)
@@ -1632,6 +1662,7 @@ def _main_dispatch(raw_args: list):
             "git",
             "github",
             "ghostty",
+            "headphone",
             "hf",
             "host",
             "image",
