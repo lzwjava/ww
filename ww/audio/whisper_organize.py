@@ -10,7 +10,19 @@ ORGANIZE_RULE = """You are given a raw Whisper transcription of a conversation. 
 
 Rules:
 
-1. **Speaker labels.** Identify distinct speakers and label them consistently (A:, B:, C:, etc.). Use context clues — greetings, topic changes, turn-taking patterns, references to each other — to distinguish speakers. If only one speaker is detectable, use a single label.
+1. **No speaker labels.** Whisper transcription has no speaker labels, and you cannot reliably reconstruct who said what. Do NOT use labels like "Speaker A / Speaker B," "Person 1 / Person 2," or invent speaker names. Narrate the discussion in third person using a variety of phrases to avoid repetition. Use patterns like:
+   - "They discussed …"
+   - "One participant noted …"
+   - "It was raised that …"
+   - "Another argued …"
+   - "Someone brought up …"
+   - "The conversation turned to …"
+   - "A point was made that …"
+   - "There was agreement that …"
+   - "One person pushed back, saying …"
+   - "It was suggested that …"
+   - "A counterpoint was raised: …"
+   For clear question-and-answer dynamics, render as "one participant asked whether …; another responded that …" rather than guessing identities. For back-and-forth exchanges, you can group them: "A brief back-and-forth followed: one side argued X; the other countered that Y; the discussion settled on Z." Do NOT consistently associate a "voice" with a position — vary your phrasing.
 
 2. **Fix grammar and fluency.** Fix obvious grammar mistakes, broken sentences, and awkward phrasing — but keep the original meaning, tone, and word choice intact. Do NOT rewrite or rephrase what someone said. Do NOT make it sound more formal or polished than the original.
 
@@ -22,23 +34,17 @@ Rules:
 
 6. **No reorganization.** Keep the chronological order of the conversation. Do not group topics or restructure.
 
-7. **Output format.** Use this format:
+7. **Output format.** Write as flowing third-person prose. Each turn or exchange should be a paragraph. Use standard Markdown. Do NOT include a title, summary, headers, or any preamble — just the narrated conversation. Example:
 
-```
-A: [what speaker A said]
+They discussed the new deployment pipeline and whether to use GitHub Actions or Jenkins. One participant argued that GitHub Actions was simpler to maintain; another pushed back, noting that Jenkins offered more flexibility for complex build matrices. It was suggested that they could start with GitHub Actions for new repos and migrate existing ones later.
 
-B: [what speaker B said]
-
-A: [next thing speaker A said]
-```
-
-Blank line between each turn. Each speaker's turn should be one paragraph (or multiple paragraphs if they spoke at length on different sub-points). Use standard Markdown. Do NOT include a title, summary, headers, or any preamble — just the labeled conversation.
+The conversation then turned to database scaling. There was agreement that read replicas would help, but no consensus on whether to use PgBouncer or built-in connection pooling. One person brought up a recent blog post comparing the two approaches.
 
 8. **Code-switching.** If the conversation mixes languages (e.g. Chinese and English), keep technical terms and proper nouns in their original form. Translate the rest to fluent English.
 
 9. **Unclear segments.** If a segment is truly unintelligible, mark it with (unclear). Use this sparingly — only when meaning cannot be reasonably inferred.
 
-10. **Merge rapid-fire turns.** If two speakers exchange several short back-and-forth turns that form a single coherent exchange (e.g. quick confirmations, brief Q&A, rapid agreement/disagreement), combine them into one turn per speaker. Use a line break within the turn for each distinct utterance. Do NOT merge turns that are separated by topic changes or that belong to different conversational threads.
+10. **Direct quotation.** When a speaker said something in a particularly striking, precise, or colorful way, you may use a short direct quote: "As one participant put it, 'the current pipeline is held together with duct tape and hope.'" Use direct quotes sparingly — no more than 2–3 per output.
 """
 
 
@@ -84,7 +90,7 @@ def _stream_to_stdout(prompt, model, debug):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Lightly organize a Whisper transcription: label speakers, fix grammar, keep original content."
+        description="Lightly organize a Whisper transcription: fix grammar, remove noise, narrate in third person."
     )
     parser.add_argument("input_file", help="Path to the .txt transcription file")
     parser.add_argument(

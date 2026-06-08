@@ -339,7 +339,7 @@ def _print_help():
     print("Whisper:")
     print("  ww whisper <file.mp4>     Transcribe via whisper (Chinese, large, CUDA)")
     print(
-        "  ww whisper organize <file.txt>  Lightly clean: label speakers, fix grammar, keep content"
+        "  ww whisper organize <file.txt>  Lightly clean: fix grammar, remove noise, third-person narration"
     )
     print(
         "  ww whisper refine <file.txt>  Refine transcription to .md via OpenRouter (deepseek-v4-flash)"
