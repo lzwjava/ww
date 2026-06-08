@@ -37,6 +37,8 @@ Blank line between each turn. Each speaker's turn should be one paragraph (or mu
 8. **Code-switching.** If the conversation mixes languages (e.g. Chinese and English), keep technical terms and proper nouns in their original form. Translate the rest to fluent English.
 
 9. **Unclear segments.** If a segment is truly unintelligible, mark it with (unclear). Use this sparingly — only when meaning cannot be reasonably inferred.
+
+10. **Merge rapid-fire turns.** If two speakers exchange several short back-and-forth turns that form a single coherent exchange (e.g. quick confirmations, brief Q&A, rapid agreement/disagreement), combine them into one turn per speaker. Use a line break within the turn for each distinct utterance. Do NOT merge turns that are separated by topic changes or that belong to different conversational threads.
 """
 
 
