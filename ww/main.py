@@ -86,6 +86,13 @@ def _print_help():
         "  ww env update             Pick a top Arena model and update MODEL= in .env"
     )
     print("")
+    print("Math:")
+    print("  ww math tanh              Tanh (Hyperbolic Tangent) reference")
+    print("  ww math tanh --plot       Generate and open tanh figure")
+    print("  ww math tanh --values     Tanh value table")
+    print("  ww math tanh --all        Tanh comprehensive reference")
+    print("  ww math tanh x1 x2 ...    Custom x values for the table")
+    print("")
     print("Gen-image:")
     print("  ww gen-image              Generate image from clipboard text (Imagen 3)")
     print("")
@@ -1372,6 +1379,21 @@ def _main_dispatch(raw_args: list):
             print(f"Unknown openrouter command: {subcmd}")
             sys.exit(1)
 
+    elif group == "math":
+        subcmd = _pop_subcmd()
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww math <command>")
+            print("")
+            print("Commands:")
+            print("  tanh      Tanh (Hyperbolic Tangent) reference")
+        elif subcmd == "tanh":
+            from ww.math.tanh import main as m
+
+            m()
+        else:
+            print(f"Unknown math command: {subcmd}")
+            sys.exit(1)
+
     elif group == "llm":
         subcmd = _pop_subcmd()
         if subcmd == "" or subcmd in ("--help", "-h"):
@@ -1605,6 +1627,7 @@ def _main_dispatch(raw_args: list):
             "display",
             "env",
             "gen-image",
+            "math",
             "gif",
             "git",
             "github",
