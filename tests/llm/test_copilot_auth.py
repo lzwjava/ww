@@ -140,7 +140,7 @@ class TestSaveTokenToEnv(unittest.TestCase):
 
         fake_file.writelines.assert_called_once()
         lines = fake_file.writelines.call_args[0][0]
-        self.assertTrue(any("GITHUB_TOKEN=gho_newtoken" in l for l in lines))
+        self.assertTrue(any("GITHUB_TOKEN=gho_newtoken" in line for line in lines))
 
     def test_updates_existing_token(self):
         from ww.llm import copilot_auth
@@ -169,9 +169,9 @@ class TestSaveTokenToEnv(unittest.TestCase):
 
         fake_write.writelines.assert_called_once()
         lines = fake_write.writelines.call_args[0][0]
-        self.assertTrue(any("GITHUB_TOKEN=gho_newtoken" in l for l in lines))
-        self.assertTrue(any("OTHER_VAR=value" in l for l in lines))
-        self.assertFalse(any("old_token" in l for l in lines))
+        self.assertTrue(any("GITHUB_TOKEN=gho_newtoken" in line for line in lines))
+        self.assertTrue(any("OTHER_VAR=value" in line for line in lines))
+        self.assertFalse(any("old_token" in line for line in lines))
 
     def test_creates_file_if_not_exists(self):
         from ww.llm import copilot_auth
@@ -189,7 +189,7 @@ class TestSaveTokenToEnv(unittest.TestCase):
 
         fake_write.writelines.assert_called_once()
         lines = fake_write.writelines.call_args[0][0]
-        self.assertTrue(any("GITHUB_TOKEN=gho_newtoken" in l for l in lines))
+        self.assertTrue(any("GITHUB_TOKEN=gho_newtoken" in line for line in lines))
 
 
 class TestMain(unittest.TestCase):
