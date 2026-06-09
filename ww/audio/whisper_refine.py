@@ -8,6 +8,8 @@ from ww.llm.openrouter_client import stream_openrouter_api
 
 REFINE_RULE = """Refine a Raw Whisper Meeting Transcription into a Polished, Comprehensive Article
 
+IMPORTANT — The output MUST always be in English, regardless of whether the source transcription is in English, Chinese, or any other language. If the source is not English, translate and refine simultaneously into fluent, natural English.
+
 IMPORTANT — Read this entire instruction carefully before proceeding. This is a REFINEMENT task, NOT a summarization task. Your natural tendency as a language model is to condense and simplify. You must actively resist that tendency here. The output should be approximately the same length as the input (in total word/character count), not dramatically shorter. If the input has 200 paragraphs of discussion, the output should have roughly 200 paragraphs of substance — just cleaned, organized, and polished. Every time you feel the urge to collapse three bullet points into one, or to write "they discussed various approaches" instead of listing each approach — stop and write out the details.
 
 ---

@@ -12,145 +12,79 @@ Example:
 """
 
 import os
-import plistlib
+import sqlite3
 import subprocess
 import sys
+import uuid as _uuid
 from datetime import datetime, timedelta
 
-# Clock app alarm storage — plist is the source of truth on macOS 26+
-_PLIST_PATH = os.path.expanduser("~/Library/Preferences/com.apple.mobiletimerd.plist")
-# Legacy SQLite path (pre-26 macOS)
 _DB_PATH = os.path.expanduser(
     "~/Library/Group Containers/group.com.apple.mobiletimerd/local.sqlite"
 )
 
-
-def _read_alarms_from_plist():
-    """Read alarms from the mobiletimerd preferences plist."""
-    if not os.path.exists(_PLIST_PATH):
-        return None, None
-    with open(_PLIST_PATH, "rb") as f:
-        data = plistlib.load(f)
-    alarms_section = data.get("MTAlarms", {})
-    alarms = alarms_section.get("MTAlarms", [])
-    return data, alarms
+# Core Data entity IDs
+_ENT_ALARM = 4  # MTCDAlarm
+_ENT_SOUND = 5  # MTCDSound
 
 
-def _read_alarms_from_sqlite():
-    """Read alarms from the legacy Core Data SQLite database."""
+def _connect():
     if not os.path.exists(_DB_PATH):
-        return []
-    import sqlite3
-
-    try:
-        conn = sqlite3.connect(_DB_PATH)
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM ZMTCDALARM")
-        count = cursor.fetchone()[0]
-        if count == 0:
-            conn.close()
-            return []
-        cursor.execute("SELECT ZTITLE, ZHOUR, ZMINUTE, ZENABLED FROM ZMTCDALARM")
-        rows = cursor.fetchall()
-        conn.close()
-        return [
-            {"title": r[0], "hour": r[1], "minute": r[2], "enabled": bool(r[3])}
-            for r in rows
-        ]
-    except Exception:
-        return []
+        print("Error: Clock.app database not found. Open the Clock app at least once.")
+        sys.exit(1)
+    return sqlite3.connect(_DB_PATH)
 
 
 def _list_alarms():
-    """List all alarms from plist and/or SQLite."""
-    data, alarms = _read_alarms_from_plist()
-    if alarms:
-        print(f"Found {len(alarms)} alarm(s) (plist):")
-        for a in alarms:
-            alarm = a.get("$MTAlarm", a)
-            h = alarm.get("MTAlarmHour", 0)
-            m = alarm.get("MTAlarmMinute", 0)
-            title = alarm.get("MTAlarmTitle", "(no label)")
-            enabled = alarm.get("MTAlarmEnabled", True)
-            status = "on" if enabled else "off"
-            print(f"  {h:02d}:{m:02d}  {title}  [{status}]")
+    """List all alarms from the SQLite database."""
+    conn = _connect()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT Z_PK, ZENABLED, ZHOUR, ZMINUTE, ZTITLE FROM ZMTCDALARM ORDER BY Z_PK"
+    )
+    rows = cur.fetchall()
+    conn.close()
+
+    if not rows:
+        print("No alarms found.")
         return
 
-    rows = _read_alarms_from_sqlite()
-    if rows:
-        print(f"Found {len(rows)} alarm(s) (sqlite):")
-        for r in rows:
-            label = r["title"] if r["title"] else "(no label)"
-            status = "on" if r["enabled"] else "off"
-            print(f"  {r['hour']:02d}:{r['minute']:02d}  {label}  [{status}]")
-        return
-
-    print("No alarms found.")
+    print(f"Found {len(rows)} alarm(s):")
+    for pk, enabled, h, m, title in rows:
+        label = title if title else "(no label)"
+        status = "on" if enabled else "off"
+        print(f"  {h:02d}:{m:02d}  {label}  [{status}]")
 
 
 def _clear_all_alarms():
-    """Remove all alarms from the Clock app.
+    """Remove all alarms from the Clock.app SQLite database."""
+    conn = _connect()
+    cur = conn.cursor()
 
-    Tries the plist first (macOS 26+), falls back to SQLite (older macOS).
-    Restarts mobiletimerd so the app picks up the changes.
-    """
-    # Try plist approach first
-    data, alarms = _read_alarms_from_plist()
-    if data is not None and alarms:
-        count = len(alarms)
-        # Show what we're removing
-        print(f"Removing {count} alarm(s):")
-        for a in alarms:
-            alarm = a.get("$MTAlarm", a)
-            h = alarm.get("MTAlarmHour", 0)
-            m = alarm.get("MTAlarmMinute", 0)
-            title = alarm.get("MTAlarmTitle", "(no label)")
-            print(f"  {h:02d}:{m:02d}  {title}")
-
-        # Clear the alarms array
-        data["MTAlarms"]["MTAlarms"] = []
-        with open(_PLIST_PATH, "wb") as f:
-            plistlib.dump(data, f)
-
-        # Restart mobiletimerd
-        subprocess.run(["killall", "mobiletimerd"], capture_output=True)
-        print(f"Done — {count} alarm(s) removed.")
+    cur.execute("SELECT ZTITLE, ZHOUR, ZMINUTE FROM ZMTCDALARM")
+    alarms = cur.fetchall()
+    if not alarms:
+        print("No alarms to clear.")
+        conn.close()
         return
 
-    # Fallback: try SQLite (older macOS)
-    if not os.path.exists(_DB_PATH):
-        print("Error: No alarm storage found (neither plist nor SQLite).")
-        print("Make sure the Clock app has been opened at least once.")
-        sys.exit(1)
+    count = len(alarms)
+    print(f"Removing {count} alarm(s):")
+    for title, h, m in alarms:
+        label = title if title else "(no label)"
+        print(f"  {h:02d}:{m:02d}  {label}")
 
-    import sqlite3
+    # Delete sound entries that reference alarms, then alarms themselves
+    cur.execute("DELETE FROM ZMTCDSOUND WHERE ZALARM IN (SELECT Z_PK FROM ZMTCDALARM)")
+    cur.execute("DELETE FROM ZMTCDALARM")
+    conn.commit()
+    conn.close()
 
-    try:
-        conn = sqlite3.connect(_DB_PATH)
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM ZMTCDALARM")
-        count = cursor.fetchone()[0]
-        if count == 0:
-            print("No alarms to clear.")
-            conn.close()
-            return
-        cursor.execute("SELECT ZTITLE, ZHOUR, ZMINUTE FROM ZMTCDALARM")
-        alarms = cursor.fetchall()
-        cursor.execute("DELETE FROM ZMTCDALARM")
-        conn.commit()
-        conn.close()
-        subprocess.run(["killall", "mobiletimerd"], capture_output=True)
-        print(f"Cleared {count} alarm(s):")
-        for title, hour, minute in alarms:
-            label = title if title else "(no label)"
-            print(f"  {hour:02d}:{minute:02d}  {label}")
-    except sqlite3.Error as e:
-        print(f"Database error: {e}")
-        sys.exit(1)
+    subprocess.run(["killall", "mobiletimerd"], capture_output=True)
+    print(f"Done — {count} alarm(s) removed.")
 
 
 def _set_alarm(args):
-    """Set an alarm N minutes from now."""
+    """Set an alarm N minutes from now by writing to the Clock.app SQLite DB."""
     try:
         minutes = float(args[0])
     except ValueError:
@@ -166,6 +100,8 @@ def _set_alarm(args):
     total_seconds = minutes * 60
     target = datetime.now() + timedelta(seconds=total_seconds)
     time_str = target.strftime("%H:%M")
+    hour = target.hour
+    minute = target.minute
 
     h = int(total_seconds) // 3600
     m = (int(total_seconds) % 3600) // 60
@@ -177,24 +113,96 @@ def _set_alarm(args):
     else:
         dur_str = f"{s}s"
 
-    notif_title = f"Alarm: {label}" if label else "Alarm"
-    notif_body = f"{dur_str} is up! ({time_str})"
+    conn = _connect()
+    cur = conn.cursor()
 
-    script = (
-        f"sleep {total_seconds} && "
-        f'osascript -e \'display notification "{notif_body}" '
-        f'with title "{notif_title}" sound name "default"\''
+    # Get next Z_PK for alarm and sound
+    cur.execute("SELECT MAX(Z_PK) FROM ZMTCDALARM")
+    max_alarm_pk = cur.fetchone()[0] or 0
+    new_alarm_pk = max_alarm_pk + 1
+
+    cur.execute("SELECT MAX(Z_PK) FROM ZMTCDSOUND")
+    max_sound_pk = cur.fetchone()[0] or 0
+    new_sound_pk = max_sound_pk + 1
+
+    # Update Z_PRIMARYKEY so Core Data stays in sync
+    cur.execute(
+        "UPDATE Z_PRIMARYKEY SET Z_MAX = ? WHERE Z_NAME = 'MTCDAlarm'",
+        (new_alarm_pk,),
     )
-    subprocess.Popen(
-        ["bash", "-c", script],
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        start_new_session=True,
+    cur.execute(
+        "UPDATE Z_PRIMARYKEY SET Z_MAX = ? WHERE Z_NAME = 'MTCDSound'",
+        (new_sound_pk,),
     )
 
-    # Also open the Clock app alarm tab
-    subprocess.run(["open", "clock-alarm://"], check=False)
+    now_ts = datetime.now().timestamp()  # Core Data timestamp (epoch)
+    alarm_uuid = _uuid.uuid4().bytes  # 16-byte blob for ZMTID
+
+    # Insert the alarm
+    cur.execute(
+        """INSERT INTO ZMTCDALARM
+           (Z_PK, Z_ENT, Z_OPT, ZALLOWSSNOOZE, ZDAY, ZDISMISSEDACTION,
+            ZENABLED, ZHOUR, ZMINUTE, ZMONTH, ZREPEATSCHEDULE,
+            ZSILENTMODEOPTIONS, ZSLEEPALARM, ZSLEEPSCHEDULE, ZSNOOZEDURATION,
+            ZYEAR, ZSOUND, ZDISMISSEDDATE, ZFIREDDATE, ZKEEPOFFUNTILDATE,
+            ZLASTMODIFIEDDATE, ZSNOOZEFIREDATE, ZTITLE, ZMTID, ZCOORDINATIONPOLICY)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+        (
+            new_alarm_pk,  # Z_PK
+            _ENT_ALARM,  # Z_ENT
+            1,  # Z_OPT
+            1,  # ZALLOWSSNOOZE (true)
+            0,  # ZDAY
+            0,  # ZDISMISSEDACTION
+            1,  # ZENABLED (true!)
+            hour,  # ZHOUR
+            minute,  # ZMINUTE
+            0,  # ZMONTH
+            0,  # ZREPEATSCHEDULE
+            2,  # ZSILENTMODEOPTIONS
+            0,  # ZSLEEPALARM
+            0,  # ZSLEEPSCHEDULE
+            9,  # ZSNOOZEDURATION
+            0,  # ZYEAR
+            new_sound_pk,  # ZSOUND (FK to ZMTCDSOUND)
+            None,  # ZDISMISSEDDATE
+            None,  # ZFIREDDATE
+            None,  # ZKEEPOFFUNTILDATE
+            now_ts,  # ZLASTMODIFIEDDATE
+            None,  # ZSNOOZEFIREDATE
+            label or None,  # ZTITLE
+            alarm_uuid,  # ZMTID
+            1,  # ZCOORDINATIONPOLICY
+        ),
+    )
+
+    # Insert the corresponding sound entry
+    cur.execute(
+        """INSERT INTO ZMTCDSOUND
+           (Z_PK, Z_ENT, Z_OPT, ZMEDIAITEMIDENTIFIER, ZSOUNDTYPE,
+            ZALARM, ZDURATION, ZTIMER, ZVOLUMELEVEL,
+            ZTONEIDENTIFIER, ZVIBRATIONIDENTIFIER)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+        (
+            new_sound_pk,  # Z_PK
+            _ENT_SOUND,  # Z_ENT
+            1,  # Z_OPT
+            0,  # ZMEDIAITEMIDENTIFIER
+            2,  # ZSOUNDTYPE (system)
+            new_alarm_pk,  # ZALARM (FK to ZMTCDALARM)
+            0,  # ZDURATION
+            None,  # ZTIMER
+            -1.0,  # ZVOLUMELEVEL (default)
+            "system:Radial",  # ZTONEIDENTIFIER
+            "",  # ZVIBRATIONIDENTIFIER
+        ),
+    )
+
+    conn.commit()
+    conn.close()
+
+    # Restart mobiletimerd so Clock.app picks up the new alarm
+    subprocess.run(["killall", "mobiletimerd"], capture_output=True)
 
     print(f"Alarm set for {time_str} (in {dur_str})", end="")
     if label:
