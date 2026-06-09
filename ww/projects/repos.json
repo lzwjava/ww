@@ -88,7 +88,8 @@
       "langchain",
       "openai-cookbook",
       "anthropic-cookbook",
-      "llama_index"
+      "llama_index",
+      "mlflow"
     ],
     "ai-agents": [
       "hermes-agent",
