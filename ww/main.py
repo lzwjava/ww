@@ -851,6 +851,9 @@ def _main_dispatch(raw_args: list):
             print("  discover           Discover devices on local network")
             print("  speed              Internet speed test (ping, jitter, bandwidth)")
             print("  physical-speed     Estimate speed via EM Doppler shift")
+            print(
+                "  ip                 Show real WAN IP (bypasses proxy), track changes"
+            )
         elif subcmd == "get-wifi-list":
             from ww.network.get_wifi_list import main as m
 
@@ -901,6 +904,10 @@ def _main_dispatch(raw_args: list):
             m()
         elif subcmd == "physical-speed":
             from ww.network.physical_speed import main as m
+
+            m()
+        elif subcmd == "ip":
+            from ww.network.wan_ip import main as m
 
             m()
         else:
