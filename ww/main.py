@@ -29,6 +29,11 @@ def _print_help():
     print("  ww amd-dev-cloud end-train    Snapshot and destroy a GPU droplet")
     print("  ww amd-dev-cloud delete-snapshot  Delete a snapshot")
     print("")
+    print("Appearance:")
+    print(
+        "  ww appearance             Manage display appearance (dark/light/auto/show)"
+    )
+    print("")
     print("Clash:")
     print("  ww clash query-dns [host]   Test AliDNS DoH resolution")
     print("  ww clash gnome-proxy <set|unset>   Toggle GNOME proxy (Linux)")
@@ -86,13 +91,6 @@ def _print_help():
         "  ww env update             Pick a top Arena model and update MODEL= in .env"
     )
     print("")
-    print("Math:")
-    print("  ww math tanh              Tanh (Hyperbolic Tangent) reference")
-    print("  ww math tanh --plot       Generate and open tanh figure")
-    print("  ww math tanh --values     Tanh value table")
-    print("  ww math tanh --all        Tanh comprehensive reference")
-    print("  ww math tanh x1 x2 ...    Custom x values for the table")
-    print("")
     print("Gen-image:")
     print("  ww gen-image              Generate image from clipboard text (Imagen 3)")
     print("")
@@ -129,6 +127,12 @@ def _print_help():
     print("  ww ghostty close          Close all Ghostty windows")
     print("  ww ghostty focus <N>      Focus a Ghostty window by index or title")
     print("  ww ghostty list           List all open Ghostty windows")
+    print("")
+    print("Headphone:")
+    print(
+        "  ww headphone              Test audio devices: play tone, record and playback"
+    )
+    print("  ww headphone list         List connected audio devices")
     print("")
     print("Host:")
     print("  ww host                   Show all hosts")
@@ -209,11 +213,6 @@ def _print_help():
     print("  ww macos system-info      Show system information")
     print("  ww macos toast            Show macOS notification toast")
     print("")
-    print("Marp:")
-    print(
-        "  ww marp <file.md>         Watch a markdown file and regenerate PDF via marp"
-    )
-    print("")
     print("Maps:")
     print("  ww maps directions <from> <to> [--mode M]       Route directions")
     print("  ww maps elevation <lat,lng>            Elevation for location")
@@ -228,6 +227,23 @@ def _print_help():
     print("  ww maps search <query> [--near L] [--radius M]  Places text search")
     print("  ww maps test                           Test all Google Maps APIs")
     print("  ww maps timezone <lat,lng>             Timezone for location")
+    print("")
+    print("Markdown:")
+    print(
+        "  ww md md2img              Convert markdown to JPG/PNG via HTML screenshot (Playwright)"
+    )
+    print("")
+    print("Marp:")
+    print(
+        "  ww marp <file.md>         Watch a markdown file and regenerate PDF via marp"
+    )
+    print("")
+    print("Math:")
+    print("  ww math tanh              Tanh (Hyperbolic Tangent) reference")
+    print("  ww math tanh --plot       Generate and open tanh figure")
+    print("  ww math tanh --values     Tanh value table")
+    print("  ww math tanh --all        Tanh comprehensive reference")
+    print("  ww math tanh x1 x2 ...    Custom x values for the table")
     print("")
     print("Network:")
     print("  ww network discover           Discover devices on local network")
