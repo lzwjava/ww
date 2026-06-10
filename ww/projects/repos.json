@@ -140,7 +140,8 @@
       "ruff",
       "yazi",
       "glow",
-      "delta"
+      "delta",
+      "bun"
     ],
     "infra-network": [
       "openwrt",
