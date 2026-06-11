@@ -1,152 +1,117 @@
-"""Fetch and summarize finance news via web search."""
+"""Fetch and summarize finance news via OpenRouter web search."""
 
 import sys
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import json
+import os
 
 import requests
-from bs4 import BeautifulSoup
 
 
-def _fetch_text(url, timeout=15):
-    """Fetch page and extract readable text."""
-    try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/131.0.0.0 Safari/537.36"
-        }
-        resp = requests.get(url, headers=headers, timeout=timeout, verify=False)
-        resp.raise_for_status()
-        soup = BeautifulSoup(resp.text, "html.parser")
-        # Remove script/style/nav/footer
-        for tag in soup(["script", "style", "nav", "footer", "header", "aside"]):
-            tag.decompose()
-        text = soup.get_text(separator="\n", strip=True)
-        # Trim
-        return text[:20000] if text else ""
-    except Exception:
-        return ""
+def _call_with_web_search(messages, model=None, max_tokens=4000):
+    """Call OpenRouter API with web search plugin enabled."""
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    if not api_key:
+        raise Exception("OPENROUTER_API_KEY environment variable is not set")
 
+    if model is None:
+        model = os.getenv("MODEL", "google/gemini-2.5-flash")
 
-def _process_item(i, item, total, call_llm):
-    """Fetch, extract, and summarize one search result."""
-    title = item["title"]
-    url = item["url"]
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    data = {
+        "model": model,
+        "messages": messages,
+        "max_tokens": max_tokens,
+        "plugins": [{"id": "web"}],
+    }
 
-    text = _fetch_text(url)
-    if not text or len(text) < 200:
-        return None
+    response = requests.post(url, headers=headers, json=data, timeout=60)
+    if not response.ok:
+        raise Exception(
+            f"OpenRouter API error: HTTP {response.status_code}\n"
+            f"  Response: {response.text[:500]}"
+        )
 
-    prompt = (
-        "Summarize the following news article in English in 2-4 sentences. "
-        "Focus on the main financial points. Do not include any preamble.\n\n" + text
-    )
-    summary = call_llm(prompt)
-    if not summary:
-        return None
-
-    return {"idx": i, "title": title, "summary": summary, "url": url}
+    body = response.json()
+    return body["choices"][0]["message"]["content"]
 
 
 def main():
-    """ww news finance — search and summarize finance news."""
-    import urllib3
-
-    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-    # Parse args
-    count = 10
-    threads = 8
+    """ww news finance — search and summarize finance news via LLM web search."""
     query = "latest finance news today"
     args = sys.argv[1:]
 
-    if "--count" in args:
-        idx = args.index("--count")
-        if idx + 1 < len(args):
-            count = int(args[idx + 1])
-    if "--threads" in args:
-        idx = args.index("--threads")
-        if idx + 1 < len(args):
-            threads = int(args[idx + 1])
-    # Treat remaining positional args as custom query
-    positional = [a for a in args if not a.startswith("-")]
-    # Skip 'finance' if it came from the subcmd dispatch
-    positional = [a for a in positional if a != "finance"]
-    if positional:
-        query = " ".join(positional)
-
     if "--help" in args or "-h" in args:
-        print("Usage: ww news finance [query] [--count N] [--threads N]")
+        print("Usage: ww news finance [query]")
         print("")
-        print("Search and summarize finance news via web search.")
+        print("Search and summarize finance news via LLM web search.")
         print("")
         print("Options:")
-        print("  --count N    Number of articles (default: 10)")
-        print("  --threads N  Parallel threads (default: 8)")
-        print(
-            "  query        Custom search query (default: 'latest finance news today')"
-        )
+        print("  query  Custom search query (default: 'latest finance news today')")
         print("")
         print("Examples:")
         print("  ww news finance")
         print('  ww news finance "fed interest rate"')
-        print("  ww news finance --count 5")
         return
 
-    # Lazy imports
-    from ww.llm.openrouter_client import call_openrouter_api
-    from ww.search.search_web import search_bing, _deduplicate
+    positional = [a for a in args if not a.startswith("-")]
+    if positional:
+        query = " ".join(positional)
 
-    def call_llm(prompt):
-        return call_openrouter_api(prompt, max_tokens=500)
+    messages = [
+        {
+            "role": "user",
+            "content": (
+                f"Search the web for the latest news about: {query}\n\n"
+                "For each of the top 10 results, provide:\n"
+                "1. A short English title\n"
+                "2. A 2-3 sentence summary\n"
+                "3. The source URL\n\n"
+                "Return ONLY valid JSON — a JSON array of objects with keys: "
+                "title, summary, url. Example:\n"
+                '[{"title": "...", "summary": "...", "url": "..."}]\n\n'
+                "No markdown, no code fences, no explanation — just the JSON array."
+            ),
+        }
+    ]
 
-    import warnings
+    model = os.getenv("MODEL", "google/gemini-2.5-flash")
+    print(f"Searching via {model} with web search...")
 
-    warnings.filterwarnings(
-        "ignore", category=urllib3.exceptions.InsecureRequestWarning
-    )
-
-    print(f"Searching: {query}")
-    results_raw = search_bing(query, num_results=count + 5)
-    results_raw = _deduplicate(results_raw)[:count]
-    print(f"Found {len(results_raw)} results.\n")
-
-    if not results_raw:
-        print("No results found.")
+    try:
+        content = _call_with_web_search(messages, model=model)
+    except Exception as e:
+        print(f"Error: {e}")
         sys.exit(1)
 
-    total = len(results_raw)
-    print(f"Processing {total} articles with {threads} threads...\n")
+    # Strip code fences if present
+    content = content.strip()
+    if content.startswith("```"):
+        content = content.split("\n", 1)[1] if "\n" in content else content[3:]
+    if content.endswith("```"):
+        content = content[:-3]
+    content = content.strip()
 
-    results: list = [None] * total
-    with ThreadPoolExecutor(max_workers=threads) as pool:
-        futures = {
-            pool.submit(_process_item, i, item, total, call_llm): i
-            for i, item in enumerate(results_raw)
-        }
-        done = 0
-        for future in as_completed(futures):
-            done += 1
-            i = futures[future]
-            item = results_raw[i]
-            try:
-                result = future.result()
-                if result:
-                    results[i] = result
-                    print(f"[{done}/{total}] ✓ {result['title'][:70]}")
-                else:
-                    print(f"[{done}/{total}] ✗ {item['title'][:70]}")
-            except Exception as e:
-                print(f"[{done}/{total}] ✗ {item['title'][:70]} — {e}")
+    try:
+        articles = json.loads(content)
+    except json.JSONDecodeError:
+        print("Failed to parse LLM response as JSON:")
+        print(content)
+        sys.exit(1)
 
-    results = [r for r in results if r is not None]
+    if not articles:
+        print("No articles found.")
+        sys.exit(1)
 
     print("\n" + "=" * 70)
-    print(f"Finance News — Top {len(results)} Stories")
+    print(f"Finance News — Top {len(articles)} Stories")
     print("=" * 70)
-    for i, r in enumerate(results, 1):
-        print(f"\n{i}. {r['title']}")
-        print(f"   {r['summary']}")
-        print(f"   {r['url']}")
+    for i, r in enumerate(articles, 1):
+        print(f"\n{i}. {r.get('title', 'Untitled')}")
+        print(f"   {r.get('summary', 'No summary.')}")
+        print(f"   {r.get('url', '')}")
 
-    print(f"\n--- {len(results)} articles processed ---")
+    print(f"\n--- {len(articles)} articles processed ---")
