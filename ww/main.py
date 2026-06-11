@@ -751,6 +751,7 @@ def _main_dispatch(raw_args: list):
             print("  base64           Encode/decode base64")
             print("  ccr              CCR utility")
             print("  clean-zip        Clean zip files")
+            print("  compare          Compare two files in Beyond Compare")
             print("  decode-jwt       Decode a JWT token")
             print("  py2txt           Convert Python files to text")
             print("  request-proxy    Make HTTP request via proxy")
@@ -766,6 +767,10 @@ def _main_dispatch(raw_args: list):
             m()
         elif subcmd == "clean-zip":
             from ww.utils.clean_zip import main as m
+
+            m()
+        elif subcmd == "compare":
+            from ww.utils.compare import main as m
 
             m()
         elif subcmd == "decode-jwt":
