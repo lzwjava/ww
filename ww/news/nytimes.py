@@ -1,6 +1,7 @@
 """Fetch, summarize, and translate NYTimes Chinese articles."""
 
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 from bs4 import BeautifulSoup
 
@@ -73,22 +74,42 @@ def _extract_article(html):
     return title, text
 
 
-def _summarize(text, call_llm):
-    """Summarize article text in English using the LLM."""
-    prompt = (
-        "Summarize the following article in English in 2-4 sentences. "
-        "Focus on the main points. Do not include any preamble.\n\n" + text
-    )
-    return call_llm(prompt)
+def _process_article(i, link, total, call_llm):
+    """Process a single article: fetch, extract, translate, summarize."""
+    url = link["url"]
+    dual = _dual_url(url)
 
+    article_html = _fetch_html(dual)
+    if not article_html:
+        return None
 
-def _translate_title(title, call_llm):
-    """Translate a Chinese title to English using the LLM."""
-    prompt = (
+    title, text = _extract_article(article_html)
+    if not text or len(text) < 100:
+        return None
+
+    # Translate title
+    prompt_t = (
         "Translate the following Chinese title to English. "
         "Provide only the translated title, nothing else.\n\n" + title
     )
-    return call_llm(prompt)
+    en_title = call_llm(prompt_t) or title
+
+    # Summarize
+    prompt_s = (
+        "Summarize the following article in English in 2-4 sentences. "
+        "Focus on the main points. Do not include any preamble.\n\n" + text
+    )
+    summary = call_llm(prompt_s)
+    if not summary:
+        return None
+
+    return {
+        "idx": i,
+        "title_zh": title,
+        "title_en": en_title,
+        "summary": summary,
+        "url": url,
+    }
 
 
 def main():
@@ -97,21 +118,27 @@ def main():
 
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-    # Parse args: --count N (default 10)
+    # Parse args: --count N (default 10), --threads N (default 8)
     count = 10
+    threads = 8
     args = sys.argv[1:]
     if "--count" in args:
         idx = args.index("--count")
         if idx + 1 < len(args):
             count = int(args[idx + 1])
+    if "--threads" in args:
+        idx = args.index("--threads")
+        if idx + 1 < len(args):
+            threads = int(args[idx + 1])
     if "--help" in args or "-h" in args:
-        print("Usage: ww news nytimes [--count N]")
+        print("Usage: ww news nytimes [--count N] [--threads N]")
         print("")
         print("Fetch top stories from NYTimes Chinese edition,")
         print("summarize and translate titles to English.")
         print("")
         print("Options:")
-        print("  --count N   Number of articles to process (default: 10)")
+        print("  --count N    Number of articles to process (default: 10)")
+        print("  --threads N  Number of parallel threads (default: 8)")
         return
 
     # Lazy import to avoid circular deps and speed up dispatch
@@ -142,40 +169,37 @@ def main():
 
     # Limit to requested count
     links = links[:count]
+    total = len(links)
 
-    results = []
-    for i, link in enumerate(links):
-        url = link["url"]
-        dual = _dual_url(url)
-        print(f"[{i + 1}/{len(links)}] {link['text'][:60]}")
+    print(f"Processing {total} articles with {threads} threads...\n")
 
-        article_html = _fetch_html(dual)
-        if not article_html:
-            continue
+    # Process articles in parallel
+    results: list = [None] * total
+    with ThreadPoolExecutor(max_workers=threads) as pool:
+        futures = {
+            pool.submit(_process_article, i, link, total, call_llm): i
+            for i, link in enumerate(links)
+        }
+        done = 0
+        for future in as_completed(futures):
+            done += 1
+            i = futures[future]
+            link = links[i]
+            try:
+                result = future.result()
+                if result:
+                    results[i] = result
+                    print(f"[{done}/{total}] ✓ {result['title_en']}")
+                else:
+                    print(f"[{done}/{total}] ✗ {link['text'][:60]}")
+            except Exception as e:
+                print(f"[{done}/{total}] ✗ {link['text'][:60]} — {e}")
 
-        title, text = _extract_article(article_html)
-        if not text or len(text) < 100:
-            print("  [skip] article too short")
-            continue
-
-        # Translate title
-        en_title = _translate_title(title, call_llm)
-        if not en_title:
-            en_title = title  # fallback to original
-
-        # Summarize
-        summary = _summarize(text, call_llm)
-        if not summary:
-            print("  [skip] summarization failed")
-            continue
-
-        results.append(
-            {"title_zh": title, "title_en": en_title, "summary": summary, "url": url}
-        )
-        print(f"  ✓ {en_title}\n")
+    # Filter out None (failed articles), preserve order
+    results = [r for r in results if r is not None]
 
     # Output final results
-    print("=" * 70)
+    print("\n" + "=" * 70)
     print(f"NYTimes Chinese — Top {len(results)} Stories (English Summary)")
     print("=" * 70)
     for i, r in enumerate(results, 1):
