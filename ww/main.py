@@ -266,6 +266,9 @@ def _print_help():
     print(
         "  ww news nytimes [--count N]  Summarize NYTimes Chinese articles (default: 10)"
     )
+    print(
+        "  ww news finance [query]      Search and summarize finance news (default: 10)"
+    )
     print("")
     print("Note:")
     print("  ww note                   Quick: clipboard → queue (fast)")
@@ -933,8 +936,15 @@ def _main_dispatch(raw_args: list):
             print(
                 "  nytimes [--count N]  Summarize NYTimes Chinese articles (default: 10)"
             )
+            print(
+                "  finance [query]      Search and summarize finance news (default: 10)"
+            )
         elif subcmd == "nytimes":
             from ww.news.nytimes import main as m
+
+            m()
+        elif subcmd == "finance":
+            from ww.news.finance import main as m
 
             m()
         else:
