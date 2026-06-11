@@ -151,7 +151,9 @@
       "verilator",
       "openlane2",
       "OpenROAD",
-      "vortex"
+      "vortex",
+      "xnu",
+      "freebsd-src"
     ],
     "infra-network": [
       "openwrt",
