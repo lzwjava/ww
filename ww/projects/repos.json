@@ -175,7 +175,8 @@
       "jekyll",
       "kramdown",
       "huggingface_hub",
-      "Telegram-iOS"
+      "Telegram-iOS",
+      "goatcounter"
     ]
   }
 }
