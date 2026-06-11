@@ -42,30 +42,40 @@ def _call_with_web_search(messages, model=None, max_tokens=4000):
 def main():
     """ww news finance — search and summarize finance news via LLM web search."""
     query = "latest finance news today"
+    days = 1
     args = sys.argv[1:]
 
     if "--help" in args or "-h" in args:
-        print("Usage: ww news finance [query]")
+        print("Usage: ww news finance [query] [--days N]")
         print("")
         print("Search and summarize finance news via LLM web search.")
         print("")
         print("Options:")
-        print("  query  Custom search query (default: 'latest finance news today')")
+        print("  --days N  Restrict to past N days (default: 1)")
+        print("  query     Custom search query (default: 'latest finance news today')")
         print("")
         print("Examples:")
         print("  ww news finance")
         print('  ww news finance "fed interest rate"')
+        print("  ww news finance --days 7")
         return
 
-    positional = [a for a in args if not a.startswith("-")]
+    if "--days" in args:
+        idx = args.index("--days")
+        if idx + 1 < len(args):
+            days = int(args[idx + 1])
+
+    positional = [a for a in args if not a.startswith("-") and a not in (str(days),)]
     if positional:
         query = " ".join(positional)
 
+    time_desc = "today" if days == 1 else f"in the past {days} days"
     messages = [
         {
             "role": "user",
             "content": (
-                f"Search the web for the latest news about: {query}\n\n"
+                f"Search the web for the latest finance news {time_desc} about: {query}\n\n"
+                "Only include articles published within this time range.\n\n"
                 "For each of the top 10 results, provide:\n"
                 "1. A short English title\n"
                 "2. A 2-3 sentence summary\n"
