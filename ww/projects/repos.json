@@ -20,7 +20,8 @@
       "llama",
       "gemma",
       "transformers",
-      "whisper.cpp"
+      "whisper.cpp",
+      "MiMo"
     ],
     "ai-training": [
       "pytorch",
@@ -51,7 +52,9 @@
       "torchtitan",
       "ao",
       "minGPT",
-      "ng-video-lecture"
+      "ng-video-lecture",
+      "triton",
+      "jax"
     ],
     "ai-inference": [
       "TensorRT-LLM",
@@ -141,7 +144,8 @@
       "yazi",
       "glow",
       "delta",
-      "bun"
+      "bun",
+      "linux"
     ],
     "infra-network": [
       "openwrt",
