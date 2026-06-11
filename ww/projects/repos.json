@@ -145,7 +145,13 @@
       "glow",
       "delta",
       "bun",
-      "linux"
+      "linux",
+      "ramulator2",
+      "tiny-gpu",
+      "verilator",
+      "openlane2",
+      "OpenROAD",
+      "vortex"
     ],
     "infra-network": [
       "openwrt",
