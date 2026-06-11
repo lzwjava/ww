@@ -203,8 +203,8 @@ def main(argv=None):
         "--jobs",
         "-j",
         type=int,
-        default=8,
-        help="Number of parallel git pull workers (default: 8)",
+        default=32,
+        help="Number of parallel git pull workers (default: 32)",
     )
     parser.add_argument(
         "--list",
