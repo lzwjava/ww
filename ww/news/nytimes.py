@@ -204,7 +204,6 @@ def main():
     print("=" * 70)
     for i, r in enumerate(results, 1):
         print(f"\n{i}. {r['title_en']}")
-        print(f"   {r['title_zh']}")
         print(f"   {r['summary']}")
         print(f"   {r['url']}")
 
