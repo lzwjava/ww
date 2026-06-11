@@ -262,6 +262,11 @@ def _print_help():
     print("  ww network wifi-scan-best     Scan WiFi and recommend best signal")
     print("  ww network wifi-util          WiFi utility tools")
     print("")
+    print("News:")
+    print(
+        "  ww news nytimes [--count N]  Summarize NYTimes Chinese articles (default: 10)"
+    )
+    print("")
     print("Note:")
     print("  ww note                   Quick: clipboard → queue (fast)")
     print("  ww note --sync            Full pipeline: create, fix, commit, push")
@@ -917,6 +922,23 @@ def _main_dispatch(raw_args: list):
             m()
         else:
             print(f"Unknown network command: {subcmd}")
+            sys.exit(1)
+
+    elif group == "news":
+        subcmd = _pop_subcmd()
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww news <command>")
+            print("")
+            print("Commands:")
+            print(
+                "  nytimes [--count N]  Summarize NYTimes Chinese articles (default: 10)"
+            )
+        elif subcmd == "nytimes":
+            from ww.news.nytimes import main as m
+
+            m()
+        else:
+            print(f"Unknown news command: {subcmd}")
             sys.exit(1)
 
     elif group == "git":
