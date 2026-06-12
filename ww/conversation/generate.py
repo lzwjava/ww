@@ -118,12 +118,14 @@ def process_conversation(
     while voice_name_A == voice_name_B:
         voice_name_B = random.choice(voice_options)
 
+    base_name = os.path.splitext(os.path.basename(filename))[0]
+
     for idx, line_data in enumerate(conversation):
         speaker = line_data.get("speaker")
         line = line_data.get("line")
         if not line:
             continue
-        temp_file = os.path.join(output_dir, f"temp_{idx}.mp3")
+        temp_file = os.path.join(output_dir, f"{base_name}_temp_{idx}.mp3")
         temp_files.append(temp_file)
 
         voice_name = None
@@ -153,7 +155,7 @@ def process_conversation(
         print(f"Dry run: Skipping concatenation for {filename}")
         return True
 
-    concat_file = os.path.join(output_dir, "concat.txt")
+    concat_file = os.path.join(output_dir, f"{base_name}_concat.txt")
     with open(concat_file, "w") as f:
         for temp_file in temp_files:
             f.write(f"file '{os.path.abspath(temp_file)}'\n")
