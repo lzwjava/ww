@@ -70,7 +70,8 @@
       "ollama",
       "sglang",
       "text-generation-webui",
-      "vllm"
+      "vllm",
+      "nano-vllm"
     ],
     "ai-apps": [
       "open-webui",
