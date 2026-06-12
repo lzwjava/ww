@@ -28,6 +28,9 @@ def main():
         sys.exit(1)
 
     file_path = sys.argv[1]
+    # Strip .jpg extension if provided — the script appends it
+    if file_path.endswith(".jpg"):
+        file_path = file_path[:-4]
     jpg_path = f"{file_path}.jpg"
     print(f"Processing image: {jpg_path}")
 
