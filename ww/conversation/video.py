@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+"""Create a video from an audio file with a generated cover image."""
 
 import sys
 import os
@@ -122,83 +122,87 @@ def run_ffmpeg_with_progress(ffmpeg_cmd, mp3_file):
     print("FFmpeg video creation completed.")
 
 
-# Get filename from command-line argument
-if len(sys.argv) != 2:
-    print("Error: Please provide a filename or path to an MP3 file.")
-    print("Usage: python make_video.py <path_to_mp3>")
-    sys.exit(1)
+def main():
+    if len(sys.argv) < 2:
+        print("Error: Please provide a filename or path to an audio file.")
+        print("Usage: ww conversation to-video <path_to_audio>")
+        sys.exit(1)
 
-input_path = sys.argv[1]
+    input_path = sys.argv[1]
 
-# Handle the input path
-if not os.path.isfile(input_path):
-    print(f"Error: {input_path} not found.")
-    sys.exit(1)
+    # Handle the input path
+    if not os.path.isfile(input_path):
+        print(f"Error: {input_path} not found.")
+        sys.exit(1)
 
-# Extract directory, filename, and base name
-input_dir = os.path.dirname(input_path) or "."
-filename_with_ext = os.path.basename(input_path)
-base_filename = os.path.splitext(filename_with_ext)[0]  # Remove .mp3 if present
-mp3_file = input_path  # Use the full input path for the MP3
+    # Extract directory, filename, and base name
+    input_dir = os.path.dirname(input_path) or "."
+    filename_with_ext = os.path.basename(input_path)
+    base_filename = os.path.splitext(filename_with_ext)[0]  # Remove extension
+    mp3_file = input_path  # Use the full input path for the MP3
 
-# Step 1: Create cover image
-print("Creating cover image...")
-image_width, image_height = 1280, 720
-image = Image.new("RGB", (image_width, image_height), "black")
-draw = ImageDraw.Draw(image)
+    # Step 1: Create cover image
+    print("Creating cover image...")
+    image_width, image_height = 1280, 720
+    image = Image.new("RGB", (image_width, image_height), "black")
+    draw = ImageDraw.Draw(image)
 
-# Load a font (try Arial, then Helvetica, then default)
-font = None
-for font_path in ["/Library/Fonts/Arial.ttf", "/Library/Fonts/Helvetica.ttf"]:
-    try:
-        font = ImageFont.truetype(font_path, 72)  # 72pt font size
-        print(f"Using font: {font_path}")
-        break
-    except IOError:
-        continue
-if font is None:
-    font = ImageFont.load_default()
-    print(
-        "Warning: Neither Arial nor Helvetica font found, using default font. Note: Default font may not scale well to 72pt."
-    )
+    # Load a font (try Arial, then Helvetica, then default)
+    font = None
+    for font_path in ["/Library/Fonts/Arial.ttf", "/Library/Fonts/Helvetica.ttf"]:
+        try:
+            font = ImageFont.truetype(font_path, 72)  # 72pt font size
+            print(f"Using font: {font_path}")
+            break
+        except IOError:
+            continue
+    if font is None:
+        font = ImageFont.load_default()
+        print(
+            "Warning: Neither Arial nor Helvetica font found, using default font. Note: Default font may not scale well to 72pt."
+        )
 
-# Get text size and position to center it
-text = base_filename
-text_bbox = draw.textbbox((0, 0), text, font=font)
-text_width = text_bbox[2] - text_bbox[0]
-text_height = text_bbox[3] - text_bbox[1]
-text_x = (image_width - text_width) / 2
-text_y = (image_height - text_height) / 2
+    # Get text size and position to center it
+    text = base_filename
+    text_bbox = draw.textbbox((0, 0), text, font=font)
+    text_width = text_bbox[2] - text_bbox[0]
+    text_height = text_bbox[3] - text_bbox[1]
+    text_x = (image_width - text_width) / 2
+    text_y = (image_height - text_height) / 2
 
-# Draw text (white color)
-draw.text((text_x, text_y), text, fill="white", font=font)
+    # Draw text (white color)
+    draw.text((text_x, text_y), text, fill="white", font=font)
 
-# Save image in ~/Downloads/
-jpg_file = os.path.expanduser(f"~/Downloads/{base_filename}.jpg")
-image.save(jpg_file)
-print(f"Cover image created: {jpg_file}")
+    # Save image in same directory as input, or ~/Downloads/
+    jpg_file = os.path.join(input_dir, f"{base_filename}.jpg")
+    if not os.access(input_dir, os.W_OK):
+        jpg_file = os.path.expanduser(f"~/Downloads/{base_filename}.jpg")
+    image.save(jpg_file)
+    print(f"Cover image created: {jpg_file}")
 
-# Step 2: Create video with FFmpeg
-output_video = os.path.expanduser(f"~/Downloads/{base_filename}.mp4")
-ffmpeg_cmd = [
-    "-loop",
-    "1",
-    "-i",
-    jpg_file,
-    "-i",
-    mp3_file,
-    "-c:v",
-    "libx264",
-    "-tune",
-    "stillimage",
-    "-c:a",
-    "aac",
-    "-b:a",
-    "192k",
-    "-shortest",
-    output_video,
-]
+    # Step 2: Create video with FFmpeg
+    output_video = os.path.join(input_dir, f"{base_filename}.mp4")
+    if not os.access(input_dir, os.W_OK):
+        output_video = os.path.expanduser(f"~/Downloads/{base_filename}.mp4")
+    ffmpeg_cmd = [
+        "-loop",
+        "1",
+        "-i",
+        jpg_file,
+        "-i",
+        mp3_file,
+        "-c:v",
+        "libx264",
+        "-tune",
+        "stillimage",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "192k",
+        "-shortest",
+        output_video,
+    ]
 
-run_ffmpeg_with_progress(ffmpeg_cmd, mp3_file)
+    run_ffmpeg_with_progress(ffmpeg_cmd, mp3_file)
 
-print(f"Video created: {output_video}")
+    print(f"Video created: {output_video}")

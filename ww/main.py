@@ -72,6 +72,10 @@ def _print_help():
     print(
         "  ww conversation notes     Convert conversation JSON files to markdown notes"
     )
+    print(
+        "  ww conversation to-video <file>  Create video from audio file with cover image"
+    )
+    print("  ww conversation to-image <file>  Resize and crop image to 854x480")
     print("")
     print("DB (Command History):")
     print("  ww db errors              Show recent error commands (--limit N)")
@@ -1175,6 +1179,8 @@ def _main_dispatch(raw_args: list):
             print(
                 "  notes             Convert conversation JSON files to markdown notes"
             )
+            print("  to-video <file>   Create video from audio file with cover image")
+            print("  to-image <file>   Resize and crop image to 854x480")
             print("")
             print("Options:")
             print("  --output-dir DIR  Output directory for audio/JSON files")
@@ -1190,6 +1196,14 @@ def _main_dispatch(raw_args: list):
             m()
         elif subcmd == "notes":
             from ww.conversation.notes import main as m
+
+            m()
+        elif subcmd == "to-video":
+            from ww.conversation.video import main as m
+
+            m()
+        elif subcmd == "to-image":
+            from ww.conversation.image import main as m
 
             m()
         else:
