@@ -13,13 +13,8 @@ except ImportError:  # pragma: no cover - optional dependency
 DEFAULT_OUTPUT_DIRECTORY = os.path.expanduser("~/projects/blog-assets/conversations")
 
 
-def text_to_speech(
-    text, output_filename, voice_name=None, language_code="en-US", dry_run=False
-):
+def text_to_speech(text, output_filename, voice_name=None, language_code="en-US"):
     print(f"Generating audio for: {output_filename}")
-    if dry_run:
-        print(f"Dry run: Skipping audio generation for {output_filename}")
-        return True
     if texttospeech is None:
         print("Error: google-cloud-texttospeech not installed.")
         return False
@@ -57,9 +52,7 @@ def text_to_speech(
         return False
 
 
-def process_conversation(
-    filepath, output_dir, seed=None, dry_run=False, lang_type="en"
-):
+def process_conversation(filepath, output_dir, seed=None, lang_type="en"):
     if seed is None:
         seed = int(time.time())
     random.seed(seed)
@@ -127,7 +120,6 @@ def process_conversation(
             temp_file,
             voice_name=voice_name,
             language_code=language_code,
-            dry_run=dry_run,
         ):
             print(f"Failed to generate audio for line {idx + 1} of {filepath}")
             for temp_file_to_remove in temp_files:
@@ -138,10 +130,6 @@ def process_conversation(
     if not temp_files:
         print(f"No audio generated for {filepath}")
         return False
-
-    if dry_run:
-        print(f"Dry run: Skipping concatenation for {filepath}")
-        return True
 
     concat_file = os.path.join(output_dir, f"{base_name}_concat.txt")
     with open(concat_file, "w") as f:
@@ -185,11 +173,6 @@ def main():
     parser.add_argument("file", type=str, help="Path to the conversation JSON file.")
     parser.add_argument("--seed", type=int, help="Random seed for voice selection.")
     parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Perform a dry run without generating audio.",
-    )
-    parser.add_argument(
         "--type",
         type=str,
         choices=["en", "cn"],
@@ -205,7 +188,7 @@ def main():
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
-    process_conversation(args.file, args.output_dir, args.seed, args.dry_run, args.type)
+    process_conversation(args.file, args.output_dir, args.seed, args.type)
 
 
 if __name__ == "__main__":

@@ -1179,7 +1179,6 @@ def _main_dispatch(raw_args: list):
             print("Options:")
             print("  --output-dir DIR  Output directory for audio/JSON files")
             print("  --type en|cn      Language type for voices (default: en)")
-            print("  --dry-run         Skip audio generation")
             print("  --seed N          Random seed for voice selection")
         elif subcmd == "json":
             from ww.conversation.json import main as m
