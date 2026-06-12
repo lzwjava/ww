@@ -64,6 +64,15 @@ def _print_help():
     print("  ww copilot chat           Chat with a Copilot model")
     print("  ww copilot models         List available Copilot models")
     print("")
+    print("Conversation:")
+    print("  ww conversation json <n>  Capture conversation JSON from stdin/clipboard")
+    print(
+        "  ww conversation generate  Generate audio from conversation JSON (GCloud TTS)"
+    )
+    print(
+        "  ww conversation notes     Convert conversation JSON files to markdown notes"
+    )
+    print("")
     print("DB (Command History):")
     print("  ww db errors              Show recent error commands (--limit N)")
     print("  ww db recent              Show recent commands (--limit N)")
@@ -1153,6 +1162,43 @@ def _main_dispatch(raw_args: list):
             print(f"Unknown copilot command: {subcmd}")
             sys.exit(1)
 
+    elif group == "conversation":
+        subcmd = _pop_subcmd()
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww conversation <command> [options]")
+            print("")
+            print("Commands:")
+            print("  json <name>       Capture conversation JSON from stdin/clipboard")
+            print(
+                "  generate          Generate audio from conversation JSON (Google Cloud TTS)"
+            )
+            print(
+                "  notes             Convert conversation JSON files to markdown notes"
+            )
+            print("")
+            print("Options:")
+            print("  --output-dir DIR  Output directory for audio/JSON files")
+            print("  --input-dir DIR   Input directory for conversation JSON files")
+            print("  --type en|cn      Language type for voices (default: en)")
+            print("  --dry-run         Skip audio generation")
+            print("  --file FILE       Process a specific JSON file")
+            print("  --seed N          Random seed for voice selection")
+        elif subcmd == "json":
+            from ww.conversation.json import main as m
+
+            m()
+        elif subcmd == "generate":
+            from ww.conversation.generate import main as m
+
+            m()
+        elif subcmd == "notes":
+            from ww.conversation.notes import main as m
+
+            m()
+        else:
+            print(f"Unknown conversation command: {subcmd}")
+            sys.exit(1)
+
     elif group == "db":
         from ww.db_stats import main as m
 
@@ -1712,6 +1758,7 @@ def _main_dispatch(raw_args: list):
             "cloudflare",
             "completion",
             "copilot",
+            "conversation",
             "db",
             "degree",
             "display",
