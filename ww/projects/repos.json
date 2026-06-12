@@ -93,7 +93,8 @@
       "openai-cookbook",
       "anthropic-cookbook",
       "llama_index",
-      "mlflow"
+      "mlflow",
+      "bark"
     ],
     "ai-agents": [
       "hermes-agent",
