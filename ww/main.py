@@ -67,7 +67,7 @@ def _print_help():
     print("Conversation:")
     print("  ww conversation json <n>  Capture conversation JSON from stdin/clipboard")
     print(
-        "  ww conversation generate  Generate audio from conversation JSON (GCloud TTS)"
+        "  ww conversation generate <file>  Generate audio from conversation JSON (GCloud TTS)"
     )
     print(
         "  ww conversation notes     Convert conversation JSON files to markdown notes"
@@ -1170,7 +1170,7 @@ def _main_dispatch(raw_args: list):
             print("Commands:")
             print("  json <name>       Capture conversation JSON from stdin/clipboard")
             print(
-                "  generate          Generate audio from conversation JSON (Google Cloud TTS)"
+                "  generate <file>   Generate audio from conversation JSON (GCloud TTS)"
             )
             print(
                 "  notes             Convert conversation JSON files to markdown notes"
@@ -1178,10 +1178,8 @@ def _main_dispatch(raw_args: list):
             print("")
             print("Options:")
             print("  --output-dir DIR  Output directory for audio/JSON files")
-            print("  --input-dir DIR   Input directory for conversation JSON files")
             print("  --type en|cn      Language type for voices (default: en)")
             print("  --dry-run         Skip audio generation")
-            print("  --file FILE       Process a specific JSON file")
             print("  --seed N          Random seed for voice selection")
         elif subcmd == "json":
             from ww.conversation.json import main as m

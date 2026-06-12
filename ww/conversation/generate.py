@@ -11,7 +11,6 @@ except ImportError:  # pragma: no cover - optional dependency
     texttospeech = None
 
 DEFAULT_OUTPUT_DIRECTORY = os.path.expanduser("~/projects/blog-assets/conversations")
-DEFAULT_INPUT_DIRECTORY = os.path.join("scripts", "conversation")
 
 
 def text_to_speech(
@@ -59,22 +58,13 @@ def text_to_speech(
 
 
 def process_conversation(
-    filename,
-    output_dir,
-    input_dir,
-    seed=None,
-    dry_run=False,
-    lang_type="en",
+    filepath, output_dir, seed=None, dry_run=False, lang_type="en"
 ):
     if seed is None:
         seed = int(time.time())
     random.seed(seed)
-    filepath = (
-        filename if os.path.isabs(filename) else os.path.join(input_dir, filename)
-    )
-    output_filename = os.path.join(
-        output_dir, os.path.splitext(os.path.basename(filename))[0] + ".mp3"
-    )
+    base_name = os.path.splitext(os.path.basename(filepath))[0]
+    output_filename = os.path.join(output_dir, base_name + ".mp3")
 
     if os.path.exists(output_filename):
         print(f"Audio file already exists: {output_filename}")
@@ -84,7 +74,7 @@ def process_conversation(
         with open(filepath, "r", encoding="utf-8") as f:
             conversation = json.load(f)
     except Exception as e:
-        print(f"Error loading conversation file {filename}: {e}")
+        print(f"Error loading conversation file {filepath}: {e}")
         return False
 
     temp_files = []
@@ -118,8 +108,6 @@ def process_conversation(
     while voice_name_A == voice_name_B:
         voice_name_B = random.choice(voice_options)
 
-    base_name = os.path.splitext(os.path.basename(filename))[0]
-
     for idx, line_data in enumerate(conversation):
         speaker = line_data.get("speaker")
         line = line_data.get("line")
@@ -141,18 +129,18 @@ def process_conversation(
             language_code=language_code,
             dry_run=dry_run,
         ):
-            print(f"Failed to generate audio for line {idx + 1} of {filename}")
+            print(f"Failed to generate audio for line {idx + 1} of {filepath}")
             for temp_file_to_remove in temp_files:
                 if os.path.exists(temp_file_to_remove):
                     os.remove(temp_file_to_remove)
             return False
 
     if not temp_files:
-        print(f"No audio generated for {filename}")
+        print(f"No audio generated for {filepath}")
         return False
 
     if dry_run:
-        print(f"Dry run: Skipping concatenation for {filename}")
+        print(f"Dry run: Skipping concatenation for {filepath}")
         return True
 
     concat_file = os.path.join(output_dir, f"{base_name}_concat.txt")
@@ -192,9 +180,9 @@ def process_conversation(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Generate audio from conversation JSON files using Google Cloud TTS."
+        description="Generate audio from a conversation JSON file using Google Cloud TTS."
     )
-    parser.add_argument("--file", type=str, help="Specific JSON file to process.")
+    parser.add_argument("file", type=str, help="Path to the conversation JSON file.")
     parser.add_argument("--seed", type=int, help="Random seed for voice selection.")
     parser.add_argument(
         "--dry-run",
@@ -214,36 +202,10 @@ def main():
         default=DEFAULT_OUTPUT_DIRECTORY,
         help=f"Output directory for MP3 files (default: {DEFAULT_OUTPUT_DIRECTORY})",
     )
-    parser.add_argument(
-        "--input-dir",
-        type=str,
-        default=DEFAULT_INPUT_DIRECTORY,
-        help=f"Input directory for conversation JSON files (default: {DEFAULT_INPUT_DIRECTORY})",
-    )
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
-
-    num_conversations = 0
-    if args.file:
-        filenames = [args.file]
-    else:
-        filenames = [f for f in os.listdir(args.input_dir) if f.endswith(".json")]
-    total_conversations = len(filenames)
-    for filename in filenames:
-        if process_conversation(
-            filename,
-            args.output_dir,
-            args.input_dir,
-            args.seed,
-            args.dry_run,
-            args.type,
-        ):
-            num_conversations += 1
-
-    print(
-        f"Processing complete! {num_conversations}/{total_conversations} conversations generated/attempted."
-    )
+    process_conversation(args.file, args.output_dir, args.seed, args.dry_run, args.type)
 
 
 if __name__ == "__main__":
