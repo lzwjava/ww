@@ -983,6 +983,7 @@ def _main_dispatch(raw_args: list):
             print("  squash             Squash git commits")
             print("  gca                AI commit, no push (gemini-flash)")
             print("  gpa                AI commit with pull+push (gemini-flash)")
+            print("  editor             Set git editor (zed|vscode)")
         elif subcmd == "amend-push":
             from ww.git.git_amend_push import main as m
 
@@ -1027,6 +1028,10 @@ def _main_dispatch(raw_args: list):
             from ww.github.gitmessageai import gitmessageai
 
             gitmessageai(allow_pull_push=True)
+        elif subcmd == "editor":
+            from ww.git.git_editor import main as m
+
+            m()
         else:
             print(f"Unknown git command: {subcmd}")
             sys.exit(1)
