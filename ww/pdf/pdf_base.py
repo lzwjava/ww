@@ -39,6 +39,33 @@ def text_to_pdf_from_markdown(
 
     lang = os.path.basename(input_markdown_path).split("-")[-1].split(".")[0]
     CJK_FONT = _font_for_lang(lang)
+    # Body font size via \fontsize since article class only supports 10/11/12pt.
+    # Use \AtBeginDocument to ensure our size wins over pandoc/class defaults.
+    # Also cap heading sizes via titlesec so they stay proportional.
+    baseline = int(pt * 1.25)
+    heading_pt = max(int(pt * 1.3), pt + 2)
+    subheading_pt = max(int(pt * 1.15), pt + 1)
+    header_tex = "\n".join(
+        [
+            "\\usepackage{setspace}",
+            "\\setstretch{1.5}",
+            "\\usepackage{titlesec}",
+            f"\\renewcommand{{\\normalsize}}{{\\fontsize{{{pt}}}{{{baseline}}}\\selectfont}}",
+            "\\AtBeginDocument{\\normalsize}",
+            f"\\titleformat{{\\section}}{{\\bfseries\\fontsize{{{heading_pt}}}{{{int(heading_pt * 1.2)}}}\\selectfont}}{{}}{{}}{{}}",
+            f"\\titleformat{{\\subsection}}{{\\bfseries\\fontsize{{{subheading_pt}}}{{{int(subheading_pt * 1.2)}}}\\selectfont}}{{}}{{}}{{}}",
+            "\\titleformat{\\subsubsection}{\\bfseries\\normalsize}{}{}{}",
+            "",
+        ]
+    )
+
+    # Write header-includes to a temp file so newlines survive pandoc parsing
+    header_file = tempfile.NamedTemporaryFile(
+        mode="w", suffix=".tex", delete=False, encoding="utf-8"
+    )
+    header_file.write(header_tex)
+    header_file.close()
+
     command = [
         "pandoc",
         input_markdown_path,
@@ -49,6 +76,8 @@ def text_to_pdf_from_markdown(
         "markdown-yaml_metadata_block-raw_tex",
         "--pdf-engine",
         "xelatex",
+        "--include-in-header",
+        header_file.name,
         "-V",
         f"romanfont={CJK_FONT}",
         "-V",
@@ -62,11 +91,9 @@ def text_to_pdf_from_markdown(
         "-V",
         f"geometry:{GEOMETRY}",
         "-V",
-        f"classoption={pt}pt",
+        "classoption=12pt",
         "-V",
         "CJKoptions=Scale=1.1",
-        "-V",
-        "linestretch=1.5",
     ]
 
     # Book-like toggles
@@ -88,6 +115,7 @@ def text_to_pdf_from_markdown(
         command.extend([str(x) for x in extra_pandoc_args])
 
     result = subprocess.run(command, capture_output=True, text=True)
+    os.unlink(header_file.name)
     if result.returncode != 0:
         print(f"Pandoc error for {output_pdf_path}: {result.stderr}")
         # raise Exception(f"Pandoc failed for {input_markdown_path}")
