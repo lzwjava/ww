@@ -7,6 +7,7 @@
 _ww() {
     local -a commands
     commands=(
+        'alarm:Clock alarms - set, list, or remove all'
         'note:Create a new note with git integration'
         'screenshot:Take a screenshot (macOS)'
         'screenshot-linux:Take a screenshot (Linux)'
@@ -18,21 +19,28 @@ _ww() {
         'utils:General utility commands'
         'java:Java/Maven utilities'
         'network:Network utilities'
+        'news:News commands'
         'git:Git management commands'
         'search:Web search (multi-engine)'
         'pdf:PDF conversion commands'
+        'md:Markdown tools'
         'copilot:GitHub Copilot commands'
+        'conversation:Conversation audio and notes'
+        'db:Command history and statistics'
         'sync:Sync config files'
         'read:RAG document indexing and query'
         'llm:LLM comparison tools'
         'openrouter:OpenRouter account management'
         'env:Environment management'
+        'appearance:Switch macOS appearance (webcam auto)'
         'display:Switch macOS appearance'
         'gen-image:Generate image from clipboard text'
         'action:Trigger GitHub Actions workflow'
-        'update:Update git repos'
+        'actions:GitHub Actions management'
+
         'degree:GDUFS self-study notices'
         'marp:Watch markdown and regenerate PDF via marp'
+        'maps:Google Maps API'
         'whisper:Transcribe via whisper'
         'host:Show host info'
         'linux:Linux system utilities'
@@ -40,13 +48,32 @@ _ww() {
         'ghostty:Ghostty terminal commands'
         'clash:Clash proxy management'
         'latest:Show latest notes'
+        'weather:Weather forecast'
+        'rain:Analyze rain intensity from webcam video'
+        'hf:HuggingFace commands'
+        'zed:Zed remote development setup'
+        'projects:Project management'
+        'amd-dev-cloud:AMD Dev Cloud GPU management'
+        'torch:Find Pythons with PyTorch installed'
+        'completion:Install or print zsh completions'
+        'headphone:Audio device testing and listing'
+    )
+
+    local -a alarm_cmds
+    alarm_cmds=(
+        'clear:Remove all alarms from the Clock app'
+        'list:List all alarms'
     )
 
     local -a note_cmds
     note_cmds=(
+        'clear:Clear done/failed entries from queue'
         'log:Create a new log entry'
         'log-file:Create log from file'
         'obfuscate:Obfuscate sensitive data in a file'
+        'process:Drain queue: create notes, commit, push'
+        'status:Show queue status'
+        'watch:Auto-process queue when new notes arrive'
     )
 
     local -a screenshot_cmds
@@ -58,6 +85,8 @@ _ww() {
     local -a github_cmds
     github_cmds=(
         'info:Account info, plan, rate limits'
+        'interests:Compare GitHub interests between two users'
+        'profile:Detailed profile report for any GitHub user'
         'repos:List your repos (recently pushed)'
         'starred:List starred repos'
         'followers:List followers'
@@ -107,6 +136,7 @@ _ww() {
         'base64:Encode/decode base64'
         'ccr:CCR utility'
         'clean-zip:Clean zip files'
+        'compare:Compare two files in Beyond Compare'
         'decode-jwt:Decode a JWT token'
         'py2txt:Convert Python files to text'
         'request-proxy:Make HTTP request via proxy'
@@ -124,6 +154,23 @@ _ww() {
         'clean-log:Clean Java log files'
     )
 
+    local -a maps_cmds
+    maps_cmds=(
+        'directions:Route directions'
+        'elevation:Elevation for location'
+        'geocode:Address to lat/lng'
+        'home:Distance/time to home'
+        'ip:Geolocate an IP address'
+        'location:Trip report from clipboard URL'
+        'nearby:Nearby places'
+        'office:Distance/time to OneLink office'
+        'place:Place details'
+        'reverse:Lat/lng to address'
+        'search:Places text search'
+        'test:Test all Google Maps APIs'
+        'timezone:Timezone for location'
+    )
+
     local -a network_cmds
     network_cmds=(
         'get-wifi-list:Get list of WiFi networks'
@@ -133,9 +180,19 @@ _ww() {
         'ip-scan:Scan IP addresses on network'
         'port-scan:Scan open ports'
         'wifi-scan:Scan for WiFi networks'
+        'wifi-scan-best:Scan WiFi and recommend best signal'
         'wifi-util:WiFi utility tools'
         'network-plot:Plot network topology'
         'discover:Discover devices on local network'
+        'speed:Internet speed test (ping, jitter, bandwidth)'
+        'physical-speed:Estimate speed via EM Doppler shift'
+        'ip:Show real WAN IP (bypasses proxy)'
+    )
+
+    local -a news_cmds
+    news_cmds=(
+        'nytimes:Summarize NYTimes Chinese articles'
+        'finance:Search and summarize finance news'
     )
 
     local -a git_cmds
@@ -176,11 +233,34 @@ _ww() {
         'md2png:Convert markdown to PNG via HTML+PDF'
     )
 
+    local -a md_cmds
+    md_cmds=(
+        'md2img:Convert markdown to JPG/PNG via Playwright screenshot'
+    )
+
     local -a copilot_cmds
     copilot_cmds=(
         'auth:Authenticate via GitHub OAuth device flow'
         'models:List available Copilot models'
         'chat:Chat with a Copilot model'
+    )
+
+    local -a conversation_cmds
+    conversation_cmds=(
+        'json:Capture conversation JSON from stdin/clipboard'
+        'generate:Generate audio from conversation JSON (GCloud TTS)'
+        'notes:Convert conversation JSON files to markdown notes'
+        'to-video:Create video from audio file with cover image'
+        'to-image:Resize and crop image to 854x480'
+    )
+
+    local -a db_cmds
+    db_cmds=(
+        'errors:Show recent error commands'
+        'recent:Show recent commands'
+        'search:Search command history'
+        'stats:Show overall usage statistics'
+        'top:Show most frequently used commands'
     )
 
     local -a sync_cmds
@@ -223,6 +303,16 @@ _ww() {
         'dark:Switch to dark mode'
         'light:Switch to light mode'
         'auto:Switch to auto mode'
+        'smart-auto:Detect ambient light via webcam'
+        'show:Show current appearance'
+    )
+
+    local -a appearance_cmds
+    appearance_cmds=(
+        'dark:Switch to dark mode'
+        'light:Switch to light mode'
+        'auto:Switch to auto mode'
+        'smart-auto:Detect ambient light via webcam'
         'show:Show current appearance'
     )
 
@@ -235,6 +325,7 @@ _ww() {
     local -a whisper_cmds
     whisper_cmds=(
         'refine:Refine transcription to .md via OpenRouter'
+        'organize:Lightly clean transcription: fix grammar, remove noise, third-person narration'
     )
 
     local -a host_cmds
@@ -265,8 +356,14 @@ _ww() {
     )
 
     local -a ghostty_cmds
-        ghostty_cmds=(
+    ghostty_cmds=(
         'close:Close all Ghostty windows'
+    )
+
+    local -a headphone_cmds
+    headphone_cmds=(
+        'list:List connected audio devices'
+        'test:Test audio devices - play tone, record and playback'
     )
 
     local -a clash_cmds
@@ -286,6 +383,44 @@ _ww() {
     local -a latest_cmds
     latest_cmds=(
         'notes:Show filename and title of latest N notes'
+    )
+
+    local -a weather_cmds
+    weather_cmds=(
+        'rain:Record video and analyze rain intensity'
+    )
+
+    local -a hf_cmds
+    hf_cmds=(
+        'news:Show trending models, datasets, and spaces'
+        'pull:Download a HF model repo to local dir'
+        'push:Upload local dir to HF model repo'
+        'top30:Top 30 most-followed HF users'
+    )
+
+    local -a actions_cmds
+    actions_cmds=(
+        'check:Check recent workflow runs'
+    )
+
+    local -a projects_cmds
+    projects_cmds=(
+        'count:Count directories in ~/projects'
+        'update:Update git repos (default: repos.json config)'
+    )
+
+    local -a amd_dev_cloud_cmds
+    amd_dev_cloud_cmds=(
+        'snapshots:List all snapshots'
+        'delete-snapshot:Delete a snapshot'
+        'start-train:Create GPU droplet from snapshot for training'
+        'end-train:Snapshot and destroy a GPU droplet'
+    )
+
+    local -a completion_cmds
+    completion_cmds=(
+        'install:Install zsh completion to ~/.zsh/completions/'
+        'script:Print the completion script to stdout'
     )
 
     local -a sync_sub_bashrc
@@ -331,37 +466,68 @@ _ww() {
             ;;
         subcmd)
             case $words[2] in
-                note)        _describe -t commands 'note command' note_cmds ;;
-                screenshot)  _describe -t commands 'screenshot command' screenshot_cmds ;;
-                github)      _describe -t commands 'github command' github_cmds ;;
-                macos)       _describe -t commands 'macos command' macos_cmds ;;
-                image)       _describe -t commands 'image command' image_cmds ;;
-                proc)        _describe -t commands 'proc command' proc_cmds ;;
-                utils)       _describe -t commands 'utils command' utils_cmds ;;
-                java)        _describe -t commands 'java command' java_cmds ;;
-                network)     _describe -t commands 'network command' network_cmds ;;
-                git)         _describe -t commands 'git command' git_cmds ;;
-                search)      _describe -t commands 'search command' search_cmds ;;
-                pdf)         _describe -t commands 'pdf command' pdf_cmds ;;
-                copilot)     _describe -t commands 'copilot command' copilot_cmds ;;
-                sync)        _describe -t commands 'sync command' sync_cmds ;;
-                read)        _describe -t commands 'read command' read_cmds ;;
-                llm)         _describe -t commands 'llm command' llm_cmds ;;
-                openrouter)  _describe -t commands 'openrouter command' openrouter_cmds ;;
-                env)         _describe -t commands 'env command' env_cmds ;;
-                display)     _describe -t commands 'display command' display_cmds ;;
-                degree)      _describe -t commands 'degree command' degree_cmds ;;
-                whisper)     _describe -t commands 'whisper command' whisper_cmds ;;
-                host)        _describe -t commands 'host command' host_cmds ;;
-                linux)       _describe -t commands 'linux command' linux_cmds ;;
-                cloudflare)  _describe -t commands 'cloudflare command' cloudflare_cmds ;;
-                ghostty)     _describe -t commands 'ghostty command' ghostty_cmds ;;
-                clash)       _describe -t commands 'clash command' clash_cmds ;;
-                latest)      _describe -t commands 'latest command' latest_cmds ;;
+                alarm)         _describe -t commands 'alarm command' alarm_cmds ;;
+                note)          _describe -t commands 'note command' note_cmds ;;
+                screenshot)    _describe -t commands 'screenshot command' screenshot_cmds ;;
+                github)        _describe -t commands 'github command' github_cmds ;;
+                macos)         _describe -t commands 'macos command' macos_cmds ;;
+                image)         _describe -t commands 'image command' image_cmds ;;
+                proc)          _describe -t commands 'proc command' proc_cmds ;;
+                utils)         _describe -t commands 'utils command' utils_cmds ;;
+                java)          _describe -t commands 'java command' java_cmds ;;
+                network)       _describe -t commands 'network command' network_cmds ;;
+                news)          _describe -t commands 'news command' news_cmds ;;
+                git)           _describe -t commands 'git command' git_cmds ;;
+                search)        _describe -t commands 'search command' search_cmds ;;
+                pdf)           _describe -t commands 'pdf command' pdf_cmds ;;
+                md)            _describe -t commands 'md command' md_cmds ;;
+                copilot)       _describe -t commands 'copilot command' copilot_cmds ;;
+                conversation)  _describe -t commands 'conversation command' conversation_cmds ;;
+                db)            _describe -t commands 'db command' db_cmds ;;
+                sync)          _describe -t commands 'sync command' sync_cmds ;;
+                read)          _describe -t commands 'read command' read_cmds ;;
+                llm)           _describe -t commands 'llm command' llm_cmds ;;
+                openrouter)    _describe -t commands 'openrouter command' openrouter_cmds ;;
+                env)           _describe -t commands 'env command' env_cmds ;;
+                appearance)    _describe -t commands 'appearance command' appearance_cmds ;;
+                display)       _describe -t commands 'display command' display_cmds ;;
+                degree)        _describe -t commands 'degree command' degree_cmds ;;
+                whisper)       _describe -t commands 'whisper command' whisper_cmds ;;
+                host)          _describe -t commands 'host command' host_cmds ;;
+                linux)         _describe -t commands 'linux command' linux_cmds ;;
+                cloudflare)    _describe -t commands 'cloudflare command' cloudflare_cmds ;;
+                ghostty)       _describe -t commands 'ghostty command' ghostty_cmds ;;
+                headphone)    _describe -t commands 'headphone command' headphone_cmds ;;
+                clash)         _describe -t commands 'clash command' clash_cmds ;;
+                latest)        _describe -t commands 'latest command' latest_cmds ;;
+                weather)       _describe -t commands 'weather command' weather_cmds ;;
+                hf)            _describe -t commands 'hf command' hf_cmds ;;
+                action)
+                    _arguments \
+                        '--repo[GitHub repo]:repo:' \
+                        '--ref[Branch or tag]:ref:'
+                    _files -g "*.yml"
+                    ;;
+                actions)       _describe -t commands 'actions command' actions_cmds ;;
+                projects)      _describe -t commands 'projects command' projects_cmds ;;
+                amd-dev-cloud) _describe -t commands 'amd-dev-cloud command' amd_dev_cloud_cmds ;;
+                completion)    _describe -t commands 'completion command' completion_cmds ;;
             esac
             ;;
         subcmd2)
             case $words[2] in
+                projects)
+                    case $words[3] in
+                        update)
+                            _arguments \
+                                '--jobs[Number of parallel workers]:jobs:' \
+                                '-j[Number of parallel workers]:jobs:' \
+                                '--category[Update only repos in a specific category]:category:' \
+                                '-c[Update only repos in a specific category]:category:' \
+                                '--list[List configured repos and categories]'
+                            ;;
+                    esac
+                    ;;
                 sync)
                     case $words[3] in
                         bashrc)   _describe -t commands 'direction' sync_sub_bashrc ;;
@@ -388,6 +554,39 @@ _ww() {
                             _arguments \
                                 '--model[Model to use]:model:' \
                                 '--debug[Enable debug output]'
+                            ;;
+                    esac
+                    ;;
+                conversation)
+                    case $words[3] in
+                        generate)
+                            _arguments \
+                                '--seed[Random seed for voice selection]:seed:' \
+                                '--type[Language type for voices (en or cn)]:type:(en cn)' \
+                                '--output-dir[Output directory for MP3 files]:dir:_directories'
+                            ;;
+                        json)
+                            _arguments \
+                                '--output-dir[Output directory]:dir:_directories'
+                            ;;
+                        notes)
+                            _arguments \
+                                '--input-dir[Input directory for JSON files]:dir:_directories' \
+                                '--notes-dir[Output directory for notes]:dir:_directories'
+                            ;;
+                        to-video)
+                            _files -g '*.{mp3,wav,m4a,ogg,flac,aac,mp4,webm,mkv}'
+                            ;;
+                        to-image)
+                            _files -g '*.jpg'
+                            ;;
+                    esac
+                    ;;
+                db)
+                    case $words[3] in
+                        recent|top|errors)
+                            _arguments \
+                                '--limit[Number of results]:limit:'
                             ;;
                     esac
                     ;;
@@ -429,6 +628,13 @@ _ww() {
                             _arguments '--json[JSON output]' ;;
                     esac
                     ;;
+                utils)
+                    case $words[3] in
+                        compare)
+                            _files
+                            ;;
+                    esac
+                    ;;
                 image)
                     case $words[3] in
                         compress|photo-compress)
@@ -442,9 +648,7 @@ _ww() {
             case $words[2] in
                 screenshot)
                     _arguments '--dir[Screenshot directory]:directory:_directories' ;;
-                update)
-                    # Accepts repo names, no specific completion
-                    ;;
+
                 latest)
                     # Accepts a number argument
                     ;;
@@ -454,6 +658,21 @@ _ww() {
                     _files -g '*.{mp4,mp3,wav,m4a,ogg,flac}' ;;
                 marp)
                     _files -g '*.md' ;;
+                maps)
+                    _describe -t commands 'maps command' maps_cmds ;;
+                md)
+                    case $words[3] in
+                        md2img)
+                            _files -g '*.md' ;;
+                    esac
+                    ;;
+                hf)
+                    case $words[3] in
+                        *)
+                            # hf <username> does profile lookup
+                            ;;
+                    esac
+                    ;;
                 read)
                     case $words[3] in
                         query)

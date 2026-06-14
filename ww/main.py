@@ -365,6 +365,8 @@ def _print_help():
     print("  ww utils unzip            Unzip an archive")
     print("")
     print("Weather:")
+    print("  ww rain                   Record video, analyze rain intensity (in-car)")
+    print("  ww rain --seconds 5       Longer video capture")
     print("  ww weather                Today's weather (auto-detect location)")
     print("  ww weather N              Today + next N days (1-3)")
     print("  ww weather <city>         Weather for a city")
@@ -1653,7 +1655,18 @@ def _main_dispatch(raw_args: list):
             sys.exit(1)
 
     elif group == "weather":
-        from ww.weather.weather import main as m
+        if len(sys.argv) > 1 and sys.argv[1] == "rain":
+            sys.argv.pop(1)  # consume 'rain' subcmd
+            from ww.weather.rain import main as m
+
+            m()
+        else:
+            from ww.weather.weather import main as m
+
+            m()
+
+    elif group == "rain":
+        from ww.weather.rain import main as m
 
         m()
 
@@ -1797,6 +1810,7 @@ def _main_dispatch(raw_args: list):
             "pdf",
             "proc",
             "projects",
+            "rain",
             "read",
             "screenshot",
             "screenshot-linux",
