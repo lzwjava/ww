@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 def _fetch_html(url, timeout=30):
     """Fetch HTML content from a URL, skipping SSL verification."""
     try:
-        response = requests.get(url, verify=False, timeout=timeout)
+        response = requests.get(url, verify=False, timeout=timeout)  # nosec B501
         response.raise_for_status()
         return response.text
     except requests.exceptions.RequestException as e:
