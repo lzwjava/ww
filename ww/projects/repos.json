@@ -21,7 +21,8 @@
       "gemma",
       "transformers",
       "whisper.cpp",
-      "MiMo"
+      "MiMo",
+      "GLM"
     ],
     "ai-training": [
       "pytorch",
