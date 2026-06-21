@@ -344,9 +344,9 @@ def _print_help():
     print("")
     print("Sync:")
     print("  ww sync bashrc [back|forth] Sync .bashrc file")
-    print("  ww sync claude            Sync Claude Code settings (sanitized)")
+    print("  ww sync claude            Sync Claude Code settings")
     print(
-        "  ww sync hermes [back|forth]  Sync config.yaml, SOUL.md, hooks/, plugins/, agent-hooks/ (forth: ~/.hermes/ -> project)"
+        "  ww sync hermes [back|forth]  Sync config.yaml, SOUL.md, hooks/, plugins/, agent-hooks/ (forth: ~/.hermes/ -> $CONFIG_DIR)"
     )
     print("  ww sync ssh [back|forth]    Sync .ssh directory")
     print("  ww sync zprofile [back|forth] Sync .zprofile file")
@@ -1228,12 +1228,12 @@ def _main_dispatch(raw_args: list):
             print("Usage: ww sync <command> [options]")
             print("")
             print("Commands:")
-            print("  claude            Sync Claude Code settings (sanitized)")
+            print("  claude            Sync Claude Code settings")
             print("  bashrc [back|forth]  Sync .bashrc file")
             print("  zprofile [back|forth]  Sync .zprofile file")
             print("  zed [back|forth]     Sync ~/.config/zed/ directory (Zed config)")
             print("  ssh [back|forth]    Sync .ssh directory")
-            print("  hermes                  Copy ww/config/hermes/ -> ~/.hermes/")
+            print("  hermes [back|forth]  Sync ~/.hermes/ <-> $CONFIG_DIR/hermes/")
             print("  openclaw          Sync OpenClaw settings")
         elif subcmd == "claude":
             from ww.sync.claude import main as m
@@ -1284,7 +1284,7 @@ def _main_dispatch(raw_args: list):
             if direction in ("--help", "-h"):
                 print("Usage: ww sync hermes [back|forth]")
                 print(
-                    "  Sync config.yaml, SOUL.md, hooks/, plugins/, agent-hooks/ (forth: ~/.hermes/ -> project, back: reverse)"
+                    "  Sync config.yaml, SOUL.md, hooks/, plugins/, agent-hooks/ (forth: ~/.hermes/ -> $CONFIG_DIR, back: reverse)"
                 )
                 return
             direction = direction or "forth"

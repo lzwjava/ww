@@ -1,39 +1,32 @@
-import argparse
-import json
+import os
 import subprocess
 from pathlib import Path
 
 DEFAULT_REMOTE = "lzw@192.168.1.36"
 
 
-def sync_openclaw_config(remote: str):
-    """Fetch openclaw config from remote server, sanitize it, and save locally."""
-    remote = f"{remote}:.openclaw/openclaw.json"
-    tmp_path = Path("/tmp/openclaw_config.json")
+def _config_dir() -> Path:
+    """Return CONFIG_DIR from env, default to ~/projects/config."""
+    return Path(os.getenv("CONFIG_DIR") or str(Path.home() / "projects" / "config"))
 
-    cmd = f"scp {remote} {tmp_path}"
+
+def sync_openclaw_config(remote: str):
+    """Fetch openclaw config from remote server and save locally (no sanitization)."""
+    remote_path = f"{remote}:.openclaw/openclaw.json"
+    dst_dir = _config_dir() / "openclaw"
+    dst_dir.mkdir(parents=True, exist_ok=True)
+    output_path = dst_dir / "openclaw.json"
+
+    cmd = f"scp {remote_path} {output_path}"
     print(f"Executing: {cmd}")
     subprocess.run(cmd, shell=True, check=True)
 
-    with open(tmp_path, "r") as f:
-        config = json.load(f)
-
-    from ww.sync.claude import sanitize_dict
-
-    sanitized = sanitize_dict(config)
-
-    current_dir = Path(__file__).parent.parent
-    config_dir = current_dir / "config"
-    config_dir.mkdir(parents=True, exist_ok=True)
-
-    output_path = config_dir / "openclaw.json"
-    with open(output_path, "w") as f:
-        json.dump(sanitized, f, indent=2)
-
-    print(f"Sanitized config saved to {output_path}")
+    print(f"Copied to {output_path}")
 
 
 def main():
+    import argparse
+
     parser = argparse.ArgumentParser(
         description="Sync openclaw config from remote server"
     )

@@ -1,6 +1,12 @@
 import os
 import subprocess
+import shutil
 from pathlib import Path
+
+
+def _config_dir() -> Path:
+    """Return CONFIG_DIR from env, default to ~/projects/config."""
+    return Path(os.getenv("CONFIG_DIR") or str(Path.home() / "projects" / "config"))
 
 
 def remote_sync(local_path: str, remote_path: str, direction: str = "forth") -> None:
@@ -52,17 +58,22 @@ def sync_zed(direction: str = "forth") -> None:
 
 def sync_hermes(direction: str = "forth") -> None:
     """
-    Sync select Hermes config between ww/config/hermes/ and ~/.hermes/.
-    Synced items: config.yaml, SOUL.md, hooks/, plugins/, agent-hooks/.
-    direction="forth": ~/.hermes/ -> ww/config/hermes/ (capture active config into project)
-    direction="back":  ww/config/hermes/ -> ~/.hermes/ (restore project config to active)
+    Sync select Hermes config between $CONFIG_DIR/hermes/ and ~/.hermes/.
+    Synced items: config.yaml, SOUL.md, hooks/, plugins/, agent-hooks/, on-agent-done.sh.
+    direction="forth": ~/.hermes/ -> $CONFIG_DIR/hermes/ (capture active config)
+    direction="back":  $CONFIG_DIR/hermes/ -> ~/.hermes/ (restore config)
     """
-    import shutil
-
-    config_dir = Path(__file__).resolve().parent.parent / "config" / "hermes"
+    config_dir = _config_dir() / "hermes"
     home_dir = Path.home() / ".hermes"
 
-    items = ["config.yaml", "SOUL.md", "hooks", "plugins", "agent-hooks"]
+    items = [
+        "config.yaml",
+        "SOUL.md",
+        "hooks",
+        "plugins",
+        "agent-hooks",
+        "on-agent-done.sh",
+    ]
 
     if direction == "forth":
         src_base = home_dir
@@ -92,9 +103,11 @@ def sync_hermes(direction: str = "forth") -> None:
             except (PermissionError, OSError) as e:
                 print(f"  SKIP {rel} ({e})")
         else:
-            # directory — copy all files recursively
+            # directory — copy all files recursively (skip __pycache__)
             for f in sorted(src_path.rglob("*")):
                 if not f.is_file():
+                    continue
+                if "__pycache__" in f.parts:
                     continue
                 f_rel = f.relative_to(src_base)
                 f_dst = dst_base / f_rel

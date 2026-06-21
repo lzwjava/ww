@@ -6,14 +6,15 @@ from unittest.mock import patch
 
 os.environ.setdefault("OPENROUTER_API_KEY", "test-fake-key")
 
-# Add ww to path so we can import the plugin
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+# Import the note plugin from ~/.hermes/plugins/note/
+_plugin_parent = str(Path.home() / ".hermes" / "plugins")
+sys.path.insert(0, _plugin_parent)
+
+from note import _strip_reasoning_tags, _content_as_text, _handle_note  # noqa: E402
 
 
 class TestStripReasoningTags(unittest.TestCase):
     def test_removes_thinking_tags(self):
-        from ww.config.hermes.plugins.note import _strip_reasoning_tags
-
         text = "Hello <thinking>internal thought</thinking> world"
         result = _strip_reasoning_tags(text)
         self.assertNotIn("thinking", result)
@@ -21,8 +22,6 @@ class TestStripReasoningTags(unittest.TestCase):
         self.assertIn("world", result)
 
     def test_removes_reasoning_tags(self):
-        from ww.config.hermes.plugins.note import _strip_reasoning_tags
-
         text = "Before <reasoning>chain of thought</reasoning> After"
         result = _strip_reasoning_tags(text)
         self.assertNotIn("reasoning", result)
@@ -30,22 +29,16 @@ class TestStripReasoningTags(unittest.TestCase):
         self.assertIn("After", result)
 
     def test_removes_scratchpad_tags(self):
-        from ww.config.hermes.plugins.note import _strip_reasoning_tags
-
         text = "A <scratchpad>notes</scratchpad> B"
         result = _strip_reasoning_tags(text)
         self.assertNotIn("scratchpad", result)
 
     def test_no_tags_unchanged(self):
-        from ww.config.hermes.plugins.note import _strip_reasoning_tags
-
         text = "Plain text without tags"
         result = _strip_reasoning_tags(text)
         self.assertEqual(result, text)
 
     def test_multiline_thinking_block(self):
-        from ww.config.hermes.plugins.note import _strip_reasoning_tags
-
         text = "Before\n<thinking>\nline1\nline2\n</thinking>\nAfter"
         result = _strip_reasoning_tags(text)
         self.assertNotIn("line1", result)
@@ -55,18 +48,12 @@ class TestStripReasoningTags(unittest.TestCase):
 
 class TestContentAsText(unittest.TestCase):
     def test_none_returns_empty(self):
-        from ww.config.hermes.plugins.note import _content_as_text
-
         self.assertEqual(_content_as_text(None), "")
 
     def test_string_passthrough(self):
-        from ww.config.hermes.plugins.note import _content_as_text
-
         self.assertEqual(_content_as_text("hello"), "hello")
 
     def test_list_of_text_parts(self):
-        from ww.config.hermes.plugins.note import _content_as_text
-
         content = [
             {"type": "text", "text": "part1"},
             {"type": "text", "text": "part2"},
@@ -76,8 +63,6 @@ class TestContentAsText(unittest.TestCase):
         self.assertIn("part2", result)
 
     def test_list_filters_non_text_parts(self):
-        from ww.config.hermes.plugins.note import _content_as_text
-
         content = [
             {"type": "text", "text": "visible"},
             {"type": "image", "url": "http://example.com/img.png"},
@@ -86,46 +71,30 @@ class TestContentAsText(unittest.TestCase):
         self.assertEqual(result, "visible")
 
     def test_empty_list_returns_empty(self):
-        from ww.config.hermes.plugins.note import _content_as_text
-
         self.assertEqual(_content_as_text([]), "")
 
     def test_other_type_converts_to_string(self):
-        from ww.config.hermes.plugins.note import _content_as_text
-
         result = _content_as_text(42)
         self.assertEqual(result, "42")
 
 
 class TestHandleNoteParsing(unittest.TestCase):
     def test_no_assistant_messages(self):
-        from ww.config.hermes.plugins.note import _handle_note
-
-        with patch(
-            "ww.config.hermes.plugins.note._get_assistant_messages", return_value=[]
-        ):
+        with patch("note._get_assistant_messages", return_value=[]):
             result = _handle_note("")
             self.assertIsNotNone(result)
             self.assertIn("No assistant responses", result)
 
     def test_invalid_number(self):
-        from ww.config.hermes.plugins.note import _handle_note
-
         msg = {"role": "assistant", "content": "hello"}
-        with patch(
-            "ww.config.hermes.plugins.note._get_assistant_messages", return_value=[msg]
-        ):
+        with patch("note._get_assistant_messages", return_value=[msg]):
             result = _handle_note("99")
             self.assertIsNotNone(result)
             self.assertIn("Invalid", result)
 
     def test_title_arg(self):
-        from ww.config.hermes.plugins.note import _handle_note
-
         msg = {"role": "assistant", "content": "x" * 300}
-        with patch(
-            "ww.config.hermes.plugins.note._get_assistant_messages", return_value=[msg]
-        ):
+        with patch("note._get_assistant_messages", return_value=[msg]):
             with patch(
                 "ww.note.create_note_from_clipboard.create_note_from_content",
                 return_value="/tmp/n.md",
@@ -136,12 +105,8 @@ class TestHandleNoteParsing(unittest.TestCase):
                     self.assertIn("saved", result.lower())
 
     def test_dir_arg(self):
-        from ww.config.hermes.plugins.note import _handle_note
-
         msg = {"role": "assistant", "content": "x" * 300}
-        with patch(
-            "ww.config.hermes.plugins.note._get_assistant_messages", return_value=[msg]
-        ):
+        with patch("note._get_assistant_messages", return_value=[msg]):
             with patch(
                 "ww.note.create_note_from_clipboard.create_note_from_content"
             ) as mock_create:

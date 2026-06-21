@@ -1,47 +1,15 @@
-import json
-import re
+import os
+import shutil
 from pathlib import Path
 
-PHONE_PATTERN = re.compile(r"^\+?\d[\d\s\-]{7,}$")
 
-
-def _is_phone_number(value: str) -> bool:
-    return bool(PHONE_PATTERN.match(value.strip()))
-
-
-def sanitize_dict(d: dict) -> dict:
-    """Recursively sanitize dictionary values for sensitive keys."""
-    sanitized = {}
-    sensitive_patterns = ["token", "key", "secret", "password"]
-
-    for k, v in d.items():
-        is_sensitive = any(pattern in k.lower() for pattern in sensitive_patterns)
-
-        if isinstance(v, dict):
-            sanitized[k] = sanitize_dict(v)
-        elif isinstance(v, list):
-            sanitized[k] = [sanitize_value(item) for item in v]
-        elif is_sensitive and isinstance(v, str):
-            sanitized[k] = "REDACTED"
-        elif isinstance(v, str) and _is_phone_number(v):
-            sanitized[k] = "REDACTED"
-        else:
-            sanitized[k] = v
-
-    return sanitized
-
-
-def sanitize_value(value):
-    if isinstance(value, dict):
-        return sanitize_dict(value)
-    elif isinstance(value, str) and _is_phone_number(value):
-        return "REDACTED"
-    else:
-        return value
+def _config_dir() -> Path:
+    """Return CONFIG_DIR from env, default to ~/projects/config."""
+    return Path(os.getenv("CONFIG_DIR") or str(Path.home() / "projects" / "config"))
 
 
 def sync_claude_settings():
-    """Read ~/.claude/settings.json, sanitize it, and save to ww/config/."""
+    """Copy ~/.claude/settings.json -> $CONFIG_DIR/claude/settings.json (no sanitization)."""
     home = Path.home()
     settings_path = home / ".claude" / "settings.json"
 
@@ -49,26 +17,12 @@ def sync_claude_settings():
         print(f"Error: {settings_path} not found.")
         return
 
-    try:
-        with open(settings_path, "r") as f:
-            settings = json.load(f)
-    except Exception as e:
-        print(f"Error reading settings: {e}")
-        return
+    dst_dir = _config_dir() / "claude"
+    dst_dir.mkdir(parents=True, exist_ok=True)
+    output_path = dst_dir / "settings.json"
 
-    sanitized_settings = sanitize_dict(settings)
-
-    # Ensure config directory exists relative to this file
-    current_dir = Path(__file__).parent.parent
-    config_dir = current_dir / "config"
-    config_dir.mkdir(parents=True, exist_ok=True)
-
-    output_path = config_dir / "claude_code_settings.json"
-
-    with open(output_path, "w") as f:
-        json.dump(sanitized_settings, f, indent=2)
-
-    print(f"Sanitized settings saved to {output_path}")
+    shutil.copy2(settings_path, output_path)
+    print(f"Copied {settings_path} -> {output_path}")
 
 
 def main():
