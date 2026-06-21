@@ -157,7 +157,8 @@
       "OpenROAD",
       "vortex",
       "xnu",
-      "freebsd-src"
+      "freebsd-src",
+      "zed"
     ],
     "infra-network": [
       "openwrt",
