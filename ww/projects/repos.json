@@ -22,7 +22,8 @@
       "transformers",
       "whisper.cpp",
       "MiMo",
-      "GLM"
+      "GLM",
+      "openfold"
     ],
     "ai-training": [
       "pytorch",
