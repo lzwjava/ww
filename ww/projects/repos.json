@@ -159,7 +159,8 @@
       "vortex",
       "xnu",
       "freebsd-src",
-      "zed"
+      "zed",
+      "miu2d"
     ],
     "infra-network": [
       "openwrt",
