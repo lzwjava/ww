@@ -141,6 +141,11 @@ def _print_help():
     print("  ww ghostty focus <N>      Focus a Ghostty window by index or title")
     print("  ww ghostty list           List all open Ghostty windows")
     print("")
+    print("HackerNews:")
+    print(
+        "  ww hackernews [--count N] [topic]  AI-agent reads HN (LangGraph, default 10)"
+    )
+    print("")
     print("Headphone:")
     print(
         "  ww headphone              Test audio devices: play tone, record and playback"
@@ -1591,6 +1596,11 @@ def _main_dispatch(raw_args: list):
 
         m()
 
+    elif group == "hackernews":
+        from ww.hackernews.agent import main as m
+
+        m()
+
     elif group == "headphone":
         subcmd = _pop_subcmd()
         if subcmd.startswith("-"):
@@ -1798,6 +1808,7 @@ def _main_dispatch(raw_args: list):
             "git",
             "github",
             "ghostty",
+            "hackernews",
             "headphone",
             "hf",
             "host",
