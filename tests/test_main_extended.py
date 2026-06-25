@@ -168,7 +168,7 @@ class TestMainBasics(unittest.TestCase):
 # ---------------------------------------------------------------------------
 class TestNoteDispatch(unittest.TestCase):
     def test_note_log(self):
-        _dispatch(["ww", "note", "log"], "ww.note.create_log.create_log")
+        _dispatch(["ww", "note", "log"], "ww.note.note_queue.enqueue_log")
 
     def test_note_log_file(self):
         _dispatch(["ww", "note", "log-file"], "ww.note.create_log.create_log_from_file")

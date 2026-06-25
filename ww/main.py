@@ -295,7 +295,7 @@ def _print_help():
     print("  ww note status            Show queue status")
     print("  ww note clear             Clear done/failed entries from queue")
     print("  ww note watch             Auto-process queue when new notes arrive")
-    print("  ww note log               Create a new log entry")
+    print("  ww note log               Quick: clipboard → log queue (fast)")
     print("  ww note obfuscate <file>  Obfuscate sensitive data in a file")
     print("")
     print("OpenRouter:")
@@ -488,9 +488,34 @@ def _main_dispatch(raw_args: list):
 
             watch_main()
         elif subcmd == "log":
-            from ww.note.create_log import create_log
+            import argparse
+            from ww.note.note_queue import enqueue_log
 
-            create_log()
+            log_parser = argparse.ArgumentParser(
+                prog="ww note log", description="Create a log entry (queued)"
+            )
+            log_parser.add_argument(
+                "--ext", help="File extension to use (e.g. md, txt)"
+            )
+            log_parser.add_argument(
+                "--detect-ext",
+                action="store_true",
+                help="Use LLM to detect file extension from content",
+            )
+            log_parser.add_argument(
+                "--friendly-name",
+                action="store_true",
+                help="Use LLM to generate a friendly filename instead of timestamp",
+            )
+            log_args, _ = log_parser.parse_known_args(sys.argv[1:])
+            kwargs = {}
+            if log_args.ext:
+                kwargs["ext"] = log_args.ext
+            if log_args.detect_ext:
+                kwargs["detect_ext"] = True
+            if log_args.friendly_name:
+                kwargs["friendly_name"] = True
+            enqueue_log(**kwargs)
         elif subcmd == "log-file":
             from ww.note.create_log import create_log_from_file
 

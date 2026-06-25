@@ -57,7 +57,7 @@ class TestMainDispatch(unittest.TestCase):
     # note
     def test_create_log_dispatches(self):
         with patch.object(sys, "argv", ["ww", "note", "log"]):
-            with patch("ww.note.create_log.create_log") as mock_fn:
+            with patch("ww.note.note_queue.enqueue_log") as mock_fn:
                 from ww.main import main
 
                 main()

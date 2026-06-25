@@ -1,5 +1,6 @@
 import os
 import re
+import subprocess
 from datetime import datetime
 
 from ww.llm.openrouter_client import call_openrouter_api
@@ -63,7 +64,9 @@ def generate_timestamp_filename(ext):
     return f"{timestamp}.{ext}"
 
 
-def create_normal_log(content=None, ext=None, friendly_name=False, detect_ext=False):
+def create_normal_log(
+    content=None, ext=None, friendly_name=False, detect_ext=False, skip_git=False
+):
     logs_dir = os.path.join(get_base_path(), "logs")
     if content is None:
         content = get_clipboard_content()
@@ -91,5 +94,16 @@ def create_normal_log(content=None, ext=None, friendly_name=False, detect_ext=Fa
 
     print(f"Log created: {file_path}")
 
-    gitmessageai(allow_pull_push=True, directory=logs_dir)
+    if skip_git:
+        return file_path
+
+    git = ["git", "-C", logs_dir]
+    try:
+        gitmessageai(allow_pull_push=True, directory=logs_dir)
+    except subprocess.CalledProcessError:
+        # Pre-commit hooks may have modified files (e.g. end-of-file-fixer).
+        # Re-stage them so the index matches the working tree, then retry once.
+        subprocess.run([*git, "add", ai_filename], check=True)
+        gitmessageai(allow_pull_push=True, directory=logs_dir)
     print(f"Git operations ran in: {logs_dir}")
+    return file_path

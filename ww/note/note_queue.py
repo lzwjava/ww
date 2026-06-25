@@ -59,14 +59,13 @@ def _get_clipboard() -> str:
             ).strip()
 
 
-def enqueue_clipboard() -> Optional[str]:
-    """Read clipboard and add to queue. Returns entry id if added, None if duplicate or empty."""
-    text = _get_clipboard()
+def _enqueue(text: str, entry_type: str = "note", **extra) -> Optional[str]:
+    """Core enqueue helper. Returns entry id if added, None if duplicate or empty."""
     if not text:
-        print("[warn] Clipboard is empty")
+        print("[warn] Content is empty")
         return None
-    if len(text) < 200:
-        print(f"[warn] Clipboard too short ({len(text)} chars, need 200+), skipping")
+    if entry_type == "note" and len(text) < 200:
+        print(f"[warn] Content too short ({len(text)} chars, need 200+), skipping")
         return None
 
     h = content_hash(text)
@@ -82,21 +81,34 @@ def enqueue_clipboard() -> Optional[str]:
 
     entry_id = h
     now = datetime.now().isoformat(timespec="seconds")
-    queue.append(
-        {
-            "id": entry_id,
-            "content": text,
-            "content_hash": h,
-            "queued_at": now,
-            "status": "pending",
-            "note_path": None,
-        }
-    )
+    entry = {
+        "id": entry_id,
+        "content": text,
+        "content_hash": h,
+        "queued_at": now,
+        "status": "pending",
+        "type": entry_type,
+        "note_path": None,
+    }
+    entry.update(extra)
+    queue.append(entry)
     _save_queue(queue)
     print(
         f"[ok] Queued (id={entry_id}, {len(text)} chars, {len(queue)} total in queue)"
     )
     return entry_id
+
+
+def enqueue_clipboard() -> Optional[str]:
+    """Read clipboard and add to note queue. Returns entry id if added, None if duplicate or empty."""
+    text = _get_clipboard()
+    return _enqueue(text, "note")
+
+
+def enqueue_log(**kwargs) -> Optional[str]:
+    """Read clipboard and add to log queue. Returns entry id if added, None if duplicate or empty."""
+    text = _get_clipboard()
+    return _enqueue(text, "log", **kwargs)
 
 
 def get_pending() -> list[dict]:

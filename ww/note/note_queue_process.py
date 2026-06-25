@@ -7,6 +7,7 @@ from ww.content.fix_mathjax import fix_mathjax_in_file
 from ww.content.fix_table import process_tables_in_file
 from ww.note.create_note_from_clipboard import create_note_from_content
 from ww.note.create_note_utils import get_base_path
+from ww.note.create_normal_log import create_normal_log
 from ww.note.note_queue import get_pending, mark_done, mark_failed
 
 
@@ -74,34 +75,56 @@ def process_queue(dry_run: bool = False) -> None:
     for i, entry in enumerate(pending, 1):
         entry_id = entry["id"]
         content = entry["content"]
+        entry_type = entry.get("type", "note")
         preview = content[:60].replace("\n", " ")
-        print(f"\n[{i}/{len(pending)}] Processing {entry_id}: {preview}...")
+        print(
+            f"\n[{i}/{len(pending)}] Processing {entry_id} ({entry_type}): {preview}..."
+        )
 
         if dry_run:
-            print(f"  [dry-run] Would create note from {len(content)} chars")
+            print(f"  [dry-run] Would create {entry_type} from {len(content)} chars")
             continue
 
         try:
-            note_path = create_note_from_content(content)
-            print(f"  [ok] Created: {note_path}")
+            if entry_type == "log":
+                file_path = create_normal_log(
+                    content,
+                    ext=entry.get("ext"),
+                    friendly_name=entry.get("friendly_name", False),
+                    detect_ext=entry.get("detect_ext", False),
+                    skip_git=True,
+                )
+                print(f"  [ok] Created: {file_path}")
+            else:
+                file_path = create_note_from_content(content)
+                print(f"  [ok] Created: {file_path}")
         except Exception as e:
-            print(f"  [error] Failed to create note: {e}")
+            print(f"  [error] Failed to create {entry_type}: {e}")
             mark_failed(entry_id, str(e))
             continue
 
-        # Post-processing: MathJax + table fix
-        if note_path and os.path.exists(note_path):
+        # Post-processing: MathJax + table fix (notes only)
+        if entry_type != "note":
+            if file_path and os.path.exists(file_path):
+                created_paths.append(file_path)
+                mark_done(entry_id, file_path)
+                print(f"  [done] {entry_id}")
+            else:
+                mark_failed(entry_id, f"Log file not created: {file_path}")
+            continue
+
+        if file_path and os.path.exists(file_path):
             try:
-                fix_mathjax_in_file(note_path, gemini=False)
-                process_tables_in_file(note_path, fix_tables=True)
+                fix_mathjax_in_file(file_path, gemini=False)
+                process_tables_in_file(file_path, fix_tables=True)
             except Exception as e:
                 print(f"  [warn] Post-processing failed: {e}")
 
-            created_paths.append(note_path)
-            mark_done(entry_id, note_path)
+            created_paths.append(file_path)
+            mark_done(entry_id, file_path)
             print(f"  [done] {entry_id}")
         else:
-            mark_failed(entry_id, f"Note file not created: {note_path}")
+            mark_failed(entry_id, f"Note file not created: {file_path}")
 
     if dry_run:
         print(f"\n[dry-run] Would commit and push {len(pending)} note(s)")
