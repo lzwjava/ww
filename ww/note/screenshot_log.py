@@ -119,7 +119,7 @@ def _generate_title_from_content(content, extra_prompt=None):
     if extra_prompt:
         prompt += f", considering this context: {extra_prompt}"
     prompt += f":\n{snippet}\n\nTitle:"
-    result = call_openrouter_api(prompt, max_tokens=300)
+    result = call_openrouter_api(prompt, max_tokens=1024)
     if not result:
         print("Failed to generate title. Using fallback.")
         return "screenshot-note"
