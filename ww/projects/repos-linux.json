@@ -1,0 +1,20 @@
+{
+  "description": "Repos moved to lzw@192.168.1.36:/mnt/data/projects/ — too large for MacBook Air. Sync back with: rsync lzw@192.168.1.36:/mnt/data/projects/{repo} ~/projects/",
+  "host": "lzw@192.168.1.36",
+  "path": "/mnt/data/projects",
+  "repos": {
+    "os-kernels": [
+      "linux",
+      "freebsd-src",
+      "wireguard-linux",
+      "xnu"
+    ],
+    "toolchain-sources": [
+      "jdk",
+      "vscode",
+      "rust",
+      "OpenROAD",
+      "rocBLAS"
+    ]
+  }
+}

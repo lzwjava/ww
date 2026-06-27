@@ -118,10 +118,7 @@
     ],
     "dev-tools": [
       "git",
-      "rust",
-      "jdk",
       "react",
-      "vscode",
       "terminal",
       "alacritty",
       "uv",
@@ -130,7 +127,6 @@
       "iclaw",
       "mcp",
       "ROCm",
-      "rocBLAS",
       "Chat2DB",
       "git-credential-manager",
       "ChezScheme",
@@ -150,15 +146,11 @@
       "glow",
       "delta",
       "bun",
-      "linux",
       "ramulator2",
       "tiny-gpu",
       "verilator",
       "openlane2",
-      "OpenROAD",
       "vortex",
-      "xnu",
-      "freebsd-src",
       "zed",
       "miu2d"
     ],
@@ -177,8 +169,7 @@
       "llm-app",
       "v2rayN",
       "seeker",
-      "weaviate",
-      "wireguard-linux"
+      "weaviate"
     ],
     "web-platforms": [
       "jekyll",
