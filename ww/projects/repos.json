@@ -114,7 +114,8 @@
       "AutoGPT",
       "mem0",
       "crewAI",
-      "langgraph"
+      "langgraph",
+      "ORG2"
     ],
     "dev-tools": [
       "git",
