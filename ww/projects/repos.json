@@ -56,7 +56,8 @@
       "minGPT",
       "ng-video-lecture",
       "triton",
-      "jax"
+      "jax",
+      "DeepSpec"
     ],
     "ai-inference": [
       "TensorRT-LLM",
