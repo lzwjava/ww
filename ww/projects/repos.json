@@ -57,7 +57,9 @@
       "ng-video-lecture",
       "triton",
       "jax",
-      "DeepSpec"
+      "DeepSpec",
+      "sparse_attention",
+      "native-sparse-attention-triton"
     ],
     "ai-inference": [
       "TensorRT-LLM",
