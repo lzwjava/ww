@@ -291,6 +291,7 @@ def _print_help():
     print("Note:")
     print("  ww note                   Quick: clipboard → queue (fast)")
     print("  ww note --sync            Full pipeline: create, fix, commit, push")
+    print("  ww note --code            LLM-wrap code in clipboard, then queue")
     print("  ww note process           Drain queue: create notes, commit, push")
     print("  ww note status            Show queue status")
     print("  ww note clear             Clear done/failed entries from queue")
@@ -465,6 +466,18 @@ def _main_dispatch(raw_args: list):
                 from ww.note.note_workflow import main as m
 
                 m()
+            elif "--code" in sys.argv:
+                sys.argv.remove("--code")
+                from ww.note.note_queue import enqueue_clipboard
+                from ww.note.create_note_utils import wrap_code_snippets
+
+                raw = __import__("pyperclip").paste().strip()
+                if not raw:
+                    print("[warn] Clipboard is empty")
+                    return
+                print(f"[info] Wrapping code snippets via LLM ({len(raw)} chars)...")
+                processed = wrap_code_snippets(raw)
+                enqueue_clipboard(text=processed, code=True)
             else:
                 # Fast path: read clipboard → queue → return instantly
                 from ww.note.note_queue import enqueue_clipboard

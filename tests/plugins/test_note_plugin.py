@@ -96,22 +96,20 @@ class TestHandleNoteParsing(unittest.TestCase):
         msg = {"role": "assistant", "content": "x" * 300}
         with patch("note._get_assistant_messages", return_value=[msg]):
             with patch(
-                "ww.note.create_note_from_clipboard.create_note_from_content",
-                return_value="/tmp/n.md",
-            ):
-                with patch("ww.github.gitmessageai.gitmessageai"):
-                    result = _handle_note('--title "My Title"')
-                    self.assertIsNotNone(result)
-                    self.assertIn("saved", result.lower())
+                "ww.note.note_queue._enqueue", return_value="abc123"
+            ) as mock_enqueue:
+                result = _handle_note('--title "My Title"')
+                self.assertIsNotNone(result)
+                self.assertIn("queued", result.lower())
+                _, kwargs = mock_enqueue.call_args
+                self.assertEqual(kwargs.get("custom_title"), "My Title")
 
     def test_dir_arg(self):
         msg = {"role": "assistant", "content": "x" * 300}
         with patch("note._get_assistant_messages", return_value=[msg]):
             with patch(
-                "ww.note.create_note_from_clipboard.create_note_from_content"
-            ) as mock_create:
-                mock_create.return_value = "/tmp/n.md"
-                with patch("ww.github.gitmessageai.gitmessageai"):
-                    _handle_note("--dir /custom/dir")
-                    _, kwargs = mock_create.call_args
-                    self.assertEqual(kwargs.get("directory"), "/custom/dir")
+                "ww.note.note_queue._enqueue", return_value="abc123"
+            ) as mock_enqueue:
+                _handle_note("--dir /custom/dir")
+                _, kwargs = mock_enqueue.call_args
+                self.assertEqual(kwargs.get("directory"), "/custom/dir")

@@ -37,6 +37,33 @@ def clean_grok_tags(content):
     return content
 
 
+def wrap_code_snippets(content):
+    """Use LLM to identify code snippets and wrap them in triple-backtick markdown fences.
+
+    The LLM adds appropriate language hints and wraps code blocks, but does not
+    change any other content (no rewording, no reformatting of prose).
+    """
+    prompt = f"""You are a markdown formatter. Your ONLY job is to wrap code snippets in triple-backtick fenced code blocks with an appropriate language hint.
+
+Rules:
+- Find any inline code, code snippets, or code-like content that is NOT already wrapped in triple backticks.
+- Wrap each code snippet in triple backticks (```) with the appropriate language tag (e.g. python, javascript, bash, sql, json, yaml, html, css, etc.).
+- Do NOT change, reword, reformat, or add to any non-code content. Keep all prose, headings, lists, and structure exactly as-is.
+- If code is already wrapped in triple backticks, leave it unchanged.
+- If there is no code to wrap, return the text unchanged.
+- Respond with ONLY the processed text, nothing else.
+
+Text to process:
+{content}"""
+    result = call_openrouter_api(prompt, max_tokens=4096)
+    if not result:
+        print(
+            "[warn] LLM returned empty result for code wrapping. Using original content."
+        )
+        return content
+    return result.strip()
+
+
 def get_clipboard_content():
     return pyperclip.paste()
 
