@@ -33,6 +33,7 @@ _ww() {
         'openrouter:OpenRouter account management'
         'env:Environment management'
         'appearance:Switch macOS appearance (webcam auto)'
+        'benchmark:GPU benchmark (local or remote)'
         'display:Switch macOS appearance'
         'gen-image:Generate image from clipboard text'
         'action:Trigger GitHub Actions workflow'
@@ -346,6 +347,12 @@ _ww() {
         'terminal:Open a fullscreen terminal'
     )
 
+    local -a benchmark_cmds
+    benchmark_cmds=(
+        '--ssh:Upload and run on remote server (USER@HOST:PORT)'
+        '--key:SSH private key path'
+    )
+
     local -a cloudflare_cmds
     cloudflare_cmds=(
         'monthly-visit:Monthly page views & visits'
@@ -490,6 +497,7 @@ _ww() {
                 openrouter)    _describe -t commands 'openrouter command' openrouter_cmds ;;
                 env)           _describe -t commands 'env command' env_cmds ;;
                 appearance)    _describe -t commands 'appearance command' appearance_cmds ;;
+                benchmark)     _describe -t commands 'benchmark command' benchmark_cmds ;;
                 display)       _describe -t commands 'display command' display_cmds ;;
                 degree)        _describe -t commands 'degree command' degree_cmds ;;
                 whisper)       _describe -t commands 'whisper command' whisper_cmds ;;

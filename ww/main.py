@@ -34,6 +34,11 @@ def _print_help():
         "  ww appearance             Manage display appearance (dark/light/auto/show)"
     )
     print("")
+    print("Benchmark:")
+    print("  ww benchmark                  Run GPU benchmark locally")
+    print("  ww benchmark --ssh HOST:PORT  Upload script and run on remote server")
+    print("  ww benchmark --key PATH       SSH key (default: ~/.ssh/id_ed25519)")
+    print("")
     print("Clash:")
     print("  ww clash query-dns [host]   Test AliDNS DoH resolution")
     print("  ww clash gnome-proxy <set|unset>   Toggle GNOME proxy (Linux)")
@@ -1417,6 +1422,11 @@ def _main_dispatch(raw_args: list):
             print(f"Unknown ghostty command: {subcmd}")
             sys.exit(1)
 
+    elif group == "benchmark":
+        from ww.benchmark.gpu_bench import main as m
+
+        m()
+
     elif group == "clash":
         subcmd = _pop_subcmd()
         if subcmd == "" or subcmd in ("--help", "-h"):
@@ -1831,6 +1841,7 @@ def _main_dispatch(raw_args: list):
             "action",
             "actions",
             "amd-dev-cloud",
+            "benchmark",
             "clash",
             "cloudflare",
             "completion",
