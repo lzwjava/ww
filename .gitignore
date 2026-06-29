@@ -50,3 +50,5 @@ ww/config/*-sanitized.json
 
 uv.lock
 tmp/
+
+ww.db
