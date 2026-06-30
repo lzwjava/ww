@@ -157,7 +157,8 @@
       "openlane2",
       "vortex",
       "zed",
-      "miu2d"
+      "miu2d",
+      "cuda-samples"
     ],
     "infra-network": [
       "openwrt",
