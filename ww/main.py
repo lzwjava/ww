@@ -363,6 +363,8 @@ def _print_help():
         "  ww sync hermes [back|forth]  Sync config.yaml, SOUL.md, hooks/, plugins/, agent-hooks/ (forth: ~/.hermes/ -> $CONFIG_DIR)"
     )
     print("  ww sync ssh [back|forth]    Sync .ssh directory")
+    print("  ww sync ww [back|forth]    Sync .env to/from $CONFIG_DIR/ww/")
+    print("  ww sync zed [back|forth]   Sync ~/.config/zed/ directory (Zed config)")
     print("  ww sync zprofile [back|forth] Sync .zprofile file")
     print("")
     print("Torch:")
@@ -1287,6 +1289,7 @@ def _main_dispatch(raw_args: list):
             print("  ssh [back|forth]    Sync .ssh directory")
             print("  hermes [back|forth]  Sync ~/.hermes/ <-> $CONFIG_DIR/hermes/")
             print("  openclaw          Sync OpenClaw settings")
+            print("  ww [back|forth]   Sync .env to/from $CONFIG_DIR/ww/")
         elif subcmd == "claude":
             from ww.sync.claude import main as m
 
@@ -1347,6 +1350,16 @@ def _main_dispatch(raw_args: list):
             from ww.sync.openclaw import main as m
 
             m()
+        elif subcmd == "ww":
+            direction = _pop_subcmd()
+            if direction in ("--help", "-h"):
+                print("Usage: ww sync ww [back|forth]")
+                print("  Sync .env to/from $CONFIG_DIR/ww/")
+                return
+            direction = direction or "forth"
+            from ww.sync.ww import sync_ww_env
+
+            sync_ww_env(direction)
         else:
             print(f"Unknown sync command: {subcmd}")
             sys.exit(1)
