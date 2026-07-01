@@ -391,6 +391,7 @@ def _print_help():
     print("")
     print("Whisper:")
     print("  ww whisper <file.mp4>     Transcribe via whisper (Chinese, large, CUDA)")
+    print("  ww whisper diarize <file> Transcribe with speaker labels (whisperx + pyannote)")
     print(
         "  ww whisper organize <file.txt>  Lightly clean: fix grammar, remove noise, third-person narration"
     )
@@ -1696,6 +1697,11 @@ def _main_dispatch(raw_args: list):
         elif len(sys.argv) > 1 and sys.argv[1] == "organize":
             sys.argv.pop(1)
             from ww.audio.whisper_organize import main as m
+
+            m()
+        elif len(sys.argv) > 1 and sys.argv[1] == "diarize":
+            sys.argv.pop(1)
+            from ww.audio.whisper_diarize import main as m
 
             m()
         else:

@@ -326,6 +326,8 @@ _ww() {
 
     local -a whisper_cmds
     whisper_cmds=(
+        'diarize:Transcribe with speaker labels (whisperx + pyannote)'
+        'organize:Lightly clean transcription'
         'refine:Refine transcription to .md via OpenRouter'
         'organize:Lightly clean transcription: fix grammar, remove noise, third-person narration'
     )
