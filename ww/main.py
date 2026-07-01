@@ -108,6 +108,9 @@ def _print_help():
     print(
         "  ww env update             Pick a top Arena model and update MODEL= in .env"
     )
+    print(
+        "  ww env warp               Install Warp (the Agentic Dev Environment) on Linux"
+    )
     print("")
     print("Gen-image:")
     print("  ww gen-image              Generate image from clipboard text (Imagen 3)")
@@ -1621,8 +1624,13 @@ def _main_dispatch(raw_args: list):
             print("")
             print("Commands:")
             print("  update    Pick a top Arena model and update MODEL= in .env")
+            print("  warp      Install Warp (the Agentic Dev Environment) on Linux")
         elif subcmd == "update":
             from ww.llm.update_env import main as m
+
+            m()
+        elif subcmd == "warp":
+            from ww.env.warp import main as m
 
             m()
         else:
