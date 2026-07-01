@@ -413,6 +413,7 @@ _ww() {
     local -a projects_cmds
     projects_cmds=(
         'count:Count directories in ~/projects'
+        'init:Clone repos from repos.json (git clone --depth=10)'
         'update:Update git repos (default: repos.json config)'
     )
 

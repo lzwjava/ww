@@ -1787,9 +1787,14 @@ def _main_dispatch(raw_args: list):
             print("")
             print("Commands:")
             print("  count    Count directories in ~/projects")
+            print("  init     Clone repos from repos.json into ~/projects (git clone --depth=10)")
             print("  update   Update git repos (default: repos.json config)")
         elif subcmd == "count":
             from ww.projects.projects_count import main as m
+
+            m()
+        elif subcmd == "init":
+            from ww.projects.projects_init import main as m
 
             m()
         elif subcmd == "update":
