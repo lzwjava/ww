@@ -100,9 +100,9 @@ def _open_browser(url: str) -> bool:
 def _find_package(pkg_format: str) -> str | None:
     downloads = os.path.expanduser("~/Downloads")
     if pkg_format == "deb":
-        pattern = "warp-terminal-*.deb"
+        pattern = "warp-terminal*.deb"
     else:
-        pattern = "warp-terminal-*.rpm"
+        pattern = "warp-terminal*.rpm"
     candidates = sorted(
         glob.glob(os.path.join(downloads, pattern)),
         key=os.path.getmtime,
