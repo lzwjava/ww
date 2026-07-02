@@ -22,6 +22,9 @@ def load_env():
     # 4. BASE_PATH overrides everything (explicit override mechanism)
     base_path = os.environ.get("BASE_PATH", "").strip()
     if base_path and base_path != ".":
+        # Expand ~ so paths work identically on Mac and Linux
+        base_path = os.path.expanduser(base_path)
+        os.environ["BASE_PATH"] = base_path
         extra_env = os.path.join(base_path, ".env")
         if os.path.isfile(extra_env):
             load_dotenv(extra_env, override=True)

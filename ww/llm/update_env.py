@@ -54,7 +54,7 @@ def find_env_path():
         return ".env"
     base = os.environ.get("BASE_PATH", "").strip()
     if base and base != ".":
-        alt = os.path.join(base, ".env")
+        alt = os.path.join(os.path.expanduser(base), ".env")
         if os.path.isfile(alt):
             return alt
     return ".env"

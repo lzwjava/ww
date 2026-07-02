@@ -13,7 +13,7 @@ def get_db_path() -> str:
         return db_path
     base_path = os.environ.get("BASE_PATH", "").strip()
     if base_path and base_path != ".":
-        return os.path.join(base_path, "ww.db")
+        return os.path.join(os.path.expanduser(base_path), "ww.db")
     # Fallback: project root
     project_root = str(Path(__file__).parent.parent)
     return os.path.join(project_root, "ww.db")

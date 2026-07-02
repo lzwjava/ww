@@ -8,7 +8,9 @@ from ww.llm.openrouter_client import call_openrouter_api
 
 def get_base_path():
     base = os.environ.get("BASE_PATH", "").strip()
-    return base if base and base != "." else "."
+    if not base or base == ".":
+        return "."
+    return os.path.expanduser(base)
 
 
 def get_first_n_words(text, n=500):

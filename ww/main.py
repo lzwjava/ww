@@ -112,6 +112,7 @@ def _print_help():
         "  ww env warp               Install Warp (the Agentic Dev Environment) on Linux"
     )
     print("  ww env ghostty           Install Ghostty terminal on Linux")
+    print("  ww env github-desktop    Install GitHub Desktop on macOS and Linux")
     print("")
     print("Gen-image:")
     print("  ww gen-image              Generate image from clipboard text (Imagen 3)")
@@ -1643,6 +1644,7 @@ def _main_dispatch(raw_args: list):
             print("  update    Pick a top Arena model and update MODEL= in .env")
             print("  warp      Install Warp (the Agentic Dev Environment) on Linux")
             print("  ghostty   Install Ghostty terminal on Linux")
+            print("  github-desktop   Install GitHub Desktop on macOS and Linux")
         elif subcmd == "update":
             from ww.llm.update_env import main as m
 
@@ -1653,6 +1655,10 @@ def _main_dispatch(raw_args: list):
             m()
         elif subcmd == "ghostty":
             from ww.env.ghostty import main as m
+
+            m()
+        elif subcmd == "github-desktop":
+            from ww.env.github_desktop import main as m
 
             m()
         else:
