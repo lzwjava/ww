@@ -298,6 +298,7 @@ _ww() {
     env_cmds=(
         'update:Pick a top Arena model and update MODEL= in .env'
         'warp:Install Warp (the Agentic Dev Environment) on Linux'
+        'ghostty:Install Ghostty terminal on Linux'
     )
 
     local -a display_cmds

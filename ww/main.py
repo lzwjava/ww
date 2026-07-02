@@ -111,6 +111,7 @@ def _print_help():
     print(
         "  ww env warp               Install Warp (the Agentic Dev Environment) on Linux"
     )
+    print("  ww env ghostty           Install Ghostty terminal on Linux")
     print("")
     print("Gen-image:")
     print("  ww gen-image              Generate image from clipboard text (Imagen 3)")
@@ -393,7 +394,9 @@ def _print_help():
     print("")
     print("Whisper:")
     print("  ww whisper <file.mp4>     Transcribe via whisper (Chinese, large, CUDA)")
-    print("  ww whisper diarize <file> Transcribe with speaker labels (whisperx + pyannote)")
+    print(
+        "  ww whisper diarize <file> Transcribe with speaker labels (whisperx + pyannote)"
+    )
     print(
         "  ww whisper organize <file.txt>  Lightly clean: fix grammar, remove noise, third-person narration"
     )
@@ -1639,12 +1642,17 @@ def _main_dispatch(raw_args: list):
             print("Commands:")
             print("  update    Pick a top Arena model and update MODEL= in .env")
             print("  warp      Install Warp (the Agentic Dev Environment) on Linux")
+            print("  ghostty   Install Ghostty terminal on Linux")
         elif subcmd == "update":
             from ww.llm.update_env import main as m
 
             m()
         elif subcmd == "warp":
             from ww.env.warp import main as m
+
+            m()
+        elif subcmd == "ghostty":
+            from ww.env.ghostty import main as m
 
             m()
         else:
@@ -1814,7 +1822,9 @@ def _main_dispatch(raw_args: list):
             print("")
             print("Commands:")
             print("  count    Count directories in ~/projects")
-            print("  init     Clone repos from repos.json into ~/projects (git clone --depth=10)")
+            print(
+                "  init     Clone repos from repos.json into ~/projects (git clone --depth=10)"
+            )
             print("  update   Update git repos (default: repos.json config)")
         elif subcmd == "count":
             from ww.projects.projects_count import main as m
