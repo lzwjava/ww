@@ -67,7 +67,8 @@ def call_openrouter_api_with_messages(
 
     body = response.json()
     finish_reason = body.get("choices", [{}])[0].get("finish_reason")
-    content = body.get("choices", [{}])[0].get("message", {}).get("content")
+    message = body.get("choices", [{}])[0].get("message", {})
+    content = message.get("content") or message.get("reasoning")
 
     if not content:
         proxy_info = _check_proxy()
@@ -79,6 +80,13 @@ def call_openrouter_api_with_messages(
             f"  HTTP: {response.status_code}\n"
             f"  Proxy: {proxy_info}\n"
             f"  Full response: {response.text[:1000]}"
+        )
+
+    if message.get("content") is None and message.get("reasoning"):
+        print(
+            f"[warn] Model '{model}' returned reasoning-only output "
+            f"(content was null, finish_reason={finish_reason}). "
+            f"Falling back to reasoning text."
         )
 
     return content

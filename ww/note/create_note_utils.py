@@ -99,7 +99,7 @@ def generate_title(content, max_words, format_prompt):
         raw = _call_llm_or_exit(
             prompt,
             f"Failed to generate title with max {max_words} words. Exit.",
-            max_tokens=1024,
+            max_tokens=4096,
         )
         title = re.sub(r"\*", " ", raw).strip()
         if len(title) < TITLE_MAX_CHARS:
