@@ -334,6 +334,9 @@ def _print_help():
     print("  ww projects count         Count directories in ~/projects")
     print("  ww projects update [name|@cat...]  Update git repos (default: repos.json)")
     print("")
+    print("Qwen (Vision):")
+    print("  ww qwen vl [--image file] [prompt]  Query local Qwen2-VL vision model")
+    print("")
     print("Read (RAG):")
     print("  ww read index <dir>       Index documents in a directory (BGE + FAISS)")
     print("  ww read query <question>  Ask a question over indexed documents")
@@ -1848,6 +1851,25 @@ def _main_dispatch(raw_args: list):
             print(f"Unknown projects command: {subcmd}")
             sys.exit(1)
 
+    elif group == "qwen":
+        subcmd = _pop_subcmd()
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww qwen <command>")
+            print("")
+            print("Commands:")
+            print("  vl          Query local Qwen2-VL vision model with an image")
+            print("")
+            print("Examples:")
+            print("  ww qwen vl --image ~/photo.jpg")
+            print("  ww qwen vl 'Describe this photo' --image ~/photo.jpg")
+        elif subcmd == "vl":
+            from ww.qwen.vision import main as m
+
+            m()
+        else:
+            print(f"Unknown qwen command: {subcmd}")
+            sys.exit(1)
+
     elif group == "alarm":
         from ww.alarm.alarm import main as m
 
@@ -1923,6 +1945,7 @@ def _main_dispatch(raw_args: list):
             "pdf",
             "proc",
             "projects",
+            "qwen",
             "rain",
             "read",
             "screenshot",
