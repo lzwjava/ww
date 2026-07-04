@@ -7,10 +7,10 @@ from pathlib import Path
 
 
 def get_db_path() -> str:
-    """Resolve DB_PATH from env. Defaults to BASE_PATH/ww.db."""
+    """Resolve DB_PATH from env. Defaults to ~/.config/ww/ww.db."""
     db_path = os.environ.get("DB_PATH", "").strip()
     if db_path:
-        return db_path
+        return os.path.expanduser(db_path)
     base_path = os.environ.get("BASE_PATH", "").strip()
     if base_path and base_path != ".":
         return os.path.join(os.path.expanduser(base_path), "ww.db")
