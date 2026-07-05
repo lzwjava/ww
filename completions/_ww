@@ -663,6 +663,9 @@ _ww() {
                 screenshot)
                     _arguments '--dir[Screenshot directory]:directory:_directories' ;;
 
+                screenshot-linux)
+                    _arguments '--no-save[Copy to clipboard instead of saving]' '-n[Copy to clipboard instead of saving]' ;;
+
                 latest)
                     # Accepts a number argument
                     ;;

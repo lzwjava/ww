@@ -1,17 +1,30 @@
 import subprocess
 import datetime
 import os
+import sys
 import time
+import tempfile
 from PIL import Image
 from dotenv import load_dotenv
 
 
 def main():
     load_dotenv()
-    screenshot_dir = (
-        os.environ.get("SCREENSHOT_DIR", "").strip() or "assets/screenshots"
-    )
-    os.makedirs(screenshot_dir, exist_ok=True)
+
+    no_save = "--no-save" in sys.argv or "-n" in sys.argv
+
+    if not no_save:
+        screenshot_dir = (
+            os.environ.get("SCREENSHOT_DIR", "").strip() or "assets/screenshots"
+        )
+        os.makedirs(screenshot_dir, exist_ok=True)
+        ts = datetime.datetime.now().strftime("%Y%m%d_%H%M")
+        path = os.path.join(screenshot_dir, f"{ts}.png")
+    else:
+        # Use a temp file when saving is disabled
+        tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+        path = tmp.name
+        tmp.close()
 
     # Prompt user to prepare for screenshot
     print("Screenshot will be taken in 5 seconds...")
@@ -29,38 +42,34 @@ def main():
     time.sleep(1)
     print("Taking screenshot now!")
 
-    # Generate filename with format: yearmmdd_hhmm.png
-    ts = datetime.datetime.now().strftime("%Y%m%d_%H%M")
-    path = os.path.join(screenshot_dir, f"{ts}.png")
-
     # Method 1: Use scrot (if available)
     try:
         subprocess.run(["scrot", path], check=True)
-        print(f"Saved screenshot to {path} using scrot")
+        method = "scrot"
     except (subprocess.CalledProcessError, FileNotFoundError):
         # Method 2: Use ImageMagick's import command
         try:
             subprocess.run(["import", "-window", "root", path], check=True)
-            print(f"Saved screenshot to {path} using ImageMagick")
+            method = "ImageMagick"
         except (subprocess.CalledProcessError, FileNotFoundError):
             # Method 3: Use gnome-screenshot (GNOME environments)
             try:
                 subprocess.run(["gnome-screenshot", "-f", path], check=True)
-                print(f"Saved screenshot to {path} using gnome-screenshot")
+                method = "gnome-screenshot"
             except (subprocess.CalledProcessError, FileNotFoundError):
                 # Method 4: Use spectacle (KDE environments)
                 try:
                     subprocess.run(["spectacle", "-b", "-n", "-o", path], check=True)
-                    print(f"Saved screenshot to {path} using spectacle")
+                    method = "spectacle"
                 except (subprocess.CalledProcessError, FileNotFoundError):
                     # Method 5: Use xwd (X11 fallback)
                     try:
-                        xwd_path = os.path.join(screenshot_dir, f"{ts}.xwd")
+                        xwd_path = path.replace(".png", ".xwd")
                         subprocess.run(["xwd", "-root", "-out", xwd_path], check=True)
                         subprocess.run(["convert", xwd_path, path], check=True)
                         if os.path.exists(xwd_path):
                             os.remove(xwd_path)
-                        print(f"Saved screenshot to {path} using xwd + convert")
+                        method = "xwd + convert"
                     except (subprocess.CalledProcessError, FileNotFoundError):
                         # Method 6: Use ffmpeg (last resort)
                         try:
@@ -80,20 +89,54 @@ def main():
                                 check=True,
                                 capture_output=True,
                             )
-                            print(f"Saved screenshot to {path} using ffmpeg")
-                        except (subprocess.CalledProcessError, FileNotFoundError):
+                            method = "ffmpeg"
+                        except (
+                            subprocess.CalledProcessError,
+                            FileNotFoundError,
+                        ):
                             print(
                                 "No suitable screenshot tool found. Please install one of: scrot, ImageMagick, gnome-screenshot, spectacle, or ffmpeg."
                             )
+                            if no_save:
+                                os.unlink(path)
+                            return
+
+    if no_save:
+        # Copy to clipboard instead of saving to file
+        try:
+            subprocess.run(
+                ["xclip", "-selection", "clipboard", "-t", "image/png", "-i", path],
+                check=True,
+                capture_output=True,
+            )
+            print(f"Screenshot copied to clipboard using {method}")
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            # Fallback to xsel if xclip is not available
+            try:
+                with open(path, "rb") as f:
+                    subprocess.run(
+                        ["xsel", "--clipboard", "--input"],
+                        stdin=f,
+                        check=True,
+                    )
+                print(f"Screenshot copied to clipboard via xsel using {method}")
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                print(
+                    "Failed to copy to clipboard. Install xclip or xsel:\n"
+                    "  sudo apt install xclip   # or xsel"
+                )
+        finally:
+            os.unlink(path)
+        return
 
     # If screenshot was taken, show basic info and compress
     if os.path.exists(path):
         try:
             with Image.open(path) as img:
                 original_size = os.path.getsize(path)
-                print(f"Screenshot saved successfully: {path}")
+                print(f"Screenshot saved: {path}")
                 print(
-                    f"Original size: {img.size[0]}x{img.size[1]} ({original_size / 1024:.1f} KB)"
+                    f"Size: {img.size[0]}x{img.size[1]} ({original_size / 1024:.1f} KB)"
                 )
 
                 new_width = int(img.size[0] * 0.5)
@@ -108,7 +151,6 @@ def main():
                     f"Compressed size: {new_width}x{new_height} ({compressed_size / 1024:.1f} KB)"
                 )
                 print(f"Compression ratio: {(original_size / compressed_size):.1f}x")
-                print(f"Compressed saved as: {compressed_path}")
 
                 os.replace(compressed_path, path)
                 print(f"Compressed screenshot saved: {path}")

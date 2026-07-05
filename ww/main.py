@@ -348,7 +348,9 @@ def _print_help():
         "  ww screenshot interact-note  Interactively capture screenshots and create a note"
     )
     print("  ww screenshot note        Create a note from latest screenshot(s)")
-    print("  ww screenshot-linux       Take a screenshot (Linux)")
+    print(
+        "  ww screenshot-linux       Take a screenshot (Linux, --no-save to clipboard)"
+    )
     print("")
     print("Search:")
     print("  ww search                 Web search (multi-engine)")
