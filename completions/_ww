@@ -13,6 +13,7 @@ _ww() {
         'screenshot-linux:Take a screenshot (Linux)'
         'gif:Create GIF from images'
         'github:GitHub management commands'
+        'inference:Inference backend detection (SGLang vs vLLM)'
         'macos:macOS system utilities'
         'image:Image processing commands'
         'proc:Process management commands'
@@ -378,6 +379,11 @@ _ww() {
         'test:Test audio devices - play tone, record and playback'
     )
 
+    local -a inference_cmds
+    inference_cmds=(
+        'test:Detect SGLang vs vLLM backend for a model'
+    )
+
     local -a clash_cmds
     clash_cmds=(
         'select-provider:Select best proxy provider'
@@ -512,6 +518,7 @@ _ww() {
                 cloudflare)    _describe -t commands 'cloudflare command' cloudflare_cmds ;;
                 ghostty)       _describe -t commands 'ghostty command' ghostty_cmds ;;
                 headphone)    _describe -t commands 'headphone command' headphone_cmds ;;
+                inference)    _describe -t commands 'inference command' inference_cmds ;;
                 clash)         _describe -t commands 'clash command' clash_cmds ;;
                 latest)        _describe -t commands 'latest command' latest_cmds ;;
                 weather)       _describe -t commands 'weather command' weather_cmds ;;

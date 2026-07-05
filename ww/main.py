@@ -198,6 +198,10 @@ def _print_help():
     print("  ww java clean-log         Clean Java log files")
     print("  ww java mvn               Maven project utilities")
     print("")
+    print("Inference:")
+    print("  ww inference test [--model M]  Detect SGLang vs vLLM backend for a model")
+    print("                              (default: tencent/hy3-preview)")
+    print("")
     print("Latest:")
     print(
         "  ww latest notes [N]        Show filename and title of latest N notes (default 10)"
@@ -1872,6 +1876,23 @@ def _main_dispatch(raw_args: list):
             print(f"Unknown qwen command: {subcmd}")
             sys.exit(1)
 
+    elif group == "inference":
+        subcmd = _pop_subcmd()
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww inference <command>")
+            print("")
+            print("Commands:")
+            print(
+                "  test  Detect SGLang vs vLLM backend for a model (default: tencent/hy3-preview)"
+            )
+        elif subcmd == "test":
+            from ww.inference.test import main as m
+
+            m()
+        else:
+            print(f"Unknown inference command: {subcmd}")
+            sys.exit(1)
+
     elif group == "alarm":
         from ww.alarm.alarm import main as m
 
@@ -1934,6 +1955,7 @@ def _main_dispatch(raw_args: list):
             "hf",
             "host",
             "image",
+            "inference",
             "java",
             "latest",
             "linux",
