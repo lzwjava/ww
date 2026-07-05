@@ -19,6 +19,7 @@ def _print_help():
     print("  wol          Send a Wake-on-LAN packet")
     print("  terminal     Open a fullscreen terminal")
     print("  switch-keys  Swap Caps Lock and Left Control keys")
+    print("  pinyin       Set up Chinese Pinyin input via IBus+libpinyin")
 
 
 def main():
@@ -61,6 +62,10 @@ def main():
         run()
     elif subcmd == "switch-keys":
         from ww.linux.switch_keys import run
+
+        run()
+    elif subcmd == "pinyin":
+        from ww.linux.pinyin import run
 
         run()
     else:
