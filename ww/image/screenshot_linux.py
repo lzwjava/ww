@@ -13,7 +13,10 @@ def _parse_area() -> int | None:
     try:
         idx = sys.argv.index("--area")
     except ValueError:
-        return None
+        try:
+            idx = sys.argv.index("-a")
+        except ValueError:
+            return None
     if idx + 1 >= len(sys.argv):
         print(
             "error: --area requires a number 1-4 (1=top-left, 2=top-right, 3=bottom-left, 4=bottom-right)"
