@@ -162,6 +162,9 @@ def _print_help():
     )
     print("  ww headphone list         List connected audio devices")
     print("")
+    print("Hermes:")
+    print("  ww hermes check            Check Hermes agent note plugin health")
+    print("")
     print("Host:")
     print("  ww host                   Show all hosts")
     print("  ww host dmit              DMIT server")
@@ -1724,6 +1727,24 @@ def _main_dispatch(raw_args: list):
 
             headphone_main()
 
+    elif group == "hermes":
+        subcmd = _pop_subcmd()
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww hermes <command>")
+            print("")
+            print("Commands:")
+            print("  check   Check Hermes agent note plugin health")
+            print("")
+            print("Examples:")
+            print("  ww hermes check")
+        elif subcmd == "check":
+            from ww.hermes.check import main as m
+
+            m()
+        else:
+            print(f"Unknown hermes command: {subcmd}")
+            sys.exit(1)
+
     elif group == "whisper":
         if len(sys.argv) > 1 and sys.argv[1] == "refine":
             sys.argv.pop(1)
@@ -1952,6 +1973,7 @@ def _main_dispatch(raw_args: list):
             "ghostty",
             "hackernews",
             "headphone",
+            "hermes",
             "hf",
             "host",
             "image",

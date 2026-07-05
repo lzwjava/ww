@@ -1,6 +1,7 @@
 import os
 import sys
 import unittest
+from contextlib import ExitStack
 from pathlib import Path
 from unittest.mock import patch
 
@@ -78,7 +79,34 @@ class TestContentAsText(unittest.TestCase):
         self.assertEqual(result, "42")
 
 
+_FAKE_PATH = "/fake/path.md"
+
+
 class TestHandleNoteParsing(unittest.TestCase):
+    def _mock_deps(self, msg_content="x" * 300):
+        """Set up mocks for all external deps used by _handle_note.
+        Returns the create_note_from_content mock for assertion."""
+        msg = {"role": "assistant", "content": msg_content}
+        self._patchers = ExitStack()
+        self._patchers.enter_context(
+            patch("note._get_assistant_messages", return_value=[msg])
+        )
+        self._patchers.enter_context(patch("dotenv.load_dotenv"))
+        cnfc = self._patchers.enter_context(
+            patch(
+                "ww.note.create_note_from_clipboard.create_note_from_content",
+                return_value=_FAKE_PATH,
+            )
+        )
+        self._patchers.enter_context(patch("ww.github.gitmessageai.gitmessageai"))
+        return cnfc
+
+    def setUp(self):
+        self._stack = ExitStack()
+
+    def tearDown(self):
+        self._stack.close()
+
     def test_no_assistant_messages(self):
         with patch("note._get_assistant_messages", return_value=[]):
             result = _handle_note("")
@@ -93,23 +121,15 @@ class TestHandleNoteParsing(unittest.TestCase):
             self.assertIn("Invalid", result)
 
     def test_title_arg(self):
-        msg = {"role": "assistant", "content": "x" * 300}
-        with patch("note._get_assistant_messages", return_value=[msg]):
-            with patch(
-                "ww.note.note_queue._enqueue", return_value="abc123"
-            ) as mock_enqueue:
-                result = _handle_note('--title "My Title"')
-                self.assertIsNotNone(result)
-                self.assertIn("queued", result.lower())
-                _, kwargs = mock_enqueue.call_args
-                self.assertEqual(kwargs.get("custom_title"), "My Title")
+        cnfc = self._mock_deps()
+        result = _handle_note('--title "My Title"')
+        self.assertIsNotNone(result)
+        self.assertIn("saved", result.lower())
+        _, kwargs = cnfc.call_args
+        self.assertEqual(kwargs.get("custom_title"), "My Title")
 
     def test_dir_arg(self):
-        msg = {"role": "assistant", "content": "x" * 300}
-        with patch("note._get_assistant_messages", return_value=[msg]):
-            with patch(
-                "ww.note.note_queue._enqueue", return_value="abc123"
-            ) as mock_enqueue:
-                _handle_note("--dir /custom/dir")
-                _, kwargs = mock_enqueue.call_args
-                self.assertEqual(kwargs.get("directory"), "/custom/dir")
+        cnfc = self._mock_deps()
+        _handle_note("--dir /custom/dir")
+        _, kwargs = cnfc.call_args
+        self.assertEqual(kwargs.get("directory"), "/custom/dir")
