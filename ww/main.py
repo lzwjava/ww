@@ -349,7 +349,7 @@ def _print_help():
     )
     print("  ww screenshot note        Create a note from latest screenshot(s)")
     print(
-        "  ww screenshot-linux       Take a screenshot (Linux, --no-save to clipboard)"
+        "  ww screenshot-linux       Take a screenshot (Linux, --no-save to clipboard, --area 1-4 for quadrant)"
     )
     print("")
     print("Search:")

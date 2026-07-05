@@ -8,10 +8,45 @@ from PIL import Image
 from dotenv import load_dotenv
 
 
+def _parse_area() -> int | None:
+    """Parse --area N from sys.argv. Returns 1-4 or None if not set."""
+    try:
+        idx = sys.argv.index("--area")
+    except ValueError:
+        return None
+    if idx + 1 >= len(sys.argv):
+        print(
+            "error: --area requires a number 1-4 (1=top-left, 2=top-right, 3=bottom-left, 4=bottom-right)"
+        )
+        sys.exit(1)
+    try:
+        area = int(sys.argv[idx + 1])
+    except ValueError:
+        print("error: --area requires a number 1-4")
+        sys.exit(1)
+    if area not in (1, 2, 3, 4):
+        print("error: --area must be 1, 2, 3, or 4")
+        sys.exit(1)
+    return area
+
+
+def _crop_quadrant(img: Image.Image, area: int) -> Image.Image:
+    w, h = img.size
+    mw, mh = w // 2, h // 2
+    boxes = {
+        1: (0, 0, mw, mh),  # top-left
+        2: (mw, 0, w, mh),  # top-right
+        3: (0, mh, mw, h),  # bottom-left
+        4: (mw, mh, w, h),  # bottom-right
+    }
+    return img.crop(boxes[area])
+
+
 def main():
     load_dotenv()
 
     no_save = "--no-save" in sys.argv or "-n" in sys.argv
+    area = _parse_area()
 
     if not no_save:
         screenshot_dir = (
@@ -19,7 +54,10 @@ def main():
         )
         os.makedirs(screenshot_dir, exist_ok=True)
         ts = datetime.datetime.now().strftime("%Y%m%d_%H%M")
-        path = os.path.join(screenshot_dir, f"{ts}.png")
+        if area:
+            path = os.path.join(screenshot_dir, f"{ts}_area{area}.png")
+        else:
+            path = os.path.join(screenshot_dir, f"{ts}.png")
     else:
         # Use a temp file when saving is disabled
         tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
@@ -100,6 +138,25 @@ def main():
                             if no_save:
                                 os.unlink(path)
                             return
+
+    # Crop to quadrant if --area is set
+    if area:
+        try:
+            with Image.open(path) as img:
+                cropped = _crop_quadrant(img, area)
+                cropped.save(path)
+            area_labels = {
+                1: "top-left",
+                2: "top-right",
+                3: "bottom-left",
+                4: "bottom-right",
+            }
+            print(f"Cropped to {area_labels[area]} quadrant")
+        except Exception as e:
+            print(f"Could not crop image: {e}")
+            if no_save:
+                os.unlink(path)
+            return
 
     if no_save:
         # Copy to clipboard instead of saving to file

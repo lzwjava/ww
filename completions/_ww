@@ -664,7 +664,10 @@ _ww() {
                     _arguments '--dir[Screenshot directory]:directory:_directories' ;;
 
                 screenshot-linux)
-                    _arguments '--no-save[Copy to clipboard instead of saving]' '-n[Copy to clipboard instead of saving]' ;;
+                    _arguments \
+                        '--no-save[Copy to clipboard instead of saving]' \
+                        '-n[Copy to clipboard instead of saving]' \
+                        '--area[Capture only a quadrant: 1=top-left 2=top-right 3=bottom-left 4=bottom-right]:area:(1 2 3 4)' ;;
 
                 latest)
                     # Accepts a number argument
