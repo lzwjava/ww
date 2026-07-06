@@ -314,6 +314,7 @@ def _print_help():
     print("  ww note clear             Clear done/failed entries from queue")
     print("  ww note watch             Auto-process queue when new notes arrive")
     print("  ww note log               Quick: clipboard → log queue (fast)")
+    print("  ww note html              Quick: clipboard → Jekyll HTML note (visual)")
     print("  ww note obfuscate <file>  Obfuscate sensitive data in a file")
     print("")
     print("OpenRouter:")
@@ -556,6 +557,10 @@ def _main_dispatch(raw_args: list):
             if log_args.friendly_name:
                 kwargs["friendly_name"] = True
             enqueue_log(**kwargs)
+        elif subcmd == "html":
+            from ww.note.create_note_html import main as html_main
+
+            html_main()
         elif subcmd == "log-file":
             from ww.note.create_log import create_log_from_file
 

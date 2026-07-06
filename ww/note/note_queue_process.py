@@ -95,6 +95,11 @@ def process_queue(dry_run: bool = False) -> None:
                     skip_git=True,
                 )
                 print(f"  [ok] Created: {file_path}")
+            elif entry_type == "html":
+                from ww.note.create_note_html import create_note_html as create_html
+
+                file_path = create_html(content)
+                print(f"  [ok] Created: {file_path}")
             else:
                 file_path = create_note_from_content(content)
                 print(f"  [ok] Created: {file_path}")

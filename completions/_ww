@@ -72,6 +72,7 @@ _ww() {
         'clear:Clear done/failed entries from queue'
         'log:Create a new log entry'
         'log-file:Create log from file'
+        'html:Create a Jekyll HTML note (visual)'
         'obfuscate:Obfuscate sensitive data in a file'
         'process:Drain queue: create notes, commit, push'
         'status:Show queue status'

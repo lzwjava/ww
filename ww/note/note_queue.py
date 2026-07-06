@@ -115,6 +115,12 @@ def enqueue_log(**kwargs) -> Optional[str]:
     return _enqueue(text, "log", **kwargs)
 
 
+def enqueue_html(**kwargs) -> Optional[str]:
+    """Read clipboard and add to HTML note queue. Returns entry id if added, None if duplicate or empty."""
+    text = _get_clipboard()
+    return _enqueue(text, "html", **kwargs)
+
+
 def get_pending() -> list[dict]:
     return [e for e in _load_queue() if e["status"] == "pending"]
 
