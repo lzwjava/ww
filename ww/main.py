@@ -353,7 +353,7 @@ def _print_help():
     print("Screenshot:")
     print("  ww screenshot [DELAY]     Take a screenshot (macOS, --dir)")
     print(
-        "  ww screenshot interact-note  Interactively capture screenshots and create a note"
+        "  ww screenshot interact-note [--skip-analysis]  Interactively capture screenshots and create a note"
     )
     print(
         "  ww screenshot note [--skip-analysis]  Create a note from latest screenshot(s)"
