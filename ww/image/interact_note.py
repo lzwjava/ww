@@ -1,5 +1,6 @@
 import sys
 import time
+from datetime import datetime
 
 from dotenv import load_dotenv
 
@@ -25,6 +26,9 @@ def main():
     delay_input = input("Delay before each screenshot (seconds)? ").strip()
     delay = int(delay_input) if delay_input else 3
 
+    # Check for --skip-analysis
+    skip_analysis = "--skip-analysis" in sys.argv
+
     # Determine screenshot directory
     screenshot_dir = _get_screenshot_dir()
 
@@ -47,6 +51,19 @@ def main():
 
     # Ask for additional context
     extra_prompt = input("Additional context (or Enter to skip)? ").strip() or None
+
+    if skip_analysis:
+        print("Skipping vision analysis (--skip-analysis).")
+        summary = "Screenshot note (analysis skipped)"
+        if extra_prompt:
+            summary = f"Screenshot note — {extra_prompt}"
+        full_title = _generate_title_from_content(
+            extra_prompt or f"Screenshot from {datetime.now().strftime('%Y-%m-%d')}",
+            extra_prompt,
+        )
+        note_path = _create_note_file(summary, full_title, screenshot_paths)
+        _print_note_url(note_path)
+        return
 
     # Describe screenshots with vision model
     print(f"Analyzing {len(screenshot_paths)} screenshot(s) with LLM vision...")

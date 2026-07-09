@@ -46,7 +46,9 @@ def _encode_image_to_base64(image_path):
 
 def _get_screenshot_dir():
     env_dir = os.environ.get("SCREENSHOT_DIR", "").strip()
-    return env_dir if env_dir else "."
+    if env_dir:
+        return os.path.expanduser(env_dir)
+    return "."
 
 
 def _get_latest_screenshots(screenshot_dir, n=1):
@@ -90,7 +92,12 @@ def _vision_describe(image_paths, prompt_text=None):
     vision_model = _get_vision_model()
     print(f"Using vision model: {vision_model}")
     messages = [{"role": "user", "content": content_parts}]
-    result = call_openrouter_api_with_messages(messages, model=vision_model)
+    try:
+        result = call_openrouter_api_with_messages(messages, model=vision_model)
+    except Exception as e:
+        print(f"Warning: vision model returned an error: {e}")
+        print("Tip: ensure VISION_MODEL supports image inputs, or use --skip-analysis")
+        sys.exit(1)
     if not result:
         print("Failed to describe screenshot with LLM.")
         sys.exit(1)
@@ -228,10 +235,29 @@ def main():
         default=None,
         help="Extra prompt to guide LLM analysis and title generation",
     )
+    parser.add_argument(
+        "--skip-analysis",
+        action="store_true",
+        help="Skip vision LLM analysis — just create a note with the screenshot embedded",
+    )
     args = parser.parse_args(sys.argv[1:])
 
     screenshot_dir = _get_screenshot_dir()
     image_paths = _get_latest_screenshots(screenshot_dir, args.n)
+
+    if args.skip_analysis:
+        print("Skipping vision analysis (--skip-analysis).")
+        description = "Screenshot note (analysis skipped)"
+        summary = description
+        if args.prompt:
+            summary = f"Screenshot note — {args.prompt}"
+        full_title = _generate_title_from_content(
+            args.prompt or f"Screenshot from {datetime.now().strftime('%Y-%m-%d')}",
+            args.prompt,
+        )
+        note_path = _create_note_file(summary, full_title, image_paths)
+        _print_note_url(note_path)
+        return
 
     print(f"Analyzing {len(image_paths)} screenshot(s) with LLM vision...")
     description = _vision_describe(image_paths, args.prompt)

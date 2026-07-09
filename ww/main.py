@@ -355,7 +355,9 @@ def _print_help():
     print(
         "  ww screenshot interact-note  Interactively capture screenshots and create a note"
     )
-    print("  ww screenshot note        Create a note from latest screenshot(s)")
+    print(
+        "  ww screenshot note [--skip-analysis]  Create a note from latest screenshot(s)"
+    )
     print(
         "  ww screenshot-linux       Take a screenshot (Linux, --no-save to clipboard, --area 1-4 for quadrant)"
     )

@@ -55,6 +55,7 @@ def main():
         screenshot_dir = (
             os.environ.get("SCREENSHOT_DIR", "").strip() or "assets/screenshots"
         )
+        screenshot_dir = os.path.expanduser(screenshot_dir)
         os.makedirs(screenshot_dir, exist_ok=True)
         ts = datetime.datetime.now().strftime("%Y%m%d_%H%M")
         if area:
