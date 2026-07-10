@@ -59,12 +59,18 @@ _ww() {
         'torch:Find Pythons with PyTorch installed'
         'completion:Install or print zsh completions'
         'headphone:Audio device testing and listing'
+        'cook:Cooking timer management'
     )
 
     local -a alarm_cmds
     alarm_cmds=(
         'clear:Remove all alarms from the Clock app'
         'list:List all alarms'
+    )
+
+    local -a cook_cmds
+    cook_cmds=(
+        'clear:Clear the cooking timer and stop notifications'
     )
 
     local -a note_cmds
@@ -487,6 +493,7 @@ _ww() {
         subcmd)
             case $words[2] in
                 alarm)         _describe -t commands 'alarm command' alarm_cmds ;;
+                cook)          _describe -t commands 'cook command' cook_cmds ;;
                 note)          _describe -t commands 'note command' note_cmds ;;
                 screenshot)    _describe -t commands 'screenshot command' screenshot_cmds ;;
                 github)        _describe -t commands 'github command' github_cmds ;;

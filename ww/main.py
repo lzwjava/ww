@@ -64,6 +64,12 @@ def _print_help():
     print("  ww completion install     Install zsh tab completion")
     print("  ww completion script      Print completion script")
     print("")
+    print("Cook:")
+    print(
+        "  ww cook <minutes>        Set a cooking timer (notifies every 2min after expiry)"
+    )
+    print("  ww cook clear            Clear the cooking timer and stop notifications")
+    print("")
     print("Copilot:")
     print("  ww copilot auth           Authenticate via GitHub OAuth device flow")
     print("  ww copilot chat           Chat with a Copilot model")
@@ -1926,6 +1932,11 @@ def _main_dispatch(raw_args: list):
 
         m()
 
+    elif group == "cook":
+        from ww.cook.cook import main as m
+
+        m()
+
     elif group == "amd-dev-cloud":
         subcmd = _pop_subcmd()
         if subcmd == "" or subcmd in ("--help", "-h"):
@@ -1966,6 +1977,7 @@ def _main_dispatch(raw_args: list):
             "clash",
             "cloudflare",
             "completion",
+            "cook",
             "copilot",
             "conversation",
             "db",
