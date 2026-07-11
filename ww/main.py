@@ -426,6 +426,12 @@ def _print_help():
         "  ww whisper refine <file.txt>  Refine transcription to .md via OpenRouter (deepseek-v4-flash)"
     )
     print("")
+    print("Transcript:")
+    print(
+        "  ww transcript <file.json>      Extract transcript from Google Cloud STT JSON to markdown"
+    )
+    print("  ww transcript <file.json> -o out.md  Write markdown to file")
+    print("")
     print("Zed:")
     print(
         "  ww zed [path]             Open Zed connected to remote workstation via SSH"
@@ -1779,6 +1785,11 @@ def _main_dispatch(raw_args: list):
 
             m()
 
+    elif group == "transcript":
+        from ww.audio.transcript import main as m
+
+        m()
+
     elif group == "degree":
         from ww.degree.degree import main as m
 
@@ -2018,6 +2029,7 @@ def _main_dispatch(raw_args: list):
             "search",
             "sync",
             "torch",
+            "transcript",
             "utils",
             "weather",
             "whisper",

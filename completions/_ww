@@ -53,8 +53,10 @@ _ww() {
         'weather:Weather forecast'
         'rain:Analyze rain intensity from webcam video'
         'hf:HuggingFace commands'
+        'tools:Development tools'
         'zed:Zed remote development setup'
         'projects:Project management'
+        'transcript:Extract Google Cloud STT JSON to markdown'
         'amd-dev-cloud:AMD Dev Cloud GPU management'
         'torch:Find Pythons with PyTorch installed'
         'completion:Install or print zsh completions'
@@ -540,6 +542,7 @@ _ww() {
                 actions)       _describe -t commands 'actions command' actions_cmds ;;
                 projects)      _describe -t commands 'projects command' projects_cmds ;;
                 amd-dev-cloud) _describe -t commands 'amd-dev-cloud command' amd_dev_cloud_cmds ;;
+                transcript)    _files -g "*.json" ;;
                 completion)    _describe -t commands 'completion command' completion_cmds ;;
             esac
             ;;
