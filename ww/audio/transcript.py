@@ -7,60 +7,33 @@ import argparse
 
 
 def extract_transcript(json_path):
-    """Load Google Cloud STT JSON and extract transcript + optional word timestamps."""
+    """Load Google Cloud STT JSON and extract transcript to markdown."""
     with open(json_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     results = data.get("results", [])
     parts = []
-    word_parts = []
 
     for result in results:
-        alternatives = result.get("alternatives", [])
-        for alt in alternatives:
+        for alt in result.get("alternatives", []):
             transcript = alt.get("transcript", "")
-            confidence = alt.get("confidence")
-            words = alt.get("words", [])
-
             if transcript:
                 parts.append(transcript)
 
-            if words:
-                for w in words:
-                    word = w.get("word", "")
-                    start = w.get("startOffset", "")
-                    end = w.get("endOffset", "")
-                    c = w.get("confidence")
-                    ts = ""
-                    if start and end:
-                        ts = f"[{start} → {end}]"
-                    elif start:
-                        ts = f"[{start}]"
-                    conf = f" (c={c:.2f})" if c is not None else ""
-                    word_parts.append(f"- {word} {ts}{conf}")
-
     full_transcript = " ".join(parts)
 
-    # Output markdown
-    lines = []
-    lines.append("# Transcript")
-    lines.append("")
-    lines.append(f"**Source:** `{json_path}`")
-    lines.append("")
-    lines.append("---")
-    lines.append("")
-    lines.append("## Full Transcript")
-    lines.append("")
-    lines.append(full_transcript)
-    lines.append("")
-
-    if word_parts:
-        lines.append("---")
-        lines.append("")
-        lines.append("## Word Timestamps")
-        lines.append("")
-        lines.extend(word_parts)
-        lines.append("")
+    lines = [
+        "# Transcript",
+        "",
+        f"**Source:** `{json_path}`",
+        "",
+        "---",
+        "",
+        "## Full Transcript",
+        "",
+        full_transcript,
+        "",
+    ]
 
     return "\n".join(lines)
 
