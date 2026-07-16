@@ -120,6 +120,10 @@ def _print_help():
     print("  ww env ghostty           Install Ghostty terminal on Linux")
     print("  ww env github-desktop    Install GitHub Desktop on macOS and Linux")
     print("")
+    print("FFmpeg:")
+    print("  ww ffmpeg merge <file1> <file2> [... <fileN>]")
+    print("                           Merge two or more audio/video files into one")
+    print("")
     print("Format:")
     print("  ww format <file.json>     Pretty-print a JSON file in-place")
     print("")
@@ -1956,6 +1960,25 @@ def _main_dispatch(raw_args: list):
 
         m()
 
+    elif group == "ffmpeg":
+        subcmd = _pop_subcmd()
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww ffmpeg <command>")
+            print("")
+            print("Commands:")
+            print("  merge   Merge two or more audio/video files into one")
+            print("")
+            print("Examples:")
+            print("  ww ffmpeg merge intro.mp3 main.mp3 outro.mp3")
+            print("  ww ffmpeg merge part1.mp4 part2.mp4")
+        elif subcmd == "merge":
+            from ww.ffmpeg.merge import main as m
+
+            m()
+        else:
+            print(f"Unknown ffmpeg command: {subcmd}")
+            sys.exit(1)
+
     elif group == "amd-dev-cloud":
         subcmd = _pop_subcmd()
         if subcmd == "" or subcmd in ("--help", "-h"):
@@ -1999,6 +2022,7 @@ def _main_dispatch(raw_args: list):
             "cook",
             "copilot",
             "format",
+            "ffmpeg",
             "conversation",
             "db",
             "degree",
