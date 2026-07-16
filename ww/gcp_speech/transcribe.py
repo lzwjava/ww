@@ -37,8 +37,8 @@ def _upload_to_gcs(local_path, gcs_path):
     return True
 
 
-def _run_batch_recognize(audio_gcs_uri, output_gcs_folder, language_code):
-    """Run Google Cloud Speech-to-Text v2 batch recognize."""
+def _submit_job(audio_gcs_uri, output_gcs_folder, language_code):
+    """Submit a batch recognize job and return the operation name."""
     client = SpeechClient()
 
     config = cloud_speech.RecognitionConfig(
@@ -64,10 +64,8 @@ def _run_batch_recognize(audio_gcs_uri, output_gcs_folder, language_code):
         recognition_output_config=output_config,
     )
 
-    print("Waiting for Speech-to-Text to complete (this may take a while)...")
     operation = client.batch_recognize(request=request)
-    response = operation.result(timeout=3 * MAX_AUDIO_LENGTH_SECS)
-    print("Recognition complete.")
+    return operation.operation.name
 
 
 def _download_results(output_gcs_folder, output_dir):
@@ -101,31 +99,41 @@ def _extract_transcript(json_path):
     return " ".join(parts)
 
 
+def _print_help():
+    print("Usage: ww gcp-speech transcribe <audio_file> [options]")
+    print()
+    print("Transcribe a local audio file via Google Cloud Speech-to-Text.")
+    print()
+    print("Arguments:")
+    print("  <audio_file>   Path to audio file (mp3, m4a, wav, ogg, mp4, etc.)")
+    print("  --lang LANG    Language code (default: auto-detect from filename)")
+    print("                 e.g. en-US, cmn-Hans-CN, ja-JP")
+    print("  --wait         Wait for transcription to complete and download results")
+    print("                 (default: async — submit job, print console link, exit)")
+    print()
+    print("Examples:")
+    print("  ww gcp-speech transcribe ~/Downloads/recording.mp3")
+    print("  ww gcp-speech transcribe ~/Downloads/recording-zh.mp3 --lang cmn-Hans-CN")
+    print("  ww gcp-speech transcribe ~/Downloads/long.mp3 --wait")
+
+
 def main():
-    if len(sys.argv) < 2 or sys.argv[1] in ("--help", "-h"):
-        print("Usage: ww gcp-speech transcribe <audio_file> [--lang LANG]")
-        print()
-        print("Transcribe a local audio file via Google Cloud Speech-to-Text.")
-        print()
-        print("Arguments:")
-        print("  <audio_file>   Path to audio file (mp3, m4a, wav, ogg, mp4, etc.)")
-        print("  --lang LANG    Language code (default: auto-detect from filename)")
-        print("                 e.g. en-US, cmn-Hans-CN, ja-JP")
-        print()
-        print("Examples:")
-        print("  ww gcp-speech transcribe ~/Downloads/recording.mp3")
-        print("  ww gcp-speech transcribe ~/Downloads/recording-zh.mp3 --lang cmn-Hans-CN")
+    args = sys.argv[1:]
+    if not args or args[0] in ("--help", "-h"):
+        _print_help()
         return
 
-    # Parse args
-    args = sys.argv[1:]
     audio_file = None
     lang = None
+    wait = False
     i = 0
     while i < len(args):
         if args[i] == "--lang" and i + 1 < len(args):
             lang = args[i + 1]
             i += 2
+        elif args[i] == "--wait":
+            wait = True
+            i += 1
         else:
             audio_file = args[i]
             i += 1
@@ -141,10 +149,7 @@ def main():
     filename = os.path.basename(audio_file)
     basename = os.path.splitext(filename)[0]
 
-    if lang:
-        language_code = lang
-    else:
-        language_code = _detect_language(filename)
+    language_code = lang or _detect_language(filename)
 
     print(f"File: {audio_file}")
     print(f"Language: {language_code}")
@@ -152,15 +157,54 @@ def main():
     # GCS paths
     gcs_audio_path = f"audio-files/{filename}"
     gcs_audio_uri = f"gs://{BUCKET_NAME}/{gcs_audio_path}"
-    gcs_output_folder = f"gs://{BUCKET_NAME}/transcripts/{basename}"
+    gcs_output_prefix = f"transcripts/{basename}"
+    gcs_output_folder = f"gs://{BUCKET_NAME}/{gcs_output_prefix}"
 
     # Upload to GCS
     _upload_to_gcs(audio_file, gcs_audio_path)
 
-    # Run batch recognize
-    _run_batch_recognize(gcs_audio_uri, gcs_output_folder, language_code)
+    # Submit job
+    operation_name = _submit_job(gcs_audio_uri, gcs_output_folder, language_code)
 
-    # Download results
+    # Console link
+    console_url = (
+        f"https://console.cloud.google.com/storage/browser/{BUCKET_NAME}/{gcs_output_prefix}"
+        f"?project={PROJECT_ID}"
+    )
+    print()
+    print("=" * 60)
+    print("JOB SUBMITTED")
+    print("=" * 60)
+    print(f"Operation: {operation_name}")
+    print(f"Output:    gs://{BUCKET_NAME}/{gcs_output_prefix}/")
+    print(f"Console:   {console_url}")
+    print()
+    print("Once complete, download results with:")
+    print(f"  gsutil cp gs://{BUCKET_NAME}/{gcs_output_prefix}/*_transcript_*.json .")
+    print("Then convert to markdown with:")
+    print("  ww transcript <json_file> -o transcript.md")
+    print("=" * 60)
+
+    if not wait:
+        return
+
+    # --wait mode: block until done, download, print transcript
+    # Poll GCS for results instead of waiting on the operation
+    print()
+    print("Waiting for transcription to complete...")
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(BUCKET_NAME)
+    import time
+
+    while True:
+        blobs = list(bucket.list_blobs(prefix=gcs_output_prefix))
+        json_blobs = [b for b in blobs if b.name.endswith(".json")]
+        if json_blobs:
+            break
+        time.sleep(10)
+
+    print("Recognition complete.")
+
     output_dir = tempfile.mkdtemp(prefix="ww_gcp_transcribe_")
     result_files = _download_results(gcs_output_folder, output_dir)
 
@@ -168,10 +212,8 @@ def main():
         print("Error: No transcription results found in GCS output.")
         sys.exit(1)
 
-    # Extract transcript
     transcript = _extract_transcript(result_files[0])
 
-    # Print transcript
     print()
     print("=" * 60)
     print("TRANSCRIPT")
@@ -180,8 +222,7 @@ def main():
     print()
     print("=" * 60)
 
-    # Save to file alongside audio
-    output_path = os.path.join(os.path.dirname(audio_file), f"{basename}.md")
+    output_path = os.path.join(os.path.dirname(os.path.abspath(audio_file)), f"{basename}.md")
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(f"# Transcript: {filename}\n\n")
         f.write(f"**Source:** `{audio_file}`\n")
