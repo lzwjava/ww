@@ -120,6 +120,9 @@ def _print_help():
     print("  ww env ghostty           Install Ghostty terminal on Linux")
     print("  ww env github-desktop    Install GitHub Desktop on macOS and Linux")
     print("")
+    print("Format:")
+    print("  ww format <file.json>     Pretty-print a JSON file in-place")
+    print("")
     print("Gen-image:")
     print("  ww gen-image              Generate image from clipboard text (Imagen 3)")
     print("")
@@ -1948,6 +1951,11 @@ def _main_dispatch(raw_args: list):
 
         m()
 
+    elif group == "format":
+        from ww.format.format import main as m
+
+        m()
+
     elif group == "amd-dev-cloud":
         subcmd = _pop_subcmd()
         if subcmd == "" or subcmd in ("--help", "-h"):
@@ -1990,6 +1998,7 @@ def _main_dispatch(raw_args: list):
             "completion",
             "cook",
             "copilot",
+            "format",
             "conversation",
             "db",
             "degree",
