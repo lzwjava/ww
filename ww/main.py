@@ -127,6 +127,10 @@ def _print_help():
     print("Format:")
     print("  ww format <file.json>     Pretty-print a JSON file in-place")
     print("")
+    print("GCP Speech:")
+    print("  ww gcp-speech transcribe <file> [--lang LANG]")
+    print("                           Transcribe audio via Google Cloud Speech-to-Text")
+    print("")
     print("Gen-image:")
     print("  ww gen-image              Generate image from clipboard text (Imagen 3)")
     print("")
@@ -1979,6 +1983,25 @@ def _main_dispatch(raw_args: list):
             print(f"Unknown ffmpeg command: {subcmd}")
             sys.exit(1)
 
+    elif group == "gcp-speech":
+        subcmd = _pop_subcmd()
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww gcp-speech <command>")
+            print("")
+            print("Commands:")
+            print("  transcribe   Transcribe audio via Google Cloud Speech-to-Text")
+            print("")
+            print("Examples:")
+            print("  ww gcp-speech transcribe ~/Downloads/recording.mp3")
+            print("  ww gcp-speech transcribe ~/Downloads/recording-zh.mp3 --lang cmn-Hans-CN")
+        elif subcmd == "transcribe":
+            from ww.gcp_speech.transcribe import main as m
+
+            m()
+        else:
+            print(f"Unknown gcp-speech command: {subcmd}")
+            sys.exit(1)
+
     elif group == "amd-dev-cloud":
         subcmd = _pop_subcmd()
         if subcmd == "" or subcmd in ("--help", "-h"):
@@ -2023,6 +2046,7 @@ def _main_dispatch(raw_args: list):
             "copilot",
             "format",
             "ffmpeg",
+            "gcp-speech",
             "conversation",
             "db",
             "degree",
