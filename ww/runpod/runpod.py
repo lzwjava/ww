@@ -3,6 +3,7 @@
 
 Subcommands:
   start <gpu> [pod_name]   Create and start a pod with the given GPU type
+  deploy <gpu> [pod_name]  Build image and deploy a pod
   stop <pod_id>             Stop a running pod
   list                      List all pods
   ssh <pod_id>              SSH into a pod
@@ -14,17 +15,9 @@ Subcommands:
   user                      Show account info
   billing                   Show billing history
   raw <args...>             Pass raw arguments directly to runpodctl
-
-GPU type shortcuts (mapped to runpodctl --gpu-id values):
-  rtx4000ada  → NVIDIA RTX 4000 Ada (24GB)
-  rtx4090     → NVIDIA RTX 4070 Ti 48GB (RTX 4090 24GB)
-  a100        → NVIDIA A100 80GB
-  h100        → NVIDIA H100 80GB
-  h200        → NVIDIA H200 140GB
-  l40s        → NVIDIA L40S 48GB
-  mi300x      → AMD MI300X 192GB (if available)
 """
 
+import os
 import shutil
 import subprocess
 import sys
@@ -45,6 +38,25 @@ GPU_ALIASES = {
 DEFAULT_IMAGE = "runpod/pytorch:2.8.0-py3.11-cuda12.8.1-cudnn-devel-ubuntu22.04"
 
 
+def _clean_env():
+    return {
+        k: v
+        for k, v in os.environ.items()
+        if k not in {
+            "ALL_PROXY",
+            "FTP_PROXY",
+            "GLOBAL_PROXY",
+            "HTTPS_PROXY",
+            "HTTPS_PROXY_REQUEST_FULLURI",
+            "HTTP_PROXY",
+            "HTTP_PROXY_REQUEST_FULLURI",
+            "ftp_proxy",
+            "http_proxy",
+            "https_proxy",
+        }
+    }
+
+
 def _check_runpodctl():
     if not shutil.which("runpodctl"):
         print("Error: runpodctl not found. Install it first:")
@@ -58,33 +70,23 @@ def _run(args, check=True):
     """Run runpodctl with given args, streaming output."""
     _check_runpodctl()
     cmd = ["runpodctl"] + args
-    try:
-        env = {
-            k: v
-            for k, v in __import__("os").environ.items()
-            if k
-            not in {
-                "ALL_PROXY",
-                "FTP_PROXY",
-                "GLOBAL_PROXY",
-                "HTTPS_PROXY",
-                "HTTPS_PROXY_REQUEST_FULLURI",
-                "HTTP_PROXY",
-                "HTTP_PROXY_REQUEST_FULLURI",
-                "ftp_proxy",
-                "http_proxy",
-                "https_proxy",
-            }
-        }
-        result = subprocess.run(cmd, check=check, env=env)
+    result = subprocess.run(cmd, check=check, env=_clean_env())
+    sys.exit(result.returncode)
+
+
+def _docker_build(image):
+    if not shutil.which("docker"):
+        print("Error: docker not found. Install Docker first.")
+        sys.exit(1)
+    print(f"Building Docker image: {image}")
+    result = subprocess.run(["docker", "build", "-t", image, "."], check=False)
+    if result.returncode != 0:
+        print("Docker build failed.")
         sys.exit(result.returncode)
-    except subprocess.CalledProcessError as e:
-        sys.exit(e.returncode)
 
 
 def cmd_start():
-    """Create and start a pod: ww runpod start <gpu> [pod_name] [--image IMG]"""
-    args = sys.argv[1:]  # remaining args after "start"
+    args = sys.argv[1:]
     if not args or args[0] in ("--help", "-h"):
         print("Usage: ww runpod start <gpu> [pod_name] [--image IMAGE]")
         print("")
@@ -135,8 +137,74 @@ def cmd_start():
     _run(runpod_args)
 
 
+def cmd_deploy():
+    args = sys.argv[1:]
+    if not args or args[0] in ("--help", "-h"):
+        print("Usage: ww runpod deploy <gpu> [pod_name] --image IMAGE [--build]")
+        print("")
+        print("Optionally builds the current project with Docker, then creates a RunPod pod")
+        print("with the specified GPU type and image.")
+        print("")
+        print("GPU types:")
+        for alias, gpu_id in sorted(GPU_ALIASES.items()):
+            print(f"  {alias:16s}  {gpu_id}")
+        print("")
+        print("Options:")
+        print("  --image IMAGE   Container image to deploy")
+        print("  --build         Rebuild local image before deploy")
+        print("")
+        print("Examples:")
+        print("  ww runpod deploy rtx4000ada --image my-registry/ww:latest")
+        print("  ww runpod deploy h200 my-run --image my-registry/ww:latest --build")
+        return
+
+    gpu_input = args[0]
+    gpu_id = GPU_ALIASES.get(gpu_input.lower(), gpu_input)
+
+    pod_name = None
+    image = None
+    force_build = False
+    i = 1
+    while i < len(args):
+        if args[i] == "--image" and i + 1 < len(args):
+            image = args[i + 1]
+            i += 2
+        elif args[i] == "--build":
+            force_build = True
+            i += 1
+        elif not args[i].startswith("-"):
+            pod_name = args[i]
+            i += 1
+        else:
+            i += 1
+
+    if not image:
+        print("Error: --image is required for deploy.")
+        print("Usage: ww runpod deploy <gpu> [pod_name] --image IMAGE [--build]")
+        sys.exit(1)
+
+    if force_build:
+        _docker_build(image)
+
+    runpod_args = [
+        "pod",
+        "create",
+        "--gpu-id",
+        gpu_id,
+        "--image",
+        image,
+    ]
+    if pod_name:
+        runpod_args += ["--name", pod_name]
+
+    print(
+        f"Deploying pod: GPU={gpu_id}, image={image}"
+        + (f", name={pod_name}" if pod_name else "")
+    )
+    _run(runpod_args)
+
+
 def cmd_stop():
-    """Stop a running pod: ww runpod stop <pod_id>"""
     args = sys.argv[1:]
     if not args or args[0] in ("--help", "-h"):
         print("Usage: ww runpod stop <pod_id>")
@@ -145,24 +213,18 @@ def cmd_stop():
 
 
 def cmd_list():
-    """List all pods: ww runpod list"""
     _run(["pod", "list"])
 
 
 def cmd_ssh():
-    """SSH into a pod: ww runpod ssh <pod_id>"""
     args = sys.argv[1:]
     if not args or args[0] in ("--help", "-h"):
         print("Usage: ww runpod ssh <pod_id>")
         return
-    # runpodctl has no direct ssh subcommand; use pod get to find IP+port, then ssh
-    # But runpodctl older versions have: runpodctl ssh <pod_id>
-    # Try the direct approach first
     _run(["ssh", args[0]])
 
 
 def cmd_detail():
-    """Show detailed hardware info for a pod: ww runpod detail <pod_id>"""
     args = sys.argv[1:]
     if not args or args[0] in ("--help", "-h"):
         print("Usage: ww runpod detail <pod_id>")
@@ -171,28 +233,11 @@ def cmd_detail():
         print("OS, CPU, memory, disk, GPU, and network details.")
         return
     pod_id = args[0]
-    env = {
-        k: v
-        for k, v in __import__("os").environ.items()
-        if k
-        not in {
-            "ALL_PROXY",
-            "FTP_PROXY",
-            "GLOBAL_PROXY",
-            "HTTPS_PROXY",
-            "HTTPS_PROXY_REQUEST_FULLURI",
-            "HTTP_PROXY",
-            "HTTP_PROXY_REQUEST_FULLURI",
-            "ftp_proxy",
-            "http_proxy",
-            "https_proxy",
-        }
-    }
     info_result = subprocess.run(
         ["runpodctl", "ssh", "info", pod_id],
         capture_output=True,
         text=True,
-        env=env,
+        env=_clean_env(),
     )
     if info_result.returncode != 0 or not info_result.stdout.strip():
         print("Failed to get pod SSH info.")
@@ -237,10 +282,10 @@ def cmd_detail():
         "sed -n '1,12p' /etc/os-release",
         "lscpu | sed -n '1,24p'",
         "free -h",
-        "df -h / | sed -n '1,2p'",
+        "df -h /",
         "nproc",
         "nvidia-smi",
-        "ip -4 addr show | awk '{print}' | head -n 24",
+        "ip -4 addr show",
         "uptime",
         "python3 --version",
         "command -v nvcc >/dev/null && nvcc --version | tail -n 2 || echo 'nvcc not found'",
@@ -249,11 +294,11 @@ def cmd_detail():
     print(f"Pod: {name} ({pod_id})")
     print(f"SSH: ssh -i {ssh_key_path} root@{ip} -p {port}")
     print("")
-    ssh_common_args = [
+    ssh_base = [
         "-i",
         ssh_key_path,
         "-o",
-        "StrictHostKeyChecking=accept-new",
+        "StrictHostKeyChecking=no",
         "-o",
         "LogLevel=ERROR",
         f"root@{ip}",
@@ -263,19 +308,18 @@ def cmd_detail():
     for cmd in remote_commands:
         print(f"--- {cmd} ---")
         result = subprocess.run(
-            ["ssh", *ssh_common_args, "bash", "-c", cmd],
+            ["ssh", *ssh_base, "bash", "-c", cmd],
             capture_output=True,
             text=True,
         )
-        if result.stdout:
+        if result.stdout.strip():
             print(result.stdout.rstrip())
-        if result.stderr:
+        if result.stderr.strip():
             print(result.stderr.rstrip())
         print("")
 
 
 def cmd_delete():
-    """Delete a pod: ww runpod delete <pod_id>"""
     args = sys.argv[1:]
     if not args or args[0] in ("--help", "-h"):
         print("Usage: ww runpod delete <pod_id>")
@@ -284,12 +328,10 @@ def cmd_delete():
 
 
 def cmd_gpus():
-    """List available GPU types: ww runpod gpus"""
     _run(["gpu", "list"])
 
 
 def cmd_send():
-    """Send a file: ww runpod send <file>"""
     args = sys.argv[1:]
     if not args or args[0] in ("--help", "-h"):
         print("Usage: ww runpod send <file>")
@@ -298,7 +340,6 @@ def cmd_send():
 
 
 def cmd_receive():
-    """Receive a file: ww runpod receive <code>"""
     args = sys.argv[1:]
     if not args or args[0] in ("--help", "-h"):
         print("Usage: ww runpod receive <code>")
@@ -308,17 +349,14 @@ def cmd_receive():
 
 
 def cmd_user():
-    """Show account info: ww runpod user"""
     _run(["user"])
 
 
 def cmd_billing():
-    """Show billing history: ww runpod billing"""
     _run(["billing"])
 
 
 def cmd_raw():
-    """Pass raw args to runpodctl: ww runpod raw <args...>"""
     args = sys.argv[1:]
     if not args:
         print("Usage: ww runpod raw <runpodctl args...>")
@@ -333,6 +371,7 @@ def main():
         print("")
         print("Commands:")
         print("  start <gpu> [name]   Create and start a pod with a GPU type")
+        print("  deploy <gpu> [name]  Build and deploy a new pod")
         print("  stop <pod_id>         Stop a running pod")
         print("  list                  List all pods")
         print("  ssh <pod_id>          SSH into a pod")
@@ -352,6 +391,7 @@ def main():
         print("Examples:")
         print("  ww runpod start rtx4000ada")
         print("  ww runpod start h200 my-training --image runpod/pytorch:2.4.0")
+        print("  ww runpod deploy h200 my-run --image my-registry/ww:latest --build")
         print("  ww runpod list")
         print("  ww runpod ssh abc123")
         print("  ww runpod stop abc123")
@@ -360,6 +400,8 @@ def main():
     subcmd = sys.argv.pop(1)
     if subcmd == "start":
         cmd_start()
+    elif subcmd == "deploy":
+        cmd_deploy()
     elif subcmd == "stop":
         cmd_stop()
     elif subcmd == "list":
