@@ -59,6 +59,8 @@ Respond with ONLY valid JSON (no markdown, no code fences):
 
 
 def launch_chrome():
+    import socket
+
     profile_dir = os.path.expanduser("~/.chrome-playwright-debug-profile")
     cmd = [
         CHROME_PATH,
@@ -68,7 +70,15 @@ def launch_chrome():
         "--no-default-browser-check",
     ]
     proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    time.sleep(3)
+    # Wait until the debug port is actually accepting connections
+    for _ in range(30):
+        try:
+            sock = socket.create_connection(("127.0.0.1", DEBUG_PORT), timeout=1)
+            sock.close()
+            return proc
+        except (ConnectionRefusedError, OSError):
+            time.sleep(0.5)
+    print("Warning: Chrome debug port not responding after 15s")
     return proc
 
 
