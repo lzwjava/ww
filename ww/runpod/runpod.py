@@ -237,7 +237,7 @@ def cmd_detail():
         "sed -n '1,12p' /etc/os-release",
         "lscpu | sed -n '1,24p'",
         "free -h",
-        "df -h /",
+        "df -h / | sed -n '1,2p'",
         "nproc",
         "nvidia-smi",
         "ip -4 addr show | awk '{print}' | head -n 24",
