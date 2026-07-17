@@ -62,6 +62,7 @@ _ww() {
         'completion:Install or print zsh completions'
         'headphone:Audio device testing and listing'
         'cook:Cooking timer management'
+        'x:X/Twitter commands'
     )
 
     local -a alarm_cmds
@@ -481,6 +482,12 @@ _ww() {
         'forth:Sync from local to remote'
     )
 
+    local -a x_cmds
+    x_cmds=(
+        'post:Generate X/Twitter posts from markdown files'
+        'unfollow:Smart bulk unfollow using LLM decisions'
+    )
+
     _arguments -C \
         '1: :->cmd' \
         '2: :->subcmd' \
@@ -544,6 +551,7 @@ _ww() {
                 amd-dev-cloud) _describe -t commands 'amd-dev-cloud command' amd_dev_cloud_cmds ;;
                 transcript)    _files -g "*.json" ;;
                 completion)    _describe -t commands 'completion command' completion_cmds ;;
+                x)             _describe -t commands 'x command' x_cmds ;;
             esac
             ;;
         subcmd2)
@@ -671,6 +679,18 @@ _ww() {
                     case $words[3] in
                         compress|photo-compress)
                             _arguments '--quality[Compression quality]:quality:' ;;
+                    esac
+                    ;;
+                x)
+                    case $words[3] in
+                        unfollow)
+                            _arguments \
+                                '--count[Target number to unfollow]:count:' \
+                                '--delay[Base delay seconds between unfollows]:delay:'
+                            ;;
+                        post)
+                            _arguments '--n[Max files to process]:n:'
+                            ;;
                     esac
                     ;;
             esac

@@ -166,7 +166,7 @@ def save_report(report):
         json.dump(report, f, indent=2, ensure_ascii=False)
 
 
-def unfollow_with_llm(page, username, count, delay, dry_run=False):
+def unfollow_with_llm(page, username, count, delay):
     """Scroll through following list, ask LLM for each, unfollow if recommended."""
     page.goto(FOLLOWING_URL_TEMPLATE.format(username=username))
     page.wait_for_timeout(3000)
@@ -227,12 +227,6 @@ def unfollow_with_llm(page, username, count, delay, dry_run=False):
                         "reason": reason,
                     }
 
-                    if dry_run:
-                        print(f"  [DRY RUN] Would unfollow @{handle}")
-                        report["unfollowed"].append(entry)
-                        unfollowed += 1
-                        continue
-
                     # Click the unfollow button within this cell
                     unfollow_btn = cell.locator('button[data-testid$="-unfollow"]')
                     if unfollow_btn.count() > 0:
@@ -292,11 +286,6 @@ def main():
         default=DEFAULT_DELAY,
         help=f"Base delay in seconds between unfollows (default: {DEFAULT_DELAY}).",
     )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Evaluate profiles with LLM but don't actually unfollow.",
-    )
     args = parser.parse_args()
 
     print("Launching Chrome with remote debugging...")
@@ -312,13 +301,10 @@ def main():
             login_manually(page)
             username = get_username(page)
 
-            mode = "DRY RUN" if args.dry_run else "LIVE"
-            print(f"\n[{mode}] Starting smart unfollow (target: {args.count})...")
+            print(f"\nStarting smart unfollow (target: {args.count})...")
             print(f"Base delay: {args.delay}s | Report: {REPORT_FILE}\n")
 
-            total, evaluated = unfollow_with_llm(
-                page, username, args.count, args.delay, args.dry_run
-            )
+            total, evaluated = unfollow_with_llm(page, username, args.count, args.delay)
 
             print(f"\nDone! Evaluated {evaluated} profiles, unfollowed {total}.")
             print(f"Report saved to: {REPORT_FILE}")

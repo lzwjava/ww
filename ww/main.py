@@ -443,6 +443,13 @@ def _print_help():
     )
     print("  ww transcript <file.json> -o out.md  Write markdown to file")
     print("")
+    print("X (Twitter):")
+    print(
+        "  ww x post --n 5           Generate X posts from markdown files in original/"
+    )
+    print("  ww x unfollow --count 500           Smart bulk unfollow via LLM")
+    print("  ww x unfollow --count 500 --delay 3  Adjust delay between unfollows")
+    print("")
     print("Zed:")
     print(
         "  ww zed [path]             Open Zed connected to remote workstation via SSH"
@@ -1949,6 +1956,33 @@ def _main_dispatch(raw_args: list):
             print(f"Unknown inference command: {subcmd}")
             sys.exit(1)
 
+    elif group == "x":
+        subcmd = _pop_subcmd()
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww x <command>")
+            print("")
+            print("Commands:")
+            print(
+                "  post      Generate X/Twitter posts from markdown files in original/"
+            )
+            print("  unfollow   Smart bulk unfollow on X/Twitter using LLM decisions")
+            print("")
+            print("Examples:")
+            print("  ww x unfollow --count 500")
+            print("  ww x unfollow --count 500 --delay 3")
+            print("  ww x post --n 5")
+        elif subcmd == "unfollow":
+            from ww.social.x_bulk_unfollow import main as m
+
+            m()
+        elif subcmd == "post":
+            from ww.social.x_post import main as m
+
+            m()
+        else:
+            print(f"Unknown x command: {subcmd}")
+            sys.exit(1)
+
     elif group == "alarm":
         from ww.alarm.alarm import main as m
 
@@ -1993,7 +2027,9 @@ def _main_dispatch(raw_args: list):
             print("")
             print("Examples:")
             print("  ww gcp-speech transcribe ~/Downloads/recording.mp3")
-            print("  ww gcp-speech transcribe ~/Downloads/recording-zh.mp3 --lang cmn-Hans-CN")
+            print(
+                "  ww gcp-speech transcribe ~/Downloads/recording-zh.mp3 --lang cmn-Hans-CN"
+            )
         elif subcmd == "transcribe":
             from ww.gcp_speech.transcribe import main as m
 
@@ -2090,6 +2126,7 @@ def _main_dispatch(raw_args: list):
             "utils",
             "weather",
             "whisper",
+            "x",
             "zed",
         ]
         matches = [g for g in all_groups if g.startswith(group)]
