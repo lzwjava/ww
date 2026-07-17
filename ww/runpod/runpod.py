@@ -23,16 +23,26 @@ import subprocess
 import sys
 
 GPU_ALIASES = {
-    "rtx4000ada": "NVIDIA-RTX-4000-Ada",
-    "rtx4070ti": "NVIDIA-RTX-4070-Ti-48GB",
-    "rtx4090": "NVIDIA-RTX-4090",
-    "a100": "NVIDIA-A100-80GB",
-    "a100-80gb": "NVIDIA-A100-80GB",
-    "h100": "NVIDIA-H100-80GB",
-    "h100-80gb": "NVIDIA-H100-80GB",
-    "h200": "NVIDIA-H200-140GB",
-    "l40s": "NVIDIA-L40S",
-    "mi300x": "AMD-MI300X-192GB",
+    "a100": "NVIDIA A100 80GB PCIe",
+    "a100-sxm": "NVIDIA A100-SXM4-80GB",
+    "a40": "NVIDIA A40",
+    "b200": "NVIDIA B200",
+    "b300": "NVIDIA B300 SXM6 AC",
+    "rtx3090": "NVIDIA GeForce RTX 3090",
+    "rtx4090": "NVIDIA GeForce RTX 4090",
+    "rtx5090": "NVIDIA GeForce RTX 5090",
+    "h100": "NVIDIA H100 80GB HBM3",
+    "h100-nvl": "NVIDIA H100 NVL",
+    "h200": "NVIDIA H200",
+    "h200-nvl": "NVIDIA H200 NVL",
+    "l4": "NVIDIA L4",
+    "l40": "NVIDIA L40",
+    "l40s": "NVIDIA L40S",
+    "rtx4000ada": "NVIDIA RTX 4000 Ada Generation",
+    "rtxa4500": "NVIDIA RTX A4500",
+    "rtxpro4000": "NVIDIA RTX PRO 4000 Blackwell",
+    "rtxpro4500": "NVIDIA RTX PRO 4500 Blackwell",
+    "rtxpro6000": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
 }
 
 DEFAULT_IMAGE = "runpod/pytorch:2.8.0-py3.11-cuda12.8.1-cudnn-devel-ubuntu22.04"
