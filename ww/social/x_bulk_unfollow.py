@@ -145,7 +145,7 @@ def ask_llm_should_unfollow(profile_info):
 
     try:
         response = call_openrouter_api_with_messages(
-            messages, model="gemini-flash", max_tokens=100
+            messages, model=None, max_tokens=100
         )
         result = json.loads(response.strip())
         return result.get("decision", "keep"), result.get("reason", "")
