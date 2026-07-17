@@ -367,6 +367,21 @@ def _print_help():
     print("  ww read query <question>  Ask a question over indexed documents")
     print("  ww read query <q> --top-k N  Use N retrieved chunks (default 5)")
     print("")
+    print("RunPod:")
+    print(
+        "  ww runpod start <gpu> [name]  Create and start a pod (rtx4000ada, h200, a100, ...)"
+    )
+    print("  ww runpod list                List all pods")
+    print("  ww runpod ssh <pod_id>        SSH into a pod")
+    print("  ww runpod stop <pod_id>       Stop a pod")
+    print("  ww runpod delete <pod_id>     Delete a pod")
+    print("  ww runpod gpus                List available GPU types")
+    print("  ww runpod send <file>         Send a file (one-time code)")
+    print("  ww runpod receive <code>      Receive a file via code")
+    print("  ww runpod user                Account info")
+    print("  ww runpod billing             Billing history")
+    print("  ww runpod raw <args...>       Pass raw args to runpodctl")
+    print("")
     print("Screenshot:")
     print("  ww screenshot [DELAY]     Take a screenshot (macOS, --dir)")
     print(
@@ -2038,6 +2053,11 @@ def _main_dispatch(raw_args: list):
             print(f"Unknown gcp-speech command: {subcmd}")
             sys.exit(1)
 
+    elif group == "runpod":
+        from ww.runpod.runpod import main as m
+
+        m()
+
     elif group == "amd-dev-cloud":
         subcmd = _pop_subcmd()
         if subcmd == "" or subcmd in ("--help", "-h"):
@@ -2117,6 +2137,7 @@ def _main_dispatch(raw_args: list):
             "qwen",
             "rain",
             "read",
+            "runpod",
             "screenshot",
             "screenshot-linux",
             "search",
