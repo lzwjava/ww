@@ -6,6 +6,7 @@ Subcommands:
   stop <pod_id>             Stop a running pod
   list                      List all pods
   ssh <pod_id>              SSH into a pod
+  detail <pod_id>           Show detailed hardware info for a pod
   delete <pod_id>           Delete a pod
   gpus                      List available GPU types
   send <file>               Send a file (generates one-time receive code)
@@ -58,7 +59,24 @@ def _run(args, check=True):
     _check_runpodctl()
     cmd = ["runpodctl"] + args
     try:
-        result = subprocess.run(cmd, check=check)
+        env = {
+            k: v
+            for k, v in __import__("os").environ.items()
+            if k
+            not in {
+                "ALL_PROXY",
+                "FTP_PROXY",
+                "GLOBAL_PROXY",
+                "HTTPS_PROXY",
+                "HTTPS_PROXY_REQUEST_FULLURI",
+                "HTTP_PROXY",
+                "HTTP_PROXY_REQUEST_FULLURI",
+                "ftp_proxy",
+                "http_proxy",
+                "https_proxy",
+            }
+        }
+        result = subprocess.run(cmd, check=check, env=env)
         sys.exit(result.returncode)
     except subprocess.CalledProcessError as e:
         sys.exit(e.returncode)
@@ -143,6 +161,119 @@ def cmd_ssh():
     _run(["ssh", args[0]])
 
 
+def cmd_detail():
+    """Show detailed hardware info for a pod: ww runpod detail <pod_id>"""
+    args = sys.argv[1:]
+    if not args or args[0] in ("--help", "-h"):
+        print("Usage: ww runpod detail <pod_id>")
+        print("")
+        print("Fetches pod SSH info via runpodctl, then SSH into the pod to collect")
+        print("OS, CPU, memory, disk, GPU, and network details.")
+        return
+    pod_id = args[0]
+    env = {
+        k: v
+        for k, v in __import__("os").environ.items()
+        if k
+        not in {
+            "ALL_PROXY",
+            "FTP_PROXY",
+            "GLOBAL_PROXY",
+            "HTTPS_PROXY",
+            "HTTPS_PROXY_REQUEST_FULLURI",
+            "HTTP_PROXY",
+            "HTTP_PROXY_REQUEST_FULLURI",
+            "ftp_proxy",
+            "http_proxy",
+            "https_proxy",
+        }
+    }
+    info_result = subprocess.run(
+        ["runpodctl", "ssh", "info", pod_id],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    if info_result.returncode != 0 or not info_result.stdout.strip():
+        print("Failed to get pod SSH info.")
+        if info_result.stdout:
+            print(info_result.stdout)
+        if info_result.stderr:
+            print(info_result.stderr)
+        sys.exit(1)
+
+    try:
+        import json
+
+        info = json.loads(info_result.stdout)
+    except json.JSONDecodeError:
+        print("Could not parse runpodctl ssh info as JSON:")
+        print(info_result.stdout)
+        sys.exit(1)
+
+    if not info.get("ip") or not info.get("port"):
+        print(
+            f"Pod '{info.get('name', pod_id)}' ({pod_id}) is not currently reachable for SSH details. Status from runpodctl:"
+        )
+        print(info.get("error", "").strip() or "No ssh info available")
+        print("")
+        print("RunPod metadata:")
+        for key, value in info.items() if isinstance(info, dict) else []:
+            print(f"  {key}: {value}")
+        if info.get("error"):
+            sys.exit(1)
+        return
+
+    ip = info.get("ip", "unknown")
+    port = info.get("port", "unknown")
+    name = info.get("name", pod_id)
+    ssh_key_path = info.get("ssh_key", {}).get("path")
+    if not ssh_key_path:
+        ssh_key_path = "/Users/lzwjava/.runpod/ssh/runpodctl-ssh-key"
+
+    remote_commands = [
+        "hostname",
+        "uname -srm",
+        "sed -n '1,12p' /etc/os-release",
+        "lscpu | sed -n '1,24p'",
+        "free -h",
+        "df -h /",
+        "nproc",
+        "nvidia-smi",
+        "ip -4 addr show | awk '{print}' | head -n 24",
+        "uptime",
+        "python3 --version",
+        "command -v nvcc >/dev/null && nvcc --version | tail -n 2 || echo 'nvcc not found'",
+        "command -v docker >/dev/null && docker --version || echo 'docker not found'",
+    ]
+    print(f"Pod: {name} ({pod_id})")
+    print(f"SSH: ssh -i {ssh_key_path} root@{ip} -p {port}")
+    print("")
+    ssh_common_args = [
+        "-i",
+        ssh_key_path,
+        "-o",
+        "StrictHostKeyChecking=accept-new",
+        "-o",
+        "LogLevel=ERROR",
+        f"root@{ip}",
+        "-p",
+        str(port),
+    ]
+    for cmd in remote_commands:
+        print(f"--- {cmd} ---")
+        result = subprocess.run(
+            ["ssh", *ssh_common_args, "bash", "-c", cmd],
+            capture_output=True,
+            text=True,
+        )
+        if result.stdout:
+            print(result.stdout.rstrip())
+        if result.stderr:
+            print(result.stderr.rstrip())
+        print("")
+
+
 def cmd_delete():
     """Delete a pod: ww runpod delete <pod_id>"""
     args = sys.argv[1:]
@@ -205,6 +336,7 @@ def main():
         print("  stop <pod_id>         Stop a running pod")
         print("  list                  List all pods")
         print("  ssh <pod_id>          SSH into a pod")
+        print("  detail <pod_id>       Show detailed hardware info for a pod")
         print("  delete <pod_id>       Delete a pod")
         print("  gpus                  List available GPU types")
         print("  send <file>           Send a file (generates receive code)")
@@ -234,6 +366,8 @@ def main():
         cmd_list()
     elif subcmd == "ssh":
         cmd_ssh()
+    elif subcmd == "detail":
+        cmd_detail()
     elif subcmd == "delete":
         cmd_delete()
     elif subcmd == "gpus":
