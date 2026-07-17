@@ -52,7 +52,8 @@ def _clean_env():
     return {
         k: v
         for k, v in os.environ.items()
-        if k not in {
+        if k
+        not in {
             "ALL_PROXY",
             "FTP_PROXY",
             "GLOBAL_PROXY",
@@ -152,7 +153,9 @@ def cmd_deploy():
     if not args or args[0] in ("--help", "-h"):
         print("Usage: ww runpod deploy <gpu> [pod_name] --image IMAGE [--build]")
         print("")
-        print("Optionally builds the current project with Docker, then creates a RunPod pod")
+        print(
+            "Optionally builds the current project with Docker, then creates a RunPod pod"
+        )
         print("with the specified GPU type and image.")
         print("")
         print("GPU types:")
@@ -211,7 +214,19 @@ def cmd_deploy():
         f"Deploying pod: GPU={gpu_id}, image={image}"
         + (f", name={pod_name}" if pod_name else "")
     )
-    _run(runpod_args)
+    result = subprocess.run(
+        ["runpodctl", *runpod_args],
+        capture_output=True,
+        text=True,
+        env=_clean_env(),
+    )
+    if result.stdout.strip():
+        print(result.stdout.rstrip())
+    if result.returncode != 0:
+        print("Deploy failed.")
+        if result.stderr.strip():
+            print(result.stderr.strip())
+        sys.exit(result.returncode)
 
 
 def cmd_stop():
