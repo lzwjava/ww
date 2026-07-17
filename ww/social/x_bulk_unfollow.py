@@ -18,6 +18,7 @@ Note: Launches your real Chrome via remote debugging (no automation flags),
 import argparse
 import json
 import os
+import re
 import subprocess
 import time
 import random
@@ -155,9 +156,15 @@ def ask_llm_should_unfollow(profile_info):
 
     try:
         response = call_openrouter_api_with_messages(
-            messages, model=None, max_tokens=100
+            messages, model=None, max_tokens=2000
         )
-        result = json.loads(response.strip())
+        # Extract JSON from response (may be wrapped in reasoning tags or markdown)
+        text = response.strip()
+        # Try to find JSON object in the text
+        match = re.search(r"\{[^}]+\}", text)
+        if match:
+            text = match.group(0)
+        result = json.loads(text)
         return result.get("decision", "keep"), result.get("reason", "")
     except Exception as e:
         print(f"  LLM error: {e}, defaulting to keep")
