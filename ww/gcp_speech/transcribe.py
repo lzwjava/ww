@@ -99,6 +99,38 @@ def _extract_transcript(json_path):
     return " ".join(parts)
 
 
+JOBS_FILE = os.path.expanduser("~/.config/ww/gcp_jobs.json")
+
+
+def _load_jobs():
+    if not os.path.isfile(JOBS_FILE):
+        return {}
+    with open(JOBS_FILE, "r") as f:
+        return json.load(f)
+
+
+def _save_jobs(jobs):
+    os.makedirs(os.path.dirname(JOBS_FILE), exist_ok=True)
+    with open(JOBS_FILE, "w") as f:
+        json.dump(jobs, f, indent=2)
+
+
+def _save_job_info(operation_name, gcs_output_prefix, audio_file, language_code):
+    """Save job info to local registry keyed by basename."""
+    import time
+
+    basename = os.path.splitext(os.path.basename(audio_file))[0]
+    jobs = _load_jobs()
+    jobs[basename] = {
+        "operation_name": operation_name,
+        "gcs_output_prefix": gcs_output_prefix,
+        "audio_file": audio_file,
+        "lang": language_code,
+        "timestamp": time.time(),
+    }
+    _save_jobs(jobs)
+
+
 def _print_help():
     print("Usage: ww gcp-speech transcribe <audio_file> [options]")
     print()
@@ -175,14 +207,18 @@ def main():
     print("=" * 60)
     print("JOB SUBMITTED")
     print("=" * 60)
+    print(f"Job ID:    {basename}")
     print(f"Operation: {operation_name}")
     print(f"Output:    gs://{BUCKET_NAME}/{gcs_output_prefix}/")
     print(f"Console:   {console_url}")
     print()
-    print("Once complete, download results with:")
-    print(f"  gsutil cp gs://{BUCKET_NAME}/{gcs_output_prefix}/*_transcript_*.json .")
-    print("Then convert to markdown with:")
-    print("  ww transcript <json_file> -o transcript.md")
+
+    # Save to local jobs registry so `ww gcp-speech result <id>` can find it
+    _save_job_info(operation_name, gcs_output_prefix, audio_file, language_code)
+    print()
+
+    print("Once complete, use:")
+    print(f"  ww gcp-speech result {basename} --wait")
     print("=" * 60)
 
     if not wait:
@@ -222,7 +258,9 @@ def main():
     print()
     print("=" * 60)
 
-    output_path = os.path.join(os.path.dirname(os.path.abspath(audio_file)), f"{basename}.md")
+    output_path = os.path.join(
+        os.path.dirname(os.path.abspath(audio_file)), f"{basename}.md"
+    )
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(f"# Transcript: {filename}\n\n")
         f.write(f"**Source:** `{audio_file}`\n")

@@ -136,6 +136,8 @@ def _print_help():
     print("GCP Speech:")
     print("  ww gcp-speech transcribe <file> [--lang LANG]")
     print("                           Transcribe audio via Google Cloud Speech-to-Text")
+    print("  ww gcp-speech result <job-id> [--wait]")
+    print("                           Query the result of a previous transcription job")
     print("")
     print("Gen-image:")
     print("  ww gen-image              Generate image from clipboard text (Imagen 3)")
@@ -2063,14 +2065,20 @@ def _main_dispatch(raw_args: list):
             print("")
             print("Commands:")
             print("  transcribe   Transcribe audio via Google Cloud Speech-to-Text")
+            print("  result       Query the result of a previous transcription job")
             print("")
             print("Examples:")
             print("  ww gcp-speech transcribe ~/Downloads/recording.mp3")
             print(
                 "  ww gcp-speech transcribe ~/Downloads/recording-zh.mp3 --lang cmn-Hans-CN"
             )
+            print("  ww gcp-speech result <job-id>")
         elif subcmd == "transcribe":
             from ww.gcp_speech.transcribe import main as m
+
+            m()
+        elif subcmd == "result":
+            from ww.gcp_speech.result import main as m
 
             m()
         else:
