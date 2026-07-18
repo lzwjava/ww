@@ -125,6 +125,8 @@ def _print_help():
     print("  ww env github-desktop    Install GitHub Desktop on macOS and Linux")
     print("")
     print("FFmpeg:")
+    print("  ww ffmpeg m4a <file1.m4a> [file2.m4a ...]")
+    print("                           Convert .m4a file(s) to MP3, combining into one")
     print("  ww ffmpeg merge <file1> <file2> [... <fileN>]")
     print("                           Merge two or more audio/video files into one")
     print("")
@@ -2034,11 +2036,18 @@ def _main_dispatch(raw_args: list):
             print("Usage: ww ffmpeg <command>")
             print("")
             print("Commands:")
+            print("  m4a     Convert .m4a file(s) to MP3, combining multiple into one")
             print("  merge   Merge two or more audio/video files into one")
             print("")
             print("Examples:")
+            print("  ww ffmpeg m4a recording.m4a")
+            print("  ww ffmpeg m4a part1.m4a part2.m4a")
             print("  ww ffmpeg merge intro.mp3 main.mp3 outro.mp3")
             print("  ww ffmpeg merge part1.mp4 part2.mp4")
+        elif subcmd == "m4a":
+            from ww.ffmpeg.m4a import main as m
+
+            m()
         elif subcmd == "merge":
             from ww.ffmpeg.merge import main as m
 
