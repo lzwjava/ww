@@ -48,17 +48,22 @@ The user is a software engineer interested in AI, engineering, and tech.
 
 You are given a batch of 10 profiles. Pick exactly ONE to unfollow.
 
+Use OBJECTIVE signals only — no bias based on language, nationality, or geography.
+A Chinese bio is perfectly fine; do not penalize accounts for being Chinese.
+
 Unfollow priority (higher = more likely to pick):
-1. Bio is primarily in Chinese — not useful for English tech content
-2. Not related to engineering, AI, tech, science, startups, or programming
-3. No professional title or job mentioned, looks like a casual/personal account
-4. Low-quality or spam-looking account
+1. Follower count is very low (< 100) — suggests low influence or credibility
+2. Bio is empty or spam-like (crypto spam, giveaway spam, link farming)
+3. No clear professional identity — no role, no project, no affiliation
+4. Account looks inactive or low-quality (generic avatar, no real activity)
 
 Keep priority (don't pick these):
-1. Related to AI, engineering, programming, tech, science, startups, VC
-2. Has a clear professional title/role (engineer, researcher, founder, etc.)
-3. Has Premium/verified status — slight bonus to keep
-4. Well-known figure in tech or science
+1. High follower count (10K+) — indicates established credibility and influence
+2. Clear professional role in AI, engineering, programming, tech, science, startups, VC
+3. Has Premium/verified status — indicates serious account
+4. Well-known figure, company, or organization in tech or science
+
+When in doubt, prefer keeping the account with more followers and clearer professional identity.
 
 You MUST pick exactly one. Respond with ONLY valid JSON (no markdown, no fences):
 {"index": <1-based index of the profile to unfollow>, "reason": "<brief reason in 10 words or less>"}"""
@@ -141,6 +146,25 @@ def extract_profile_info(cell):
     except Exception:
         info["premium"] = False
 
+    # Follower count — shown in the UserCell, e.g. "1,234 Followers"
+    try:
+        text = cell.inner_text()
+        match = re.search(r"([\d,\.]+[KMB]?)\s*Followers?", text)
+        if match:
+            raw = match.group(1).replace(",", "")
+            mult = 1
+            if raw.endswith("K"):
+                raw, mult = raw[:-1], 1_000
+            elif raw.endswith("M"):
+                raw, mult = raw[:-1], 1_000_000
+            elif raw.endswith("B"):
+                raw, mult = raw[:-1], 1_000_000_000
+            info["followers"] = int(float(raw) * mult)
+        else:
+            info["followers"] = 0
+    except Exception:
+        info["followers"] = 0
+
     return info
 
 
@@ -159,6 +183,7 @@ def ask_llm_pick_unfollow(profiles):
             f"[{i + 1}] @{p.get('handle', 'unknown')} | "
             f"Name: {p.get('name', '')} | "
             f"Bio: {p.get('bio', '(empty)')} | "
+            f"Followers: {p.get('followers', 0):,} | "
             f"Premium: {'Yes' if p.get('premium') else 'No'}"
         )
     profile_text = "\n".join(lines)
@@ -297,7 +322,10 @@ def unfollow_with_llm(page, username, count, delay):
             f"\nBatch of {len(batch)} profiles gathered (evaluated {evaluated} total):"
         )
         for _, p in batch:
-            print(f"  @{p['handle']} — {p.get('bio', '')[:60]}")
+            print(
+                f"  @{p['handle']} — {p.get('followers', 0):,} followers"
+                f" | bio: {p.get('bio', '')[:50]}"
+            )
 
         # Ask LLM to pick one
         profiles = [p for _, p in batch]
