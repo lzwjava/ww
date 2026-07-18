@@ -8,6 +8,10 @@ load_env()
 def _print_help():
     print("Usage: ww <group> [command] [options]")
     print("")
+    print("Help:")
+    print("  ww help <file_path>       LLM-powered help for a specific module file")
+    print("  ww help                   Show this help")
+    print("")
     print("Action:")
     print(
         "  ww action [workflow.yml]  Trigger a GitHub Actions workflow (default: gh-pages.yml)"
@@ -512,8 +516,19 @@ def _main_dispatch(raw_args: list):
 
     group = sys.argv.pop(1)
 
-    if group in ("--help", "-h", "help"):
+    if group in ("--help", "-h"):
         _print_help()
+        return
+
+    if group == "help":
+        # ww help <file_path> — LLM-powered help for a specific module
+        # Don't pop the file path — let the help module read it from sys.argv
+        if len(sys.argv) <= 1:
+            _print_help()
+            return
+        from ww.help_llm.help import main as m
+
+        m()
         return
 
     if group == "note":
