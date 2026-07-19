@@ -437,6 +437,11 @@ def _print_help():
     print("  ww utils smart-unzip      Smart unzip archives")
     print("  ww utils unzip            Unzip an archive")
     print("")
+    print("Vision Model:")
+    print(
+        "  ww vision-model test [--model MODEL]  Test VISION_MODEL via OpenRouter (image + text)"
+    )
+    print("")
     print("Weather:")
     print("  ww rain                   Record video, analyze rain intensity (in-car)")
     print("  ww rain --seconds 5       Longer video capture")
@@ -2120,6 +2125,27 @@ def _main_dispatch(raw_args: list):
             print(f"Unknown amd-dev-cloud command: {subcmd}")
             sys.exit(1)
 
+    elif group == "vision-model":
+        subcmd = _pop_subcmd()
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww vision-model <command>")
+            print("")
+            print("Commands:")
+            print(
+                "  test [--model MODEL] [--image PATH]  Test VISION_MODEL via OpenRouter (image + text)"
+            )
+            print("")
+            print("Examples:")
+            print("  ww vision-model test")
+            print("  ww vision-model test --model openai/gpt-4o-mini")
+        elif subcmd == "test":
+            from ww.vision_model.test import main as m
+
+            m()
+        else:
+            print(f"Unknown vision-model command: {subcmd}")
+            sys.exit(1)
+
     else:
         # Suggest similar commands when exact match fails
         all_groups = [
@@ -2177,6 +2203,7 @@ def _main_dispatch(raw_args: list):
             "torch",
             "transcript",
             "utils",
+            "vision-model",
             "weather",
             "whisper",
             "x",
