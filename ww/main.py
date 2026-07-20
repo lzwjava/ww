@@ -155,6 +155,9 @@ def _print_help():
     )
     print("  ww gen-video set-privacy  Change privacy of an uploaded YouTube video")
     print("  ww gen-video server       Start the gen-video API server (FastAPI)")
+    print(
+        "  ww gen-video generate    Read pasteboard content and send to gen-video server"
+    )
     print("")
     print("GIF:")
     print("  ww gif                    Create GIF from images")
@@ -1639,6 +1642,11 @@ def _main_dispatch(raw_args: list):
         elif len(sys.argv) > 1 and sys.argv[1] == "server":
             sys.argv.pop(1)  # consume 'server'
             from ww.gen_video.server import main as m
+
+            m()
+        elif len(sys.argv) > 1 and sys.argv[1] == "generate":
+            sys.argv.pop(1)  # consume 'generate'
+            from ww.gen_video.generate import main as m
 
             m()
         else:
