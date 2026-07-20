@@ -144,9 +144,11 @@ def _print_help():
     print("")
     print("Gen-video:")
     print(
-        "  ww gen-video <file>       Generate a short-form video (9:16) from a markdown note"
+        "  ww gen-video <file>       Generate a 15s short-form video (9:16) from a markdown note"
     )
-    print("  ww gen-video <file> --output out.mp4 --voice Samantha")
+    print(
+        "                           5 slides × 3s, centered images, top/bottom text, no audio"
+    )
     print("")
     print("GIF:")
     print("  ww gif                    Create GIF from images")
