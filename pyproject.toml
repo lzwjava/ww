@@ -49,6 +49,8 @@ dependencies = [
     "whisperx>=3.8.6",
     "google-api-python-client>=2.198.0",
     "google-auth-oauthlib>=1.4.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
 ]
 
 [project.scripts]
@@ -82,6 +84,7 @@ exclude = [
     "ww/pico/",
     "ww/gen_video/youtube_upload.py",
     "ww/gen_video/youtube_set_privacy.py",
+    "ww/gen_video/server.py",
 ]
 
 [tool.ruff]

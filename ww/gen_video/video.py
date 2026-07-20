@@ -436,102 +436,38 @@ def _create_slide_frame(
     return output_path
 
 
-def main():
-    try:
-        from ww.env import load_env as _le
+def generate_video_from_content(
+    md_content,
+    output_path,
+    model=None,
+    image_model="black-forest-labs/flux.2-pro",
+    verbose=True,
+):
+    """Run the full video generation pipeline from markdown content.
 
-        _le()
-    except ImportError:
-        pass
+    Steps: generate scenes → generate images → create slide frames → assemble video.
 
-    # Parse args
-    args = list(sys.argv[1:])
+    Args:
+        md_content: Markdown text (already stripped of frontmatter).
+        output_path: Where to write the final .mp4.
+        model: LLM model for script generation (default: $MODEL env var).
+        image_model: Image generation model.
+        verbose: If True, print progress to stdout.
 
-    if not args or "--help" in args or "-h" in args:
-        print("Usage: ww gen-video <file_path> [options]")
-        print()
-        print(
-            "Generate a 15-second vertical short-form video (9:16) from a markdown note."
-        )
-        print("5 slides × 3 seconds each. No audio.")
-        print("Optimized for Douyin / WeChat Video Account.")
-        print()
-        print("Options:")
-        print(
-            "  --output PATH       Output video path (default: <input_name>_video.mp4)"
-        )
-        print("  --model MODEL       LLM model for script generation (default: $MODEL)")
-        print(
-            "  --image-model MODEL Image generation model (default: black-forest-labs/flux.2-pro)"
-        )
-        print("  --upload            Upload generated video to YouTube after creation")
-        print(
-            "  --private           When uploading, set video to private (default: public)"
-        )
-        print()
-        print("Examples:")
-        print("  ww gen-video notes/2026-07-20-tesla-p100-vs-m60-for-ai-en.md")
-        print("  ww gen-video notes/2026-07-20-tesla-p100-vs-m60-for-ai-en.md --upload")
-        return
+    Returns:
+        (success: bool, output_path: str or None, error_msg: str or None)
+    """
+    _p = print if verbose else lambda *a, **kw: None
 
-    file_path = args[0]
-
-    output_path = None
-    model = None
-    image_model = "black-forest-labs/flux.2-pro"
-    do_upload = False
-    upload_private = False
-
-    i = 1
-    while i < len(args):
-        if args[i] == "--output" and i + 1 < len(args):
-            output_path = args[i + 1]
-            i += 2
-        elif args[i] == "--model" and i + 1 < len(args):
-            model = args[i + 1]
-            i += 2
-        elif args[i] == "--image-model" and i + 1 < len(args):
-            image_model = args[i + 1]
-            i += 2
-        elif args[i] == "--upload":
-            do_upload = True
-            i += 1
-        elif args[i] == "--private":
-            upload_private = True
-            i += 1
-        else:
-            print(f"Unknown option: {args[i]}")
-            sys.exit(1)
-
-    # Resolve input file
-    file_path = os.path.expanduser(file_path)
-    if not os.path.isfile(file_path):
-        print(f"Error: File not found: {file_path}")
-        sys.exit(1)
-
-    if output_path is None:
-        base = os.path.splitext(os.path.basename(file_path))[0]
-        output_path = f"{base}_video.mp4"
-
-    # ── Step 1: Read markdown ──────────────────────────────────────────────
-    print(f"Reading: {file_path}")
-    with open(file_path, "r", encoding="utf-8") as f:
-        raw_md = f.read()
-    md_content = _strip_frontmatter(raw_md)
-    print(f"Content length: {len(md_content)} chars")
-
-    # ── Step 2: Generate scenes (titles, subtitles, image prompts) ─────────
-    print("Step 1/3: Generating scenes (titles, subtitles, image prompts)...")
+    _p("Step 1/3: Generating scenes (titles, subtitles, image prompts)...")
     scenes = _generate_scenes(md_content, model=model)
-    print(f"Scenes: {len(scenes)}")
+    _p(f"Scenes: {len(scenes)}")
 
     for i, s in enumerate(scenes):
-        print(
-            f'  Scene {i + 1}: "{s.get("title", "")}" — {s.get("subtitle", "")[:60]}...'
-        )
+        _p(f'  Scene {i + 1}: "{s.get("title", "")}" — {s.get("subtitle", "")[:60]}...')
 
-    # ── Step 3: Generate images via Flux ──────────────────────────────────
-    print("\nStep 2/3: Generating images via Flux...")
+    # ── Step 2: Generate images via Flux ──────────────────────────────────
+    _p("\nStep 2/3: Generating images via Flux...")
     temp_dir = Path(tempfile.mkdtemp(prefix="gen_video_"))
     raw_image_paths = []
 
@@ -540,7 +476,7 @@ def main():
         if not prompt:
             continue
 
-        print(f"\n  Scene {i + 1}/{len(scenes)}: {prompt[:80]}...")
+        _p(f"\n  Scene {i + 1}/{len(scenes)}: {prompt[:80]}...")
         img_urls = _openrouter_image(prompt, image_model=image_model)
 
         if img_urls:
@@ -549,8 +485,7 @@ def main():
             if success:
                 raw_image_paths.append(str(img_path))
             else:
-                print("  Warning: Image download failed")
-                # Create a simple colored placeholder
+                _p("  Warning: Image download failed")
                 placeholder = temp_dir / f"raw_scene_{i:03d}.png"
                 from PIL import Image as PILImage
 
@@ -558,7 +493,7 @@ def main():
                 bg.save(str(placeholder))
                 raw_image_paths.append(str(placeholder))
         else:
-            print("  Creating placeholder...")
+            _p("  Creating placeholder...")
             placeholder = temp_dir / f"raw_scene_{i:03d}.png"
             from PIL import Image as PILImage
 
@@ -576,8 +511,8 @@ def main():
         raw_image_paths.append(str(placeholder))
     raw_image_paths = raw_image_paths[:5]
 
-    # ── Step 4: Create slide frames with text overlays ────────────────────
-    print("\nStep 3/3: Creating slide frames and assembling video...")
+    # ── Step 3: Create slide frames with text overlays ────────────────────
+    _p("\nStep 3/3: Creating slide frames and assembling video...")
     slide_frames = []
     for i, (img_path, scene) in enumerate(zip(raw_image_paths, scenes[:5])):
         title = scene.get("title", "")
@@ -585,10 +520,10 @@ def main():
         slide_path = temp_dir / f"slide_{i:03d}.png"
         _create_slide_frame(img_path, title, subtitle, str(slide_path))
         slide_frames.append(str(slide_path))
-        print(f'  Slide {i + 1}: "{title}"')
+        _p(f'  Slide {i + 1}: "{title}"')
 
-    # ── Step 5: Assemble video with background music ─────────────────────
-    print("\nAssembling video (5 slides × 3s = 15s)...")
+    # ── Step 4: Assemble video with background music ─────────────────────
+    _p("\nAssembling video (5 slides × 3s = 15s)...")
     try:
         seg_files = []
         for i, slide_path in enumerate(slide_frames):
@@ -651,7 +586,7 @@ def main():
         # Add background music: trim to 15s, fade out last 1s, lower volume
         bg_music = os.path.join(os.path.dirname(__file__), "bg.mp3")
         if os.path.isfile(bg_music):
-            print("  Adding background music with fade-out...")
+            _p("  Adding background music with fade-out...")
             subprocess.run(
                 [
                     "ffmpeg",
@@ -681,8 +616,7 @@ def main():
                 timeout=120,
             )
         else:
-            print(f"  Note: bg.mp3 not found at {bg_music}, no audio added")
-            # Just copy the concat video as-is
+            _p(f"  Note: bg.mp3 not found at {bg_music}, no audio added")
             subprocess.run(
                 ["cp", str(concat_video), output_path],
                 check=True,
@@ -692,8 +626,14 @@ def main():
             )
 
         success = True
+        error_msg = None
     except subprocess.CalledProcessError as e:
-        print(f"Error: FFmpeg failed: {e.stderr[:500] if e.stderr else e}")
+        error_msg = e.stderr[:500] if e.stderr else str(e)
+        _p(f"Error: FFmpeg failed: {error_msg}")
+        success = False
+    except Exception as e:
+        error_msg = str(e)
+        _p(f"Error: {error_msg}")
         success = False
 
     # Cleanup
@@ -702,10 +642,10 @@ def main():
     shutil.rmtree(temp_dir, ignore_errors=True)
 
     if success:
-        print(f"\n✓ Video created: {output_path}")
+        _p(f"\n✓ Video created: {output_path}")
         try:
             size = os.path.getsize(output_path)
-            print(f"  Size: {size / 1024 / 1024:.1f} MB")
+            _p(f"  Size: {size / 1024 / 1024:.1f} MB")
             dur = subprocess.run(
                 [
                     "ffprobe",
@@ -722,27 +662,124 @@ def main():
                 timeout=10,
             )
             d = json.loads(dur.stdout)["format"]["duration"]
-            print(f"  Duration: {float(d):.1f}s")
+            _p(f"  Duration: {float(d):.1f}s")
         except Exception:
             pass
 
-        # ── Upload to YouTube if requested ──────────────────────────────────
-        if do_upload:
-            print("\n── Uploading to YouTube ──")
-            # Manipulate sys.argv so the upload module sees the right args
-            saved_argv = list(sys.argv)
-            upload_args = [saved_argv[0], file_path, output_path]
-            if upload_private:
-                upload_args.append("--private")
-            sys.argv = upload_args
-            try:
-                from ww.gen_video.youtube_upload import main as upload_main
+    return (success, output_path if success else None, error_msg)
 
-                upload_main()
-            except Exception as e:
-                print(f"Upload failed: {e}")
-            finally:
-                sys.argv = saved_argv
-    else:
-        print("\n✗ Video creation failed.")
+
+def main():
+    try:
+        from ww.env import load_env as _le
+
+        _le()
+    except ImportError:
+        pass
+
+    # Parse args
+    args = list(sys.argv[1:])
+
+    if not args or "--help" in args or "-h" in args:
+        print("Usage: ww gen-video <file_path> [options]")
+        print()
+        print(
+            "Generate a 15-second vertical short-form video (9:16) from a markdown note."
+        )
+        print("5 slides × 3 seconds each. No audio.")
+        print("Optimized for Douyin / WeChat Video Account.")
+        print()
+        print("Options:")
+        print(
+            "  --output PATH       Output video path (default: <input_name>_video.mp4)"
+        )
+        print("  --model MODEL       LLM model for script generation (default: $MODEL)")
+        print(
+            "  --image-model MODEL Image generation model (default: black-forest-labs/flux.2-pro)"
+        )
+        print("  --upload            Upload generated video to YouTube after creation")
+        print(
+            "  --private           When uploading, set video to private (default: public)"
+        )
+        print()
+        print("Subcommands:")
+        print("  server              Start the gen-video API server")
+        print()
+        print("Examples:")
+        print("  ww gen-video notes/2026-07-20-tesla-p100-vs-m60-for-ai-en.md")
+        print("  ww gen-video notes/2026-07-20-tesla-p100-vs-m60-for-ai-en.md --upload")
+        return
+
+    file_path = args[0]
+
+    output_path = None
+    model = None
+    image_model = "black-forest-labs/flux.2-pro"
+    do_upload = False
+    upload_private = False
+
+    i = 1
+    while i < len(args):
+        if args[i] == "--output" and i + 1 < len(args):
+            output_path = args[i + 1]
+            i += 2
+        elif args[i] == "--model" and i + 1 < len(args):
+            model = args[i + 1]
+            i += 2
+        elif args[i] == "--image-model" and i + 1 < len(args):
+            image_model = args[i + 1]
+            i += 2
+        elif args[i] == "--upload":
+            do_upload = True
+            i += 1
+        elif args[i] == "--private":
+            upload_private = True
+            i += 1
+        else:
+            print(f"Unknown option: {args[i]}")
+            sys.exit(1)
+
+    # Resolve input file
+    file_path = os.path.expanduser(file_path)
+    if not os.path.isfile(file_path):
+        print(f"Error: File not found: {file_path}")
         sys.exit(1)
+
+    if output_path is None:
+        base = os.path.splitext(os.path.basename(file_path))[0]
+        output_path = f"{base}_video.mp4"
+
+    # ── Step 1: Read markdown ──────────────────────────────────────────────
+    print(f"Reading: {file_path}")
+    with open(file_path, "r", encoding="utf-8") as f:
+        raw_md = f.read()
+    md_content = _strip_frontmatter(raw_md)
+    print(f"Content length: {len(md_content)} chars")
+
+    # ── Run pipeline ───────────────────────────────────────────────────────
+    success, out_path, error_msg = generate_video_from_content(
+        md_content, output_path, model=model, image_model=image_model, verbose=True
+    )
+
+    if not success:
+        print("\n✗ Video creation failed.")
+        if error_msg:
+            print(f"  {error_msg}")
+        sys.exit(1)
+
+    # ── Upload to YouTube if requested ──────────────────────────────────
+    if do_upload:
+        print("\n── Uploading to YouTube ──")
+        saved_argv = list(sys.argv)
+        upload_args = [saved_argv[0], file_path, output_path]
+        if upload_private:
+            upload_args.append("--private")
+        sys.argv = upload_args
+        try:
+            from ww.gen_video.youtube_upload import main as upload_main
+
+            upload_main()
+        except Exception as e:
+            print(f"Upload failed: {e}")
+        finally:
+            sys.argv = saved_argv
