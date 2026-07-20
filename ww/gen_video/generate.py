@@ -18,9 +18,10 @@ Options:
     --image-model   Image generation model override
     --server URL    Override GEN_VIDEO_SERVER_URL for this call
     --poll          Wait for job to complete and download the video
+    --upload        Upload the generated video to YouTube after creation
+    --privacy STATUS  YouTube privacy status: public, private, or unlisted (default: public)
 """
 
-import json
 import os
 import sys
 import time
@@ -44,6 +45,8 @@ def main():
     image_model = None
     server_url = None
     do_poll = False
+    do_upload = False
+    privacy = "public"
 
     i = 0
     while i < len(args):
@@ -62,6 +65,17 @@ def main():
         elif args[i] == "--poll":
             do_poll = True
             i += 1
+        elif args[i] == "--upload":
+            do_upload = True
+            i += 1
+        elif args[i] == "--privacy" and i + 1 < len(args):
+            privacy = args[i + 1]
+            if privacy not in ("public", "private", "unlisted"):
+                print(
+                    f"Error: --privacy must be public, private, or unlisted, got: {privacy}"
+                )
+                sys.exit(1)
+            i += 2
         elif args[i] in ("--help", "-h"):
             print(__doc__)
             return
@@ -75,8 +89,7 @@ def main():
         server_url = os.getenv("GEN_VIDEO_SERVER_URL", "")
     if not server_url:
         print(
-            "Error: GEN_VIDEO_SERVER_URL not set. "
-            "Set it in .env or pass --server URL."
+            "Error: GEN_VIDEO_SERVER_URL not set. Set it in .env or pass --server URL."
         )
         sys.exit(1)
 
@@ -115,15 +128,20 @@ def main():
         output_path = f"gen_video_{timestamp}.mp4"
 
     # ── Build and send request ──────────────────────────────────────────
-    payload = {"content": content}
+    payload: dict[str, str | bool] = {"content": content}
     if model:
         payload["model"] = model
     if image_model:
         payload["image_model"] = image_model
+    if do_upload:
+        payload["upload"] = True
+        payload["privacy"] = privacy
 
     print(f"Sending to {submit_url} ...")
     print(f"  Model: {model or 'default'}")
     print(f"  Image model: {image_model or 'default'}")
+    if do_upload:
+        print(f"  Upload to YouTube: yes (privacy: {privacy})")
 
     try:
         resp = requests.post(submit_url, json=payload, timeout=(10, 30))
@@ -182,6 +200,9 @@ def main():
 
         if status == "completed":
             print()
+            youtube_url = status_data.get("youtube_url")
+            if youtube_url:
+                print(f"YouTube URL: {youtube_url}")
             break
         elif status == "failed":
             error = status_data.get("error", "Unknown error")
@@ -196,7 +217,7 @@ def main():
 
     # ── Download the completed video ────────────────────────────────────
     download_url = f"{base_url}/api/jobs/{job_id}/download"
-    print(f"Downloading video...")
+    print("Downloading video...")
 
     try:
         dresp = requests.get(download_url, stream=True, timeout=(10, 600))
