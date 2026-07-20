@@ -283,22 +283,48 @@ The narration segmentation should feel natural when spoken. Each scene's narrati
     raw = re.sub(r"^```(?:json)?\s*", "", raw.strip())
     raw = re.sub(r"\s*```$", "", raw.strip())
 
+    # Find the outermost JSON object by tracking brace depth
+    start = raw.find("{")
+    if start == -1:
+        print("Error: No JSON object found in LLM response.")
+        print(f"Raw response:\n{raw[:500]}")
+        sys.exit(1)
+
+    depth = 0
+    end = start
+    in_string = False
+    escape = False
+    for i in range(start, len(raw)):
+        ch = raw[i]
+        if escape:
+            escape = False
+            continue
+        if ch == "\\" and in_string:
+            escape = True
+            continue
+        if ch == '"' and not escape:
+            in_string = not in_string
+            continue
+        if not in_string:
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    end = i
+                    break
+    if depth != 0:
+        print("Error: Unmatched braces in LLM response.")
+        print(f"Raw response:\n{raw[:500]}")
+        sys.exit(1)
+
+    json_str = raw[start : end + 1]
     try:
-        data = json.loads(raw)
-    except json.JSONDecodeError:
-        # Try to find JSON in the response
-        match = re.search(r"\{.*\}", raw, re.DOTALL)
-        if match:
-            try:
-                data = json.loads(match.group())
-            except json.JSONDecodeError:
-                print("Error: Could not parse LLM response as JSON.")
-                print(f"Raw response:\n{raw[:500]}")
-                sys.exit(1)
-        else:
-            print("Error: No JSON found in LLM response.")
-            print(f"Raw response:\n{raw[:500]}")
-            sys.exit(1)
+        data = json.loads(json_str)
+    except json.JSONDecodeError as e:
+        print(f"Error: Could not parse LLM response as JSON: {e}")
+        print(f"Raw response:\n{raw[:500]}")
+        sys.exit(1)
 
     script = data.get("script", "")
     scenes = data.get("scenes", [])
