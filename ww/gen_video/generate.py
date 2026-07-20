@@ -2,8 +2,8 @@
 """ww gen-video generate — Read markdown from pasteboard, send to the gen-video API server.
 
 Reads content from the system clipboard, POSTs it to the GEN_VIDEO_SERVER_URL
-endpoint (returns immediately with a job_id), polls until completed,
-and downloads the generated video.
+endpoint (returns immediately with a job_id), and prints the job ID.
+Use --poll to wait for completion and download the generated video.
 
 Usage:
     ww gen-video generate [options]
@@ -17,8 +17,7 @@ Options:
     --model MODEL   LLM model override to send to the server
     --image-model   Image generation model override
     --server URL    Override GEN_VIDEO_SERVER_URL for this call
-    --poll          Poll until job completes and download (default: on)
-    --no-poll       Return job_id immediately without waiting
+    --poll          Wait for job to complete and download the video
 """
 
 import json
@@ -44,7 +43,7 @@ def main():
     model = None
     image_model = None
     server_url = None
-    do_poll = True
+    do_poll = False
 
     i = 0
     while i < len(args):
@@ -60,8 +59,8 @@ def main():
         elif args[i] == "--server" and i + 1 < len(args):
             server_url = args[i + 1]
             i += 2
-        elif args[i] == "--no-poll":
-            do_poll = False
+        elif args[i] == "--poll":
+            do_poll = True
             i += 1
         elif args[i] in ("--help", "-h"):
             print(__doc__)
