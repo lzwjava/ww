@@ -152,6 +152,7 @@ def _print_help():
     print(
         "  ww gen-video upload       Upload a video to YouTube via YouTube Data API v3"
     )
+    print("  ww gen-video set-privacy  Change privacy of an uploaded YouTube video")
     print("")
     print("GIF:")
     print("  ww gif                    Create GIF from images")
@@ -1626,6 +1627,11 @@ def _main_dispatch(raw_args: list):
         if len(sys.argv) > 1 and sys.argv[1] == "upload":
             sys.argv.pop(1)  # consume 'upload'
             from ww.gen_video.youtube_upload import main as m
+
+            m()
+        elif len(sys.argv) > 1 and sys.argv[1] == "set-privacy":
+            sys.argv.pop(1)  # consume 'set-privacy'
+            from ww.gen_video.youtube_set_privacy import main as m
 
             m()
         else:

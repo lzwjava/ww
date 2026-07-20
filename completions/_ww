@@ -37,6 +37,7 @@ _ww() {
         'benchmark:GPU benchmark (local or remote)'
         'display:Switch macOS appearance'
         'gen-image:Generate image from clipboard text'
+        'gen-video:Generate video from markdown note or upload/set-privacy'
         'action:Trigger GitHub Actions workflow'
         'actions:GitHub Actions management'
 
@@ -133,6 +134,12 @@ _ww() {
         'photo-compress:Compress photos'
         'exif:Scan images for EXIF GPS data'
         'whatsapp:Download images from WhatsApp Web'
+    )
+
+    local -a gen_video_cmds
+    gen_video_cmds=(
+        'upload:Upload a video to YouTube'
+        'set-privacy:Change privacy of an uploaded YouTube video'
     )
 
     local -a proc_cmds
@@ -529,6 +536,7 @@ _ww() {
                 benchmark)     _describe -t commands 'benchmark command' benchmark_cmds ;;
                 display)       _describe -t commands 'display command' display_cmds ;;
                 degree)        _describe -t commands 'degree command' degree_cmds ;;
+                gen-video)     _describe -t commands 'gen-video command' gen_video_cmds ;;
                 whisper)       _describe -t commands 'whisper command' whisper_cmds ;;
                 host)          _describe -t commands 'host command' host_cmds ;;
                 linux)         _describe -t commands 'linux command' linux_cmds ;;
@@ -556,6 +564,13 @@ _ww() {
             ;;
         subcmd2)
             case $words[2] in
+                gen-video)
+                    case $words[3] in
+                        set-privacy)
+                            _arguments '2:privacy status:(public unlisted private)'
+                            ;;
+                    esac
+                    ;;
                 projects)
                     case $words[3] in
                         update)
