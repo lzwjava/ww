@@ -53,9 +53,19 @@ def _openrouter_chat(messages, model=None, max_tokens=4096):
     return content
 
 
-def _openrouter_image(prompt, image_model="black-forest-labs/flux.2-pro"):
-    """Generate an image via OpenRouter Flux model. Returns list of image URLs/data URLs."""
-    api_key = os.getenv("OPENROUTER_API_KEY")
+def _openrouter_image(prompt, image_model=None, retry_count=0):
+    """Generate an image via OpenRouter's chat completions with an image model.
+
+    Args:
+        prompt: Image generation prompt.
+        image_model: Model name for OpenRouter.
+        retry_count: Internal — number of retries already attempted.
+
+    Returns:
+        list of image URLs (usually 1), or empty list on failure.
+    """
+    MAX_RETRIES = 3
+    api_key = os.environ.get("OPENROUTER_API_KEY")
     if not api_key:
         print("Error: OPENROUTER_API_KEY not set.")
         sys.exit(1)
@@ -73,9 +83,14 @@ def _openrouter_image(prompt, image_model="black-forest-labs/flux.2-pro"):
     if not resp.ok:
         detail = resp.text[:500]
         if "Request Moderated" in detail or "Protected Content" in detail:
+            if retry_count >= MAX_RETRIES:
+                print(f"  Moderation blocked after {MAX_RETRIES} retries — giving up.")
+                return []
             sanitized = _sanitize_prompt(prompt)
             print("  Moderation blocked — retrying with sanitized prompt...")
-            return _openrouter_image(sanitized, image_model=image_model)
+            return _openrouter_image(
+                sanitized, image_model=image_model, retry_count=retry_count + 1
+            )
         print(f"  Warning: Image generation failed: HTTP {resp.status_code}")
         print(f"  {detail}")
         return []
