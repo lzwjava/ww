@@ -11,6 +11,7 @@ import re
 import sys
 import tempfile
 import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import requests
@@ -295,6 +296,28 @@ Output format — return ONLY valid JSON, no markdown fences:
     return scenes
 
 
+def _generate_scene_image(scene_index, prompt, temp_dir, image_model):
+    """Generate an image for a single scene and download it to temp_dir.
+
+    Thread-safe — all state is local or passed in.
+
+    Returns:
+        (index: int, path: str) — the scene index and path to the downloaded image.
+    """
+    img_urls = _openrouter_image(prompt, image_model=image_model)
+    if img_urls:
+        img_path = temp_dir / f"raw_scene_{scene_index:03d}.png"
+        if _download_image(img_urls[0], str(img_path)):
+            return (scene_index, str(img_path))
+    # Fall through: create placeholder
+    placeholder = temp_dir / f"raw_scene_{scene_index:03d}.png"
+    from PIL import Image as PILImage
+
+    bg = PILImage.new("RGB", (1080, 1920), (20, 20, 40))
+    bg.save(str(placeholder))
+    return (scene_index, str(placeholder))
+
+
 def _create_slide_frame(
     image_path, title, subtitle, output_path, width=1080, height=1920
 ):
@@ -466,40 +489,44 @@ def generate_video_from_content(
     for i, s in enumerate(scenes):
         _p(f'  Scene {i + 1}: "{s.get("title", "")}" — {s.get("subtitle", "")[:60]}...')
 
-    # ── Step 2: Generate images via Flux ──────────────────────────────────
-    _p("\nStep 2/3: Generating images via Flux...")
+    # ── Step 2: Generate images via Flux (parallel) ─────────────────────────
+    _p("\nStep 2/3: Generating images via Flux (parallel)...")
     temp_dir = Path(tempfile.mkdtemp(prefix="gen_video_"))
     raw_image_paths = []
 
-    for i, scene in enumerate(scenes):
-        prompt = scene.get("image_prompt", "")
-        if not prompt:
-            continue
+    # Submit all scenes in parallel
+    results: dict[int, str] = {}
+    scene_indices = [i for i, s in enumerate(scenes) if s.get("image_prompt")]
+    worker_count = max(1, len(scene_indices))
 
-        _p(f"\n  Scene {i + 1}/{len(scenes)}: {prompt[:80]}...")
-        img_urls = _openrouter_image(prompt, image_model=image_model)
+    with ThreadPoolExecutor(max_workers=worker_count) as ex:
+        futures = {}
+        for i in scene_indices:
+            prompt = scenes[i].get("image_prompt", "")
+            _p(f"  Submitting scene {i + 1}/{len(scenes)}: {prompt[:80]}...")
+            futures[
+                ex.submit(_generate_scene_image, i, prompt, temp_dir, image_model)
+            ] = i
 
-        if img_urls:
-            img_path = temp_dir / f"raw_scene_{i:03d}.png"
-            success = _download_image(img_urls[0], str(img_path))
-            if success:
-                raw_image_paths.append(str(img_path))
-            else:
-                _p("  Warning: Image download failed")
+        for future in as_completed(futures):
+            i = futures[future]
+            try:
+                idx, path = future.result()
+                results[idx] = path
+                _p(f"  Scene {i + 1} done")
+            except Exception as e:
+                _p(f"  Scene {i + 1} exception: {e}")
                 placeholder = temp_dir / f"raw_scene_{i:03d}.png"
                 from PIL import Image as PILImage
 
                 bg = PILImage.new("RGB", (1080, 1920), (20, 20, 40))
                 bg.save(str(placeholder))
-                raw_image_paths.append(str(placeholder))
-        else:
-            _p("  Creating placeholder...")
-            placeholder = temp_dir / f"raw_scene_{i:03d}.png"
-            from PIL import Image as PILImage
+                results[i] = str(placeholder)
 
-            bg = PILImage.new("RGB", (1080, 1920), (20, 20, 40))
-            bg.save(str(placeholder))
-            raw_image_paths.append(str(placeholder))
+    # Collect results in scene order
+    for i in range(len(scenes)):
+        if i in results:
+            raw_image_paths.append(results[i])
 
     # Ensure exactly 5 images (pad or trim)
     while len(raw_image_paths) < 5:
