@@ -158,6 +158,9 @@ def _print_help():
     print(
         "  ww gen-video generate    Read pasteboard content and send to gen-video server"
     )
+    print(
+        "  ww gen-video query <id>  Query the status of a video generation job"
+    )
     print("")
     print("GIF:")
     print("  ww gif                    Create GIF from images")
@@ -1647,6 +1650,11 @@ def _main_dispatch(raw_args: list):
         elif len(sys.argv) > 1 and sys.argv[1] == "generate":
             sys.argv.pop(1)  # consume 'generate'
             from ww.gen_video.generate import main as m
+
+            m()
+        elif len(sys.argv) > 1 and sys.argv[1] == "query":
+            sys.argv.pop(1)  # consume 'query'
+            from ww.gen_video.query import main as m
 
             m()
         else:
