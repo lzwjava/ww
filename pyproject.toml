@@ -47,6 +47,8 @@ dependencies = [
     "langgraph>=1.2.6",
     "langchain-openai>=1.3.3",
     "whisperx>=3.8.6",
+    "google-api-python-client>=2.198.0",
+    "google-auth-oauthlib>=1.4.0",
 ]
 
 [project.scripts]
@@ -78,6 +80,7 @@ exclude = [
     "ww/arduino/",
     "ww/ansible/",
     "ww/pico/",
+    "ww/gen_video/youtube_upload.py",
 ]
 
 [tool.ruff]

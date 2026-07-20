@@ -149,6 +149,9 @@ def _print_help():
     print(
         "                           5 slides × 3s, centered images, top/bottom text, no audio"
     )
+    print(
+        "  ww gen-video upload       Upload a video to YouTube via YouTube Data API v3"
+    )
     print("")
     print("GIF:")
     print("  ww gif                    Create GIF from images")
@@ -1620,9 +1623,15 @@ def _main_dispatch(raw_args: list):
         m()
 
     elif group == "gen-video":
-        from ww.gen_video.video import main as m
+        if len(sys.argv) > 1 and sys.argv[1] == "upload":
+            sys.argv.pop(1)  # consume 'upload'
+            from ww.gen_video.youtube_upload import main as m
 
-        m()
+            m()
+        else:
+            from ww.gen_video.video import main as m
+
+            m()
 
     elif group == "action":
         from ww.action.action import main as m
