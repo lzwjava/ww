@@ -555,6 +555,7 @@ def generate_video_from_content(
         seg_files = []
         for i, slide_path in enumerate(slide_frames):
             seg_file = temp_dir / f"seg_{i:03d}.mp4"
+            _p(f"  Encoding segment {i + 1}/5...")
             subprocess.run(
                 [
                     "ffmpeg",
@@ -588,6 +589,7 @@ def generate_video_from_content(
                 f.write(f"file '{s}'\n")
 
         concat_video = temp_dir / "concat_video.mp4"
+        _p("  Concatenating segments...")
         subprocess.run(
             [
                 "ffmpeg",
@@ -643,7 +645,7 @@ def generate_video_from_content(
                 timeout=120,
             )
         else:
-            _p(f"  Note: bg.mp3 not found at {bg_music}, no audio added")
+            _p(f"  Skipping audio (bg.mp3 not found at {bg_music})")
             subprocess.run(
                 ["cp", str(concat_video), output_path],
                 check=True,
@@ -664,6 +666,7 @@ def generate_video_from_content(
         success = False
 
     # Cleanup
+    _p("  Cleaning up temp files...")
     import shutil
 
     shutil.rmtree(temp_dir, ignore_errors=True)
