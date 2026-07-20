@@ -25,7 +25,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from googleapiclient.errors import HttpError
 
-SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+SCOPES = ["https://www.googleapis.com/auth/youtube"]
 
 
 def _parse_frontmatter(text):
@@ -110,7 +110,7 @@ def _get_credentials(credential_file=None):
     if credential_file is None:
         credential_file = str(google_dir / "client_secret.json")
 
-    token_file = google_dir / "youtube_token.json"
+    token_file = google_dir / "youtube_upload_token.json"
     credentials = None
 
     # Load cached token
@@ -171,18 +171,21 @@ def main():
         print("  mp4_path           Path to the MP4 video file to upload")
         print()
         print("Options:")
-        print("  --public           Set video privacy to public (default: private)")
-        print("  --unlisted         Set video privacy to unlisted (default: private)")
+        print("  --private          Set video privacy to private (default: public)")
+        print("  --unlisted         Set video privacy to unlisted (default: public)")
         print("  --credential PATH  Path to Google OAuth client_secret.json")
         print("  --description TEXT Override video description")
         print("  --tags TAG1,TAG2   Comma-separated tags (overrides frontmatter)")
+        print()
+        print("The video is uploaded as public by default and explicitly set to")
+        print("public after upload for reliable visibility.")
         print()
         print("Examples:")
         print(
             "  ww gen-video upload notes/2026-07-20-tesla-p100-vs-m60-for-ai.md output.mp4"
         )
         print(
-            "  ww gen-video upload notes/2026-07-20-tesla-p100-vs-m60-for-ai.md output.mp4 --public"
+            "  ww gen-video upload notes/2026-07-20-tesla-p100-vs-m60-for-ai.md output.mp4 --private"
         )
         return
 
@@ -195,15 +198,15 @@ def main():
     mp4_path = args[1]
 
     # ── Parse options ───────────────────────────────────────────────────────
-    privacy_status = "private"
+    privacy_status = "public"
     credential_file = None
     description_override = None
     tags_override = None
 
     i = 2
     while i < len(args):
-        if args[i] == "--public":
-            privacy_status = "public"
+        if args[i] == "--private":
+            privacy_status = "private"
             i += 1
         elif args[i] == "--unlisted":
             privacy_status = "unlisted"
@@ -314,5 +317,26 @@ def main():
     print("\nUploaded successfully!")
     print(f"  Video ID: {video_id}")
     print(f"  URL: {url}")
+
+    # ── Auto-set privacy to public ──────────────────────────────────────────
+    # Even if the upload was set to public, YouTube may still process as
+    # private initially. Explicitly update to ensure it's public.
+    if privacy_status == "public":
+        print("\nSetting video to public...")
+        try:
+            # Fetch the current video status
+            video_resp = youtube.videos().list(part="status", id=video_id).execute()
+            items = video_resp.get("items", [])
+            if items:
+                video = items[0]
+                video["status"]["privacyStatus"] = "public"
+                youtube.videos().update(
+                    part="status",
+                    body={"id": video_id, "status": video["status"]},
+                ).execute()
+                print("  Video is now public.")
+        except Exception as e:
+            print(f"  Warning: Could not set public status: {e}")
+            print("  You can run: ww gen-video set-privacy", video_id, "public")
 
     webbrowser.open(url)

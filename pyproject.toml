@@ -81,6 +81,7 @@ exclude = [
     "ww/ansible/",
     "ww/pico/",
     "ww/gen_video/youtube_upload.py",
+    "ww/gen_video/youtube_set_privacy.py",
 ]
 
 [tool.ruff]
