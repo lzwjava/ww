@@ -142,6 +142,12 @@ def _print_help():
     print("Gen-image:")
     print("  ww gen-image              Generate image from clipboard text (Imagen 3)")
     print("")
+    print("Gen-video:")
+    print(
+        "  ww gen-video <file>       Generate a short-form video (9:16) from a markdown note"
+    )
+    print("  ww gen-video <file> --output out.mp4 --voice Samantha")
+    print("")
     print("GIF:")
     print("  ww gif                    Create GIF from images")
     print("")
@@ -1611,6 +1617,11 @@ def _main_dispatch(raw_args: list):
 
         m()
 
+    elif group == "gen-video":
+        from ww.gen_video.video import main as m
+
+        m()
+
     elif group == "action":
         from ww.action.action import main as m
 
@@ -2167,6 +2178,7 @@ def _main_dispatch(raw_args: list):
             "display",
             "env",
             "gen-image",
+            "gen-video",
             "math",
             "gif",
             "git",
