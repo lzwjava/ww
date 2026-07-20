@@ -37,20 +37,31 @@ class GenerateRequest(BaseModel):
     content: str
     model: str | None = None
     image_model: str = "black-forest-labs/flux.2-pro"
+    upload: bool = False
+    privacy: str = "public"
 
 
 OUTPUT_DIR = Path("/tmp/gen_video_server_outputs")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-# In-memory job store: {job_id: {status, progress, output_path, error, created_at, completed_at}}
+# In-memory job store: {job_id: {status, output_path, youtube_url, error, created_at, completed_at}}
 _jobs: dict[str, dict] = {}
 _jobs_lock = threading.Lock()
 
 
 def _run_generation(
-    job_id: str, content: str, output_path: str, model: str | None, image_model: str
+    job_id: str,
+    content: str,
+    output_path: str,
+    model: str | None,
+    image_model: str,
+    upload: bool,
+    privacy: str,
 ):
-    """Run the video generation pipeline in a background thread."""
+    """Run the video generation pipeline in a background thread.
+
+    If upload=True, also uploads the generated video to YouTube.
+    """
     with _jobs_lock:
         _jobs[job_id]["status"] = "processing"
 
@@ -69,13 +80,44 @@ def _run_generation(
             _jobs[job_id]["completed_at"] = time.time()
         return
 
-    with _jobs_lock:
-        if success and out_path and os.path.isfile(out_path):
-            _jobs[job_id]["status"] = "completed"
-            _jobs[job_id]["output_path"] = out_path
-        else:
+    if not (success and out_path and os.path.isfile(out_path)):
+        with _jobs_lock:
             _jobs[job_id]["status"] = "failed"
             _jobs[job_id]["error"] = error_msg or "Unknown error"
+            _jobs[job_id]["completed_at"] = time.time()
+        return
+
+    # ── Upload to YouTube if requested ──────────────────────────────────
+    youtube_url = None
+    if upload:
+        from ww.gen_video.youtube_upload import (
+            prepare_video_metadata,
+            upload_video,
+        )
+
+        print("\n── Uploading to YouTube ──")
+        try:
+            title, description, tags = prepare_video_metadata(content)
+            print(f"Title: {title}")
+            print(f"Tags: {', '.join(tags) if tags else '(none)'}")
+            print(f"Privacy: {privacy}")
+            print(
+                f"Video: {out_path} ({os.path.getsize(out_path) / 1024 / 1024:.1f} MB)"
+            )
+            print()
+
+            video_id, url = upload_video(
+                out_path, title, description, tags, privacy=privacy
+            )
+            youtube_url = url
+            print(f"\nYouTube URL: {youtube_url}")
+        except Exception as e:
+            print(f"YouTube upload failed: {e}")
+
+    with _jobs_lock:
+        _jobs[job_id]["status"] = "completed"
+        _jobs[job_id]["output_path"] = out_path
+        _jobs[job_id]["youtube_url"] = youtube_url
         _jobs[job_id]["completed_at"] = time.time()
 
 
@@ -91,6 +133,9 @@ async def submit_job(req: GenerateRequest):
 
     Returns immediately with a job_id. Poll GET /api/jobs/{job_id} for status,
     then download from GET /api/jobs/{job_id}/download when completed.
+
+    Set upload=true to also upload the generated video to YouTube
+    (requires ~/Library/Application Support/gen-video/youtube_token.json).
     """
     if not req.content.strip():
         raise HTTPException(status_code=400, detail="content cannot be empty")
@@ -103,6 +148,7 @@ async def submit_job(req: GenerateRequest):
             "job_id": job_id,
             "status": "pending",
             "output_path": None,
+            "youtube_url": None,
             "error": None,
             "created_at": time.time(),
             "completed_at": None,
@@ -110,7 +156,15 @@ async def submit_job(req: GenerateRequest):
 
     thread = threading.Thread(
         target=_run_generation,
-        args=(job_id, req.content, output_path, req.model, req.image_model),
+        args=(
+            job_id,
+            req.content,
+            output_path,
+            req.model,
+            req.image_model,
+            req.upload,
+            req.privacy,
+        ),
         daemon=True,
     )
     thread.start()
@@ -135,6 +189,7 @@ async def list_jobs():
                 "created_at": job["created_at"],
                 "completed_at": job["completed_at"],
                 "error": job["error"],
+                "youtube_url": job.get("youtube_url"),
             }
             jobs.append(entry)
         jobs.sort(key=lambda j: j["created_at"], reverse=True)
@@ -154,6 +209,7 @@ async def get_job_status(job_id: str):
         "job_id": job["job_id"],
         "status": job["status"],
         "error": job["error"],
+        "youtube_url": job.get("youtube_url"),
         "created_at": job["created_at"],
         "completed_at": job["completed_at"],
         "download_url": f"/api/jobs/{job_id}/download"
@@ -228,10 +284,17 @@ def main():
     print(f"  Health:   GET  http://{args.host}:{args.port}/health")
     print()
     print("Example (curl):")
-    print("  # Submit job")
+    print("  # Submit job (video only)")
     print("  curl -s -X POST http://localhost:8000/api/generate-video \\")
     print('    -H "Content-Type: application/json" \\')
     print('    -d \'{"content": "# Hello\\n\\nThis is a test video."}\'')
+    print()
+    print("  # Submit job with YouTube upload")
+    print("  curl -s -X POST http://localhost:8000/api/generate-video \\")
+    print('    -H "Content-Type: application/json" \\')
+    print(
+        '    -d \'{"content": "# Hello\\n\\nThis is a test video.", "upload": true}\''
+    )
     print()
     print("  # Poll until completed (replace JOB_ID)")
     print("  curl -s http://localhost:8000/api/jobs/JOB_ID")

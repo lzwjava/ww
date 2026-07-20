@@ -98,6 +98,8 @@ def _get_credentials(credential_file=None):
 
     Default credential path: ~/.google/client_secret.json
     Token cache: ~/.google/youtube_token.json
+
+    Raises RuntimeError if credential file is missing and no cached token exists.
     """
     from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials
@@ -125,18 +127,18 @@ def _get_credentials(credential_file=None):
         credentials.refresh(Request())
     elif not credentials or not credentials.valid:
         if not os.path.isfile(credential_file):
-            print(f"Error: Google OAuth client secret not found at {credential_file}")
-            print()
-            print("To set up YouTube upload:")
-            print("1. Go to https://console.cloud.google.com/")
-            print("2. Create a project -> Enable YouTube Data API v3")
-            print("3. Create OAuth 2.0 credentials (Desktop app type)")
-            print("4. Download the JSON and save it as:")
-            print(f"   {credential_file}")
-            print("5. In Google Cloud Console, add this Authorized redirect URI:")
-            print("   http://localhost:8080/")
-            print()
-            sys.exit(1)
+            msg = (
+                f"Google OAuth client secret not found at {credential_file}\n\n"
+                "To set up YouTube upload:\n"
+                "1. Go to https://console.cloud.google.com/\n"
+                "2. Create a project -> Enable YouTube Data API v3\n"
+                "3. Create OAuth 2.0 credentials (Desktop app type)\n"
+                "4. Download the JSON and save it as:\n"
+                f"   {credential_file}\n"
+                "5. In Google Cloud Console, add this Authorized redirect URI:\n"
+                "   http://localhost:8080/"
+            )
+            raise RuntimeError(msg)
 
         flow = InstalledAppFlow.from_client_secrets_file(credential_file, SCOPES)
         print("Opening browser for Google OAuth...")
@@ -147,6 +149,142 @@ def _get_credentials(credential_file=None):
         f.write(credentials.to_json())
 
     return credentials
+
+
+def prepare_video_metadata(content_text, note_path_hint=""):
+    """Extract YouTube metadata from markdown content.
+
+    Parses YAML frontmatter for title/tags, generates description via LLM.
+
+    Args:
+        content_text: Full markdown text with optional YAML frontmatter.
+        note_path_hint: Optional file path for source attribution in description.
+
+    Returns:
+        (title: str, description: str, tags: list[str])
+    """
+    frontmatter, body = _parse_frontmatter(content_text)
+
+    title = frontmatter.get("title", "")
+    if not title and note_path_hint:
+        title = os.path.splitext(os.path.basename(note_path_hint))[0]
+    if not title:
+        title = "Untitled Video"
+
+    tags = []
+    if "tags" in frontmatter:
+        tag_str = frontmatter["tags"]
+        if isinstance(tag_str, str):
+            tags = [t.strip() for t in tag_str.replace(",", " ").split() if t.strip()]
+
+    # Generate description via LLM
+    description = None
+    try:
+        from ww.llm.openrouter_client import call_openrouter_api_with_messages
+
+        llm_prompt = (
+            "You are a YouTube video description writer. "
+            "Write a concise, engaging YouTube description for a tech/AI video "
+            "based on the note content below. Include key takeaways, a brief overview, "
+            "and relevant hashtags. Keep it under 4000 characters. "
+            "Do not use markdown or HTML. Use plain text only.\n\n"
+            f"Note content:\n{content_text}"
+        )
+        llm_desc = call_openrouter_api_with_messages(
+            [{"role": "user", "content": llm_prompt}],
+        )
+        if llm_desc:
+            description = llm_desc.strip()
+            print(f"  LLM-generated description: {len(description)} chars")
+    except Exception as e:
+        print(f"  LLM description generation failed: {e}")
+
+    if description is None:
+        description = _clean_description(body)
+
+    # Append source attribution
+    if note_path_hint:
+        description += f"\n\nSource: {note_path_hint}"
+
+    return title, description, tags
+
+
+def upload_video(
+    video_path, title, description, tags, privacy="public", credential_file=None
+):
+    """Upload a video to YouTube.
+
+    Args:
+        video_path: Path to the MP4 file.
+        title: Video title (max 100 chars).
+        description: Video description.
+        tags: List of tag strings.
+        privacy: 'public', 'private', or 'unlisted'.
+        credential_file: Path to Google OAuth client_secret.json.
+
+    Returns:
+        (video_id: str, url: str)
+
+    Raises:
+        RuntimeError: If credentials are missing.
+        HttpError: If YouTube API rejects the request.
+    """
+    print("Authenticating with Google...")
+    credentials = _get_credentials(credential_file)
+
+    print("Building YouTube API client...")
+    youtube = build("youtube", "v3", credentials=credentials)
+
+    print("Uploading video...")
+    request_body = {
+        "snippet": {
+            "title": title[:100],
+            "description": description,
+            "tags": tags,
+        },
+        "status": {
+            "privacyStatus": privacy,
+        },
+    }
+
+    media = MediaFileUpload(video_path, chunksize=5 * 1024 * 1024, resumable=True)
+
+    request = youtube.videos().insert(
+        part="snippet,status",
+        body=request_body,
+        media_body=media,
+    )
+
+    response = request.execute()
+
+    video_id = response.get("id")
+    if not video_id:
+        raise RuntimeError(f"No video ID in YouTube response: {json.dumps(response)}")
+
+    url = f"https://youtu.be/{video_id}"
+    print("\nUploaded successfully!")
+    print(f"  Video ID: {video_id}")
+    print(f"  URL: {url}")
+
+    # Auto-set privacy to public — YouTube may still process as private initially
+    if privacy == "public":
+        print("\nSetting video to public...")
+        try:
+            video_resp = youtube.videos().list(part="status", id=video_id).execute()
+            items = video_resp.get("items", [])
+            if items:
+                video = items[0]
+                video["status"]["privacyStatus"] = "public"
+                youtube.videos().update(
+                    part="status",
+                    body={"id": video_id, "status": video["status"]},
+                ).execute()
+                print("  Video is now public.")
+        except Exception as e:
+            print(f"  Warning: Could not set public status: {e}")
+            print("  You can run: ww gen-video set-privacy", video_id, "public")
+
+    return video_id, url
 
 
 def main():
@@ -246,51 +384,20 @@ def main():
     with open(note_path, "r", encoding="utf-8") as f:
         text = f.read()
 
-    frontmatter, body = _parse_frontmatter(text)
+    title, description, tags = prepare_video_metadata(text, note_path_hint=note_path)
 
-    title = frontmatter.get("title", "")
-    if not title:
-        title = os.path.splitext(os.path.basename(note_path))[0]
-
-    tags = tags_override
-    if tags is None and "tags" in frontmatter:
-        tag_str = frontmatter["tags"]
-        if isinstance(tag_str, str):
-            tags = [t.strip() for t in tag_str.replace(",", " ").split() if t.strip()]
-
-    if tags is None:
-        tags = []
-
-    description = description_override
-    if description is None:
-        if use_llm_description:
-            print("Generating description via LLM...")
-            from ww.llm.openrouter_client import call_openrouter_api_with_messages
-
-            llm_prompt = (
-                "You are a YouTube video description writer. "
-                "Write a concise, engaging YouTube description for a tech/AI video "
-                "based on the note content below. Include key takeaways, a brief overview, "
-                "and relevant hashtags. Keep it under 4000 characters. "
-                "Do not use markdown or HTML. Use plain text only.\n\n"
-                f"Note content:\n{text}"
-            )
-            llm_desc = call_openrouter_api_with_messages(
-                [{"role": "user", "content": llm_prompt}],
-            )
-            if llm_desc:
-                description = llm_desc.strip()
-                print(f"  LLM-generated description: {len(description)} chars")
-            else:
-                print(
-                    "  LLM description generation failed, falling back to note content."
-                )
-                description = _clean_description(body)
-        else:
-            description = _clean_description(body)
-
-    # Append source attribution
-    description += f"\n\nSource: {note_path}"
+    # Handle overrides (source attribution added by prepare_video_metadata,
+    # but overrides strip it — re-add)
+    if description_override:
+        description = description_override
+        if note_path not in description:
+            description += f"\n\nSource: {note_path}"
+    elif not use_llm_description:
+        _, body = _parse_frontmatter(text)
+        description = _clean_description(body)
+        description += f"\n\nSource: {note_path}"
+    if tags_override:
+        tags = tags_override
 
     print(f"Title: {title}")
     print(f"Description: {len(description)} chars")
@@ -299,36 +406,20 @@ def main():
     print(f"Video: {mp4_path} ({os.path.getsize(mp4_path) / 1024 / 1024:.1f} MB)")
     print()
 
-    # ── Authenticate and upload ─────────────────────────────────────────────
-    print("Authenticating with Google...")
-    credentials = _get_credentials(credential_file)
-
-    print("Building YouTube API client...")
-    youtube = build("youtube", "v3", credentials=credentials)
-
-    print("Uploading video...")
-    request_body = {
-        "snippet": {
-            "title": title,
-            "description": description,
-            "tags": tags,
-        },
-        "status": {
-            "privacyStatus": privacy_status,
-        },
-    }
-
-    media = MediaFileUpload(mp4_path, chunksize=5 * 1024 * 1024, resumable=True)
-
-    request = youtube.videos().insert(
-        part="snippet,status",
-        body=request_body,
-        media_body=media,
-    )
-
-    response = None
+    # ── Upload ──────────────────────────────────────────────────────────────
     try:
-        response = request.execute()
+        video_id, url = upload_video(
+            mp4_path,
+            title,
+            description,
+            tags,
+            privacy=privacy_status,
+            credential_file=credential_file,
+        )
+        webbrowser.open(url)
+    except RuntimeError as e:
+        print(f"Error: {e}")
+        sys.exit(1)
     except HttpError as e:
         detail = e.content.decode() if hasattr(e, "content") and e.content else str(e)
         print(f"Error: YouTube API returned HTTP {e.status_code}")
@@ -337,37 +428,3 @@ def main():
     except Exception as e:
         print(f"Error: Upload failed: {e}")
         sys.exit(1)
-
-    video_id = response.get("id")
-    if not video_id:
-        print("Error: No video ID in response.")
-        print(f"Full response: {json.dumps(response, indent=2)}")
-        sys.exit(1)
-
-    url = f"https://youtu.be/{video_id}"
-    print("\nUploaded successfully!")
-    print(f"  Video ID: {video_id}")
-    print(f"  URL: {url}")
-
-    # ── Auto-set privacy to public ──────────────────────────────────────────
-    # Even if the upload was set to public, YouTube may still process as
-    # private initially. Explicitly update to ensure it's public.
-    if privacy_status == "public":
-        print("\nSetting video to public...")
-        try:
-            # Fetch the current video status
-            video_resp = youtube.videos().list(part="status", id=video_id).execute()
-            items = video_resp.get("items", [])
-            if items:
-                video = items[0]
-                video["status"]["privacyStatus"] = "public"
-                youtube.videos().update(
-                    part="status",
-                    body={"id": video_id, "status": video["status"]},
-                ).execute()
-                print("  Video is now public.")
-        except Exception as e:
-            print(f"  Warning: Could not set public status: {e}")
-            print("  You can run: ww gen-video set-privacy", video_id, "public")
-
-    webbrowser.open(url)
