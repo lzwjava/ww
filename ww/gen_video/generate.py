@@ -2,7 +2,8 @@
 """ww gen-video generate — Read markdown from pasteboard, send to the gen-video API server.
 
 Reads content from the system clipboard, POSTs it to the GEN_VIDEO_SERVER_URL
-endpoint, and downloads the generated video.
+endpoint (returns immediately with a job_id), polls until completed,
+and downloads the generated video.
 
 Usage:
     ww gen-video generate [options]
@@ -16,8 +17,11 @@ Options:
     --model MODEL   LLM model override to send to the server
     --image-model   Image generation model override
     --server URL    Override GEN_VIDEO_SERVER_URL for this call
+    --poll          Poll until job completes and download (default: on)
+    --no-poll       Return job_id immediately without waiting
 """
 
+import json
 import os
 import sys
 import time
@@ -28,6 +32,7 @@ import requests
 def main():
     try:
         from ww.env import load_env as _le
+
         _le()
     except ImportError:
         pass
@@ -39,6 +44,7 @@ def main():
     model = None
     image_model = None
     server_url = None
+    do_poll = True
 
     i = 0
     while i < len(args):
@@ -54,6 +60,9 @@ def main():
         elif args[i] == "--server" and i + 1 < len(args):
             server_url = args[i + 1]
             i += 2
+        elif args[i] == "--no-poll":
+            do_poll = False
+            i += 1
         elif args[i] in ("--help", "-h"):
             print(__doc__)
             return
@@ -72,23 +81,27 @@ def main():
         )
         sys.exit(1)
 
-    # Strip trailing slash and append the API path
-    api_url = server_url.rstrip("/")
-    if not api_url.endswith("/api/generate-video"):
-        api_url += "/api/generate-video"
+    server_url = server_url.rstrip("/")
+    base_url = server_url.removesuffix("/api/generate-video").removesuffix("/api")
+    submit_url = base_url + "/api/generate-video"
 
     # ── Read pasteboard ─────────────────────────────────────────────────
     try:
         import pyperclip
+
         content = pyperclip.paste()
     except Exception:
-        # Fallback: try pbpaste on macOS
         import subprocess
+
         try:
-            result = subprocess.run(["pbpaste"], capture_output=True, text=True, timeout=5)
+            result = subprocess.run(
+                ["pbpaste"], capture_output=True, text=True, timeout=5
+            )
             content = result.stdout
         except Exception:
-            print("Error: Could not read from pasteboard. Is pyperclip or pbpaste available?")
+            print(
+                "Error: Could not read from pasteboard. Is pyperclip or pbpaste available?"
+            )
             sys.exit(1)
 
     if not content or not content.strip():
@@ -102,27 +115,21 @@ def main():
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         output_path = f"gen_video_{timestamp}.mp4"
 
-    # ── Build request ───────────────────────────────────────────────────
+    # ── Build and send request ──────────────────────────────────────────
     payload = {"content": content}
     if model:
         payload["model"] = model
     if image_model:
         payload["image_model"] = image_model
 
-    print(f"Sending to {api_url} ...")
+    print(f"Sending to {submit_url} ...")
     print(f"  Model: {model or 'default'}")
     print(f"  Image model: {image_model or 'default'}")
-    print()
 
     try:
-        resp = requests.post(
-            api_url,
-            json=payload,
-            timeout=(10, 600),  # 10s connect, 600s read (video generation takes time)
-            stream=True,
-        )
+        resp = requests.post(submit_url, json=payload, timeout=(10, 30))
     except requests.exceptions.ConnectionError:
-        print(f"Error: Could not connect to {api_url}")
+        print(f"Error: Could not connect to {submit_url}")
         print("  Is the gen-video server running? Try: ww gen-video server")
         sys.exit(1)
     except requests.exceptions.Timeout:
@@ -141,13 +148,73 @@ def main():
         print(f"  {detail}")
         sys.exit(1)
 
-    # ── Save the response as a video file ───────────────────────────────
-    content_type = resp.headers.get("content-type", "")
-    if "video" not in content_type and "octet-stream" not in content_type:
-        print(f"Warning: Unexpected content type: {content_type}")
+    result = resp.json()
+    job_id = result.get("job_id")
+    if not job_id:
+        print(f"Error: No job_id in response: {result}")
+        sys.exit(1)
+
+    print(f"\nJob submitted: {job_id}")
+    print(f"  Status URL:  {base_url}/api/jobs/{job_id}")
+    print(f"  Download URL: {base_url}/api/jobs/{job_id}/download")
+
+    if not do_poll:
+        print(f"\nJob ID: {job_id}")
+        return
+
+    # ── Poll until completed ────────────────────────────────────────────
+    print("\nWaiting for completion...")
+    status_url = f"{base_url}/api/jobs/{job_id}"
+
+    dots = 0
+    while True:
+        try:
+            sresp = requests.get(status_url, timeout=10)
+        except Exception:
+            time.sleep(5)
+            continue
+
+        if sresp.status_code != 200:
+            time.sleep(5)
+            continue
+
+        status_data = sresp.json()
+        status = status_data.get("status", "unknown")
+
+        if status == "completed":
+            print()
+            break
+        elif status == "failed":
+            error = status_data.get("error", "Unknown error")
+            print(f"\nError: Job failed: {error}")
+            sys.exit(1)
+        else:
+            # pending or processing
+            dots += 1
+            marker = "." * dots
+            print(f"\r  Status: {status}{marker:<10}", end="", flush=True)
+            time.sleep(5)
+
+    # ── Download the completed video ────────────────────────────────────
+    download_url = f"{base_url}/api/jobs/{job_id}/download"
+    print(f"Downloading video...")
+
+    try:
+        dresp = requests.get(download_url, stream=True, timeout=(10, 600))
+    except Exception as e:
+        print(f"Error: Download failed: {e}")
+        sys.exit(1)
+
+    if dresp.status_code != 200:
+        try:
+            detail = dresp.json().get("detail", dresp.text[:500])
+        except Exception:
+            detail = dresp.text[:500]
+        print(f"Error: Download returned HTTP {dresp.status_code}: {detail}")
+        sys.exit(1)
 
     with open(output_path, "wb") as f:
-        for chunk in resp.iter_content(chunk_size=8192):
+        for chunk in dresp.iter_content(chunk_size=8192):
             if chunk:
                 f.write(chunk)
 
