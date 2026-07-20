@@ -168,8 +168,6 @@ def prepare_video_metadata(content_text, note_path_hint=""):
     title = frontmatter.get("title", "")
     if not title and note_path_hint:
         title = os.path.splitext(os.path.basename(note_path_hint))[0]
-    if not title:
-        title = "Untitled Video"
 
     tags = []
     if "tags" in frontmatter:
@@ -177,11 +175,37 @@ def prepare_video_metadata(content_text, note_path_hint=""):
         if isinstance(tag_str, str):
             tags = [t.strip() for t in tag_str.replace(",", " ").split() if t.strip()]
 
-    # Generate description via LLM
+    # Generate title and description via LLM when frontmatter is missing
     description = None
     try:
         from ww.llm.openrouter_client import call_openrouter_api_with_messages
 
+        # ── Title (if missing) ──────────────────────────────────────────
+        if not title:
+            title_prompt = (
+                "Write a compelling YouTube video title (max 100 characters) "
+                "for a tech/AI video based on this content. "
+                "Return ONLY the title, nothing else — no quotes, no explanation.\\n\\n"
+                f"Content:\\n{content_text}"
+            )
+            llm_title = call_openrouter_api_with_messages(
+                [{"role": "user", "content": title_prompt}],
+            )
+            if llm_title:
+                title = llm_title.strip().strip('"').strip()
+                title = title.split("\\n")[0]  # first line only
+                print(f"  LLM-generated title: {title[:80]}")
+            if not title:
+                # Ultimate fallback: first heading or first sentence
+                for line in content_text.split("\\n"):
+                    stripped = line.strip()
+                    if stripped.startswith("#"):
+                        title = stripped.lstrip("#").strip()
+                        break
+                if not title:
+                    title = content_text.strip().split(".")[0].strip()[:100]
+
+        # ── Description ─────────────────────────────────────────────────
         llm_prompt = (
             "You are a YouTube video description writer. "
             "Write a concise, engaging YouTube description for a tech/AI video "
