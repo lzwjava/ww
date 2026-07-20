@@ -537,7 +537,7 @@ def main():
         slide_frames.append(str(slide_path))
         print(f"  Slide {i+1}: \"{title}\"")
 
-    # ── Step 5: Assemble video ────────────────────────────────────────────
+    # ── Step 5: Assemble video with background music ─────────────────────
     print("\nAssembling video (5 slides × 3s = 15s)...")
     try:
         seg_files = []
@@ -564,16 +564,45 @@ def main():
             for s in seg_files:
                 f.write(f"file '{s}'\n")
 
+        concat_video = temp_dir / "concat_video.mp4"
         subprocess.run(
             [
                 "ffmpeg", "-y",
                 "-f", "concat", "-safe", "0",
                 "-i", str(concat_file),
                 "-c:v", "libx264", "-pix_fmt", "yuv420p",
-                output_path,
+                str(concat_video),
             ],
             check=True, capture_output=True, text=True, timeout=120,
         )
+
+        # Add background music: trim to 15s, fade out last 1s, lower volume
+        bg_music = os.path.join(os.path.dirname(__file__), "bg.mp3")
+        if os.path.isfile(bg_music):
+            print("  Adding background music with fade-out...")
+            subprocess.run(
+                [
+                    "ffmpeg", "-y",
+                    "-i", str(concat_video),
+                    "-i", bg_music,
+                    "-c:v", "copy",
+                    "-c:a", "aac", "-b:a", "128k",
+                    "-filter_complex",
+                    "[1:a]atrim=0:15,afade=t=out:st=14:d=1,volume=0.3[a]",
+                    "-map", "0:v",
+                    "-map", "[a]",
+                    "-shortest",
+                    output_path,
+                ],
+                check=True, capture_output=True, text=True, timeout=120,
+            )
+        else:
+            print(f"  Note: bg.mp3 not found at {bg_music}, no audio added")
+            # Just copy the concat video as-is
+            subprocess.run(
+                ["cp", str(concat_video), output_path],
+                check=True, capture_output=True, text=True, timeout=10,
+            )
 
         success = True
     except subprocess.CalledProcessError as e:
