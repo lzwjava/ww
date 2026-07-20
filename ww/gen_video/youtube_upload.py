@@ -175,10 +175,13 @@ def main():
         print("  --unlisted         Set video privacy to unlisted (default: public)")
         print("  --credential PATH  Path to Google OAuth client_secret.json")
         print("  --description TEXT Override video description")
+        print(
+            "  --from-note       Use note content as description (skip LLM generation)"
+        )
         print("  --tags TAG1,TAG2   Comma-separated tags (overrides frontmatter)")
         print()
-        print("The video is uploaded as public by default and explicitly set to")
-        print("public after upload for reliable visibility.")
+        print("Description is generated via LLM by default. Use --from-note to")
+        print("use the raw note content instead.")
         print()
         print("Examples:")
         print(
@@ -201,6 +204,7 @@ def main():
     privacy_status = "public"
     credential_file = None
     description_override = None
+    use_llm_description = True
     tags_override = None
 
     i = 2
@@ -217,6 +221,9 @@ def main():
         elif args[i] == "--description" and i + 1 < len(args):
             description_override = args[i + 1]
             i += 2
+        elif args[i] == "--from-note":
+            use_llm_description = False
+            i += 1
         elif args[i] == "--tags" and i + 1 < len(args):
             tags_override = args[i + 1].split(",")
             i += 2
@@ -256,7 +263,31 @@ def main():
 
     description = description_override
     if description is None:
-        description = _clean_description(body)
+        if use_llm_description:
+            print("Generating description via LLM...")
+            from ww.llm.openrouter_client import call_openrouter_api_with_messages
+
+            llm_prompt = (
+                "You are a YouTube video description writer. "
+                "Write a concise, engaging YouTube description for a tech/AI video "
+                "based on the note content below. Include key takeaways, a brief overview, "
+                "and relevant hashtags. Keep it under 4000 characters. "
+                "Do not use markdown or HTML. Use plain text only.\n\n"
+                f"Note content:\n{text}"
+            )
+            llm_desc = call_openrouter_api_with_messages(
+                [{"role": "user", "content": llm_prompt}],
+            )
+            if llm_desc:
+                description = llm_desc.strip()
+                print(f"  LLM-generated description: {len(description)} chars")
+            else:
+                print(
+                    "  LLM description generation failed, falling back to note content."
+                )
+                description = _clean_description(body)
+        else:
+            description = _clean_description(body)
 
     # Append source attribution
     description += f"\n\nSource: {note_path}"
