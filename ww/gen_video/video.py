@@ -356,22 +356,25 @@ def _create_slide_frame(image_path, title, subtitle, output_path, width=1080, he
         title_font = ImageFont.load_default()
         subtitle_font = ImageFont.load_default()
 
-    # ── Top bar: title ─────────────────────────────────────────────────
-    top_bar_height = int(height * 0.15)
-    draw.rectangle([0, 0, width, top_bar_height], fill=(0, 0, 0, 200))
+    # ── Top title: just above the image area ──────────────────────────
+    # WeChat video has navigation at the top, so keep title just above the image (12%-18%)
+    title_bar_top = int(height * 0.12)
+    title_bar_height = int(height * 0.06)
+    draw.rectangle([0, title_bar_top, width, title_bar_top + title_bar_height], fill=(0, 0, 0, 200))
 
     # Center the title text
     title_bbox = draw.textbbox((0, 0), title, font=title_font)
     title_w = title_bbox[2] - title_bbox[0]
     title_h = title_bbox[3] - title_bbox[1]
     title_x = (width - title_w) // 2
-    title_y = (top_bar_height - title_h) // 2
+    title_y = title_bar_top + (title_bar_height - title_h) // 2
     draw.text((title_x, title_y), title, fill="white", font=title_font)
 
-    # ── Bottom bar: subtitle ───────────────────────────────────────────
-    bottom_bar_height = int(height * 0.15)
-    bottom_y = height - bottom_bar_height
-    draw.rectangle([0, bottom_y, width, height], fill=(0, 0, 0, 200))
+    # ── Bottom subtitle: just below the image area ────────────────────
+    # WeChat video has avatar/username at the bottom, so put subtitle just below image (82%-88%)
+    subtitle_bar_top = int(height * 0.82)
+    subtitle_bar_height = int(height * 0.06)
+    draw.rectangle([0, subtitle_bar_top, width, subtitle_bar_top + subtitle_bar_height], fill=(0, 0, 0, 200))
 
     # Word-wrap subtitle
     words = subtitle.split()
@@ -391,7 +394,7 @@ def _create_slide_frame(image_path, title, subtitle, output_path, width=1080, he
     # Center subtitle text vertically in bottom bar
     line_height = 48
     total_text_height = len(lines) * line_height
-    text_start_y = bottom_y + (bottom_bar_height - total_text_height) // 2
+    text_start_y = subtitle_bar_top + (subtitle_bar_height - total_text_height) // 2
 
     for i, line in enumerate(lines):
         bbox = draw.textbbox((0, 0), line, font=subtitle_font)
@@ -402,9 +405,9 @@ def _create_slide_frame(image_path, title, subtitle, output_path, width=1080, he
 
     # Add a subtle gradient line separator between bars and image area
     for y_offset in range(3):
-        draw.rectangle([0, top_bar_height + y_offset, width, top_bar_height + y_offset + 1],
+        draw.rectangle([0, title_bar_top + title_bar_height + y_offset, width, title_bar_top + title_bar_height + y_offset + 1],
                        fill=(50, 50, 50, 100))
-        draw.rectangle([0, bottom_y + y_offset, width, bottom_y + y_offset + 1],
+        draw.rectangle([0, subtitle_bar_top + y_offset, width, subtitle_bar_top + y_offset + 1],
                        fill=(50, 50, 50, 100))
 
     frame.save(output_path, "PNG")
