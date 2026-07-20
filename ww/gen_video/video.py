@@ -91,7 +91,9 @@ def _openrouter_image(prompt, image_model="black-forest-labs/flux.2-pro"):
                 urls = []
                 for img in images:
                     if isinstance(img, dict):
-                        img_url = img.get("image_url", {}).get("url", "") or img.get("url", "")
+                        img_url = img.get("image_url", {}).get("url", "") or img.get(
+                            "url", ""
+                        )
                         if img_url:
                             urls.append(img_url)
                 if urls:
@@ -138,7 +140,9 @@ def _openrouter_image(prompt, image_model="black-forest-labs/flux.2-pro"):
             re.IGNORECASE,
         )
     if not urls:
-        print(f"  Warning: No image URLs found in response. Content preview: {content[:200]}")
+        print(
+            f"  Warning: No image URLs found in response. Content preview: {content[:200]}"
+        )
         return []
 
     print(f"  Got {len(urls)} image(s): {urls[0][:80]}")
@@ -167,7 +171,9 @@ def _download_image(url_or_data, output_path):
         try:
             import base64
 
-            match = re.match(r"data:image/(?:png|jpeg|jpg|webp);base64,(.+)", url_or_data)
+            match = re.match(
+                r"data:image/(?:png|jpeg|jpg|webp);base64,(.+)", url_or_data
+            )
             if match:
                 image_data = base64.b64decode(match.group(1))
                 with open(output_path, "wb") as f:
@@ -271,7 +277,7 @@ Output format — return ONLY valid JSON, no markdown fences:
         print(f"Raw response:\n{raw[:500]}")
         sys.exit(1)
 
-    json_str = raw[start: end + 1]
+    json_str = raw[start : end + 1]
     try:
         data = json.loads(json_str)
     except json.JSONDecodeError as e:
@@ -289,7 +295,9 @@ Output format — return ONLY valid JSON, no markdown fences:
     return scenes
 
 
-def _create_slide_frame(image_path, title, subtitle, output_path, width=1080, height=1920):
+def _create_slide_frame(
+    image_path, title, subtitle, output_path, width=1080, height=1920
+):
     """Create a full slide frame: image centered + top title + bottom subtitle.
 
     The image is placed in the middle 60% of the frame. Top and bottom sections
@@ -360,7 +368,9 @@ def _create_slide_frame(image_path, title, subtitle, output_path, width=1080, he
     # WeChat video has navigation at the top, so keep title just above the image (12%-18%)
     title_bar_top = int(height * 0.12)
     title_bar_height = int(height * 0.06)
-    draw.rectangle([0, title_bar_top, width, title_bar_top + title_bar_height], fill=(0, 0, 0, 200))
+    draw.rectangle(
+        [0, title_bar_top, width, title_bar_top + title_bar_height], fill=(0, 0, 0, 200)
+    )
 
     # Center the title text
     title_bbox = draw.textbbox((0, 0), title, font=title_font)
@@ -374,7 +384,10 @@ def _create_slide_frame(image_path, title, subtitle, output_path, width=1080, he
     # WeChat video has avatar/username at the bottom, so put subtitle just below image (82%-88%)
     subtitle_bar_top = int(height * 0.82)
     subtitle_bar_height = int(height * 0.06)
-    draw.rectangle([0, subtitle_bar_top, width, subtitle_bar_top + subtitle_bar_height], fill=(0, 0, 0, 200))
+    draw.rectangle(
+        [0, subtitle_bar_top, width, subtitle_bar_top + subtitle_bar_height],
+        fill=(0, 0, 0, 200),
+    )
 
     # Word-wrap subtitle
     words = subtitle.split()
@@ -405,10 +418,19 @@ def _create_slide_frame(image_path, title, subtitle, output_path, width=1080, he
 
     # Add a subtle gradient line separator between bars and image area
     for y_offset in range(3):
-        draw.rectangle([0, title_bar_top + title_bar_height + y_offset, width, title_bar_top + title_bar_height + y_offset + 1],
-                       fill=(50, 50, 50, 100))
-        draw.rectangle([0, subtitle_bar_top + y_offset, width, subtitle_bar_top + y_offset + 1],
-                       fill=(50, 50, 50, 100))
+        draw.rectangle(
+            [
+                0,
+                title_bar_top + title_bar_height + y_offset,
+                width,
+                title_bar_top + title_bar_height + y_offset + 1,
+            ],
+            fill=(50, 50, 50, 100),
+        )
+        draw.rectangle(
+            [0, subtitle_bar_top + y_offset, width, subtitle_bar_top + y_offset + 1],
+            fill=(50, 50, 50, 100),
+        )
 
     frame.save(output_path, "PNG")
     return output_path
@@ -417,6 +439,7 @@ def _create_slide_frame(image_path, title, subtitle, output_path, width=1080, he
 def main():
     try:
         from ww.env import load_env as _le
+
         _le()
     except ImportError:
         pass
@@ -427,17 +450,28 @@ def main():
     if not args or "--help" in args or "-h" in args:
         print("Usage: ww gen-video <file_path> [options]")
         print()
-        print("Generate a 15-second vertical short-form video (9:16) from a markdown note.")
+        print(
+            "Generate a 15-second vertical short-form video (9:16) from a markdown note."
+        )
         print("5 slides × 3 seconds each. No audio.")
         print("Optimized for Douyin / WeChat Video Account.")
         print()
         print("Options:")
-        print("  --output PATH       Output video path (default: <input_name>_video.mp4)")
+        print(
+            "  --output PATH       Output video path (default: <input_name>_video.mp4)"
+        )
         print("  --model MODEL       LLM model for script generation (default: $MODEL)")
-        print("  --image-model MODEL Image generation model (default: black-forest-labs/flux.2-pro)")
+        print(
+            "  --image-model MODEL Image generation model (default: black-forest-labs/flux.2-pro)"
+        )
+        print("  --upload            Upload generated video to YouTube after creation")
+        print(
+            "  --private           When uploading, set video to private (default: public)"
+        )
         print()
         print("Examples:")
         print("  ww gen-video notes/2026-07-20-tesla-p100-vs-m60-for-ai-en.md")
+        print("  ww gen-video notes/2026-07-20-tesla-p100-vs-m60-for-ai-en.md --upload")
         return
 
     file_path = args[0]
@@ -445,6 +479,8 @@ def main():
     output_path = None
     model = None
     image_model = "black-forest-labs/flux.2-pro"
+    do_upload = False
+    upload_private = False
 
     i = 1
     while i < len(args):
@@ -457,6 +493,12 @@ def main():
         elif args[i] == "--image-model" and i + 1 < len(args):
             image_model = args[i + 1]
             i += 2
+        elif args[i] == "--upload":
+            do_upload = True
+            i += 1
+        elif args[i] == "--private":
+            upload_private = True
+            i += 1
         else:
             print(f"Unknown option: {args[i]}")
             sys.exit(1)
@@ -484,7 +526,9 @@ def main():
     print(f"Scenes: {len(scenes)}")
 
     for i, s in enumerate(scenes):
-        print(f"  Scene {i+1}: \"{s.get('title', '')}\" — {s.get('subtitle', '')[:60]}...")
+        print(
+            f'  Scene {i + 1}: "{s.get("title", "")}" — {s.get("subtitle", "")[:60]}...'
+        )
 
     # ── Step 3: Generate images via Flux ──────────────────────────────────
     print("\nStep 2/3: Generating images via Flux...")
@@ -496,7 +540,7 @@ def main():
         if not prompt:
             continue
 
-        print(f"\n  Scene {i+1}/{len(scenes)}: {prompt[:80]}...")
+        print(f"\n  Scene {i + 1}/{len(scenes)}: {prompt[:80]}...")
         img_urls = _openrouter_image(prompt, image_model=image_model)
 
         if img_urls:
@@ -509,6 +553,7 @@ def main():
                 # Create a simple colored placeholder
                 placeholder = temp_dir / f"raw_scene_{i:03d}.png"
                 from PIL import Image as PILImage
+
                 bg = PILImage.new("RGB", (1080, 1920), (20, 20, 40))
                 bg.save(str(placeholder))
                 raw_image_paths.append(str(placeholder))
@@ -516,6 +561,7 @@ def main():
             print("  Creating placeholder...")
             placeholder = temp_dir / f"raw_scene_{i:03d}.png"
             from PIL import Image as PILImage
+
             bg = PILImage.new("RGB", (1080, 1920), (20, 20, 40))
             bg.save(str(placeholder))
             raw_image_paths.append(str(placeholder))
@@ -524,6 +570,7 @@ def main():
     while len(raw_image_paths) < 5:
         placeholder = temp_dir / f"raw_scene_{len(raw_image_paths):03d}.png"
         from PIL import Image as PILImage
+
         bg = PILImage.new("RGB", (1080, 1920), (20, 20, 40))
         bg.save(str(placeholder))
         raw_image_paths.append(str(placeholder))
@@ -538,7 +585,7 @@ def main():
         slide_path = temp_dir / f"slide_{i:03d}.png"
         _create_slide_frame(img_path, title, subtitle, str(slide_path))
         slide_frames.append(str(slide_path))
-        print(f"  Slide {i+1}: \"{title}\"")
+        print(f'  Slide {i + 1}: "{title}"')
 
     # ── Step 5: Assemble video with background music ─────────────────────
     print("\nAssembling video (5 slides × 3s = 15s)...")
@@ -548,17 +595,28 @@ def main():
             seg_file = temp_dir / f"seg_{i:03d}.mp4"
             subprocess.run(
                 [
-                    "ffmpeg", "-y",
-                    "-loop", "1",
-                    "-i", str(slide_path),
-                    "-c:v", "libx264",
-                    "-t", "3",
-                    "-pix_fmt", "yuv420p",
-                    "-r", "30",
-                    "-vf", "scale=1080:1920",
+                    "ffmpeg",
+                    "-y",
+                    "-loop",
+                    "1",
+                    "-i",
+                    str(slide_path),
+                    "-c:v",
+                    "libx264",
+                    "-t",
+                    "3",
+                    "-pix_fmt",
+                    "yuv420p",
+                    "-r",
+                    "30",
+                    "-vf",
+                    "scale=1080:1920",
                     str(seg_file),
                 ],
-                check=True, capture_output=True, text=True, timeout=60,
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=60,
             )
             seg_files.append(str(seg_file))
 
@@ -570,13 +628,24 @@ def main():
         concat_video = temp_dir / "concat_video.mp4"
         subprocess.run(
             [
-                "ffmpeg", "-y",
-                "-f", "concat", "-safe", "0",
-                "-i", str(concat_file),
-                "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                "ffmpeg",
+                "-y",
+                "-f",
+                "concat",
+                "-safe",
+                "0",
+                "-i",
+                str(concat_file),
+                "-c:v",
+                "libx264",
+                "-pix_fmt",
+                "yuv420p",
                 str(concat_video),
             ],
-            check=True, capture_output=True, text=True, timeout=120,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=120,
         )
 
         # Add background music: trim to 15s, fade out last 1s, lower volume
@@ -585,26 +654,41 @@ def main():
             print("  Adding background music with fade-out...")
             subprocess.run(
                 [
-                    "ffmpeg", "-y",
-                    "-i", str(concat_video),
-                    "-i", bg_music,
-                    "-c:v", "copy",
-                    "-c:a", "aac", "-b:a", "128k",
+                    "ffmpeg",
+                    "-y",
+                    "-i",
+                    str(concat_video),
+                    "-i",
+                    bg_music,
+                    "-c:v",
+                    "copy",
+                    "-c:a",
+                    "aac",
+                    "-b:a",
+                    "128k",
                     "-filter_complex",
                     "[1:a]atrim=0:15,afade=t=out:st=14:d=1,volume=0.3[a]",
-                    "-map", "0:v",
-                    "-map", "[a]",
+                    "-map",
+                    "0:v",
+                    "-map",
+                    "[a]",
                     "-shortest",
                     output_path,
                 ],
-                check=True, capture_output=True, text=True, timeout=120,
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=120,
             )
         else:
             print(f"  Note: bg.mp3 not found at {bg_music}, no audio added")
             # Just copy the concat video as-is
             subprocess.run(
                 ["cp", str(concat_video), output_path],
-                check=True, capture_output=True, text=True, timeout=10,
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=10,
             )
 
         success = True
@@ -614,6 +698,7 @@ def main():
 
     # Cleanup
     import shutil
+
     shutil.rmtree(temp_dir, ignore_errors=True)
 
     if success:
@@ -622,14 +707,42 @@ def main():
             size = os.path.getsize(output_path)
             print(f"  Size: {size / 1024 / 1024:.1f} MB")
             dur = subprocess.run(
-                ["ffprobe", "-v", "error", "-show_entries", "format=duration",
-                 "-of", "json", output_path],
-                capture_output=True, text=True, timeout=10,
+                [
+                    "ffprobe",
+                    "-v",
+                    "error",
+                    "-show_entries",
+                    "format=duration",
+                    "-of",
+                    "json",
+                    output_path,
+                ],
+                capture_output=True,
+                text=True,
+                timeout=10,
             )
             d = json.loads(dur.stdout)["format"]["duration"]
             print(f"  Duration: {float(d):.1f}s")
         except Exception:
             pass
+
+        # ── Upload to YouTube if requested ──────────────────────────────────
+        if do_upload:
+            print("\n── Uploading to YouTube ──")
+            # Manipulate sys.argv so the upload module sees the right args
+            saved_argv = list(sys.argv)
+            upload_args = [saved_argv[0], file_path, output_path]
+            if upload_private:
+                upload_args.append("--private")
+            sys.argv = upload_args
+            try:
+                from ww.gen_video.youtube_upload import main as upload_main
+
+                upload_main()
+            except Exception as e:
+                print(f"Upload failed: {e}")
+            finally:
+                sys.argv = saved_argv
     else:
         print("\n✗ Video creation failed.")
         sys.exit(1)

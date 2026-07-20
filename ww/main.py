@@ -149,6 +149,7 @@ def _print_help():
     print(
         "                           5 slides × 3s, centered images, top/bottom text, no audio"
     )
+    print("  ww gen-video <file>       With --upload: generate + upload to YouTube")
     print(
         "  ww gen-video upload       Upload a video to YouTube via YouTube Data API v3"
     )
