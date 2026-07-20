@@ -21,7 +21,7 @@ from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from ww.gen_video.video import generate_video_from_content
@@ -47,7 +47,9 @@ _jobs: dict[str, dict] = {}
 _jobs_lock = threading.Lock()
 
 
-def _run_generation(job_id: str, content: str, output_path: str, model: str | None, image_model: str):
+def _run_generation(
+    job_id: str, content: str, output_path: str, model: str | None, image_model: str
+):
     """Run the video generation pipeline in a background thread."""
     with _jobs_lock:
         _jobs[job_id]["status"] = "processing"
@@ -58,7 +60,7 @@ def _run_generation(job_id: str, content: str, output_path: str, model: str | No
             output_path,
             model=model,
             image_model=image_model,
-            verbose=False,
+            verbose=True,
         )
     except Exception as e:
         with _jobs_lock:
@@ -154,7 +156,9 @@ async def get_job_status(job_id: str):
         "error": job["error"],
         "created_at": job["created_at"],
         "completed_at": job["completed_at"],
-        "download_url": f"/api/jobs/{job_id}/download" if job["status"] == "completed" else None,
+        "download_url": f"/api/jobs/{job_id}/download"
+        if job["status"] == "completed"
+        else None,
     }
 
 
@@ -175,9 +179,7 @@ async def download_video(job_id: str):
 
     out_path = job["output_path"]
     if not out_path or not os.path.isfile(out_path):
-        raise HTTPException(
-            status_code=500, detail="Output file not found on disk"
-        )
+        raise HTTPException(status_code=500, detail="Output file not found on disk")
 
     return FileResponse(
         out_path,
@@ -220,20 +222,16 @@ def main():
     print(f"  Port: {args.port}")
     print(f"  Submit:  POST http://{args.host}:{args.port}/api/generate-video")
     print(f"  Status:  GET  http://{args.host}:{args.port}/api/jobs/{{job_id}}")
-    print(f"  Download: GET  http://{args.host}:{args.port}/api/jobs/{{job_id}}/download")
+    print(
+        f"  Download: GET  http://{args.host}:{args.port}/api/jobs/{{job_id}}/download"
+    )
     print(f"  Health:   GET  http://{args.host}:{args.port}/health")
     print()
     print("Example (curl):")
     print("  # Submit job")
-    print(
-        '  curl -s -X POST http://localhost:8000/api/generate-video \\'
-    )
-    print(
-        '    -H "Content-Type: application/json" \\'
-    )
-    print(
-        '    -d \'{"content": "# Hello\\n\\nThis is a test video."}\''
-    )
+    print("  curl -s -X POST http://localhost:8000/api/generate-video \\")
+    print('    -H "Content-Type: application/json" \\')
+    print('    -d \'{"content": "# Hello\\n\\nThis is a test video."}\'')
     print()
     print("  # Poll until completed (replace JOB_ID)")
     print("  curl -s http://localhost:8000/api/jobs/JOB_ID")
