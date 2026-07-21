@@ -20,6 +20,7 @@ def _print_help():
     print("  terminal     Open a fullscreen terminal")
     print("  switch-keys  Swap Caps Lock and Left Control keys")
     print("  pinyin       Set up Chinese Pinyin input via IBus+libpinyin")
+    print("  check-fan    Diagnose why system fans are loud")
 
 
 def main():
@@ -66,6 +67,10 @@ def main():
         run()
     elif subcmd == "pinyin":
         from ww.linux.pinyin import run
+
+        run()
+    elif subcmd == "check-fan":
+        from ww.linux.check_fan import run
 
         run()
     else:
