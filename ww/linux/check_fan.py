@@ -223,6 +223,111 @@ def run():
         print("  Test: unmount the HDD temporarily to isolate the source.")
     print()
 
+    # ── 8. LLM summary via OpenRouter ──────────────────────────────
+    _llm_summarize()
+
+
+def _llm_summarize():
+    """Send collected diagnostics to OpenRouter for a concise analysis."""
+    api_key = os.environ.get("OPENROUTER_API_KEY")
+    model = os.environ.get("MODEL")
+    if not api_key or not model:
+        print("  OPENROUTER_API_KEY or MODEL not set — skipping LLM analysis.")
+        print()
+        return
+
+    # Re-collect key data as a compact string
+    data = _collect_diagnostics()
+
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are a Linux systems engineer. A user ran 'ww linux check-fan' "
+                "because their computer fan is loud. Below is the raw diagnostic data. "
+                "Analyze it and produce a SHORT (<150 words) answer in plain text "
+                "(no markdown). State the most likely cause of the fan noise, then "
+                "1-2 concrete steps to fix it. If the data shows temperatures are fine "
+                "and the OS has no fan control, say so and recommend a BIOS fix."
+            ),
+        },
+        {
+            "role": "user",
+            "content": data,
+        },
+    ]
+
+    try:
+        import requests
+
+        url = "https://openrouter.ai/api/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        }
+        body = {
+            "model": model,
+            "messages": messages,
+            "max_tokens": 300,
+        }
+        resp = requests.post(url, headers=headers, json=body, timeout=(5, 30))
+        if resp.ok:
+            reply = resp.json()["choices"][0]["message"]["content"]
+            print(f"{'=' * 60}")
+            print("  LLM ANALYSIS")
+            print(f"{'=' * 60}")
+            print()
+            print(reply)
+            print()
+        else:
+            print(f"  LLM call failed: HTTP {resp.status_code}")
+    except Exception as e:
+        print(f"  LLM call failed: {e}")
+    print()
+
+
+def _collect_diagnostics() -> str:
+    """Re-run and collect key diagnostics as a compact string."""
+    parts = []
+
+    # Temps - grab summary lines from sensors
+    sensors_out = _run(["sensors", "-A"])
+    temps = []
+    for line in sensors_out.split("\n"):
+        if ":" in line and ("°C" in line or "N/A" in line):
+            temps.append(line.strip())
+    if temps:
+        parts.append("Temperatures:\n" + "\n".join(temps[:15]))
+
+    # GPU
+    gpu = _run(["nvidia-smi", "--query-gpu=index,name,fan.speed,temperature.gpu,pstate,power.draw", "--format=csv,noheader"])
+    parts.append("GPU:\n" + gpu)
+
+    # Fan controllers
+    pwm_info = _read_sysfs("/sys/devices/**/pwm/pwmchip*/npwm")
+    parts.append("PWM controllers:\n" + pwm_info)
+
+    fan_rpm = _read_sysfs("/sys/devices/**/fan*_input")
+    parts.append("Fan RPM sensors:\n" + fan_rpm)
+
+    # Spinning disks
+    lsblk = _run(["lsblk", "-n", "-o", "NAME,ROTA,MODEL"])
+    spinning = [l for l in lsblk.split("\n") if " 1 " in l or l.endswith(" 1")]
+    parts.append("HDDs:\n" + ("\n".join(spinning) if spinning else "none"))
+
+    # Load
+    load_avg = Path("/proc/loadavg").read_text().strip()
+    parts.append("Load average: " + load_avg)
+
+    # iowait
+    iostat = _run(["iostat", "-x", "1", "2"])
+    for line in iostat.split("\n"):
+        if "iowait" in line or "%iowait" in line:
+            parts.append("iowait: " + line.strip())
+            break
+
+    return "\n\n".join(parts)
+
 
 if __name__ == "__main__":
     run()
