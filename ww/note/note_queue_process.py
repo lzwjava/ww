@@ -50,6 +50,49 @@ def _git_commit_push(files=None) -> None:
         gitmessageai(allow_pull_push=True, directory=directory, files=files)
 
 
+def _print_note_links(files: list[str], directory: str | None) -> None:
+    """Print GitHub links for each pushed note file."""
+    import subprocess
+
+    git = ["git", "-C", directory] if directory else ["git"]
+
+    # Get remote URL
+    try:
+        remote = subprocess.run(
+            [*git, "config", "--get", "remote.origin.url"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+    except subprocess.CalledProcessError:
+        return  # no remote configured, skip
+
+    # Parse owner/repo from git@github.com:owner/repo.git or https://github.com/owner/repo
+    for prefix in ("git@github.com:", "https://github.com/"):
+        if remote.startswith(prefix):
+            repo_path = remote[len(prefix) :]
+            break
+    else:
+        return  # not a GitHub remote
+    repo_path = repo_path.removesuffix(".git")
+
+    # Get git root to relativize file paths
+    try:
+        toplevel = subprocess.run(
+            [*git, "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+    except subprocess.CalledProcessError:
+        return
+
+    for f in files:
+        rel = os.path.relpath(f, toplevel) if os.path.isabs(f) else f
+        url = f"https://github.com/{repo_path}/blob/main/{rel}"
+        print(f"  {url}")
+
+
 def process_queue(dry_run: bool = False) -> None:
     """Drain all pending queue entries through the full note pipeline."""
     pending = get_pending()
@@ -141,6 +184,8 @@ def process_queue(dry_run: bool = False) -> None:
         try:
             _git_commit_push(files=created_paths)
             print("[ok] All notes committed and pushed")
+            base = get_base_path()
+            _print_note_links(created_paths, None if base == "." else base)
         except Exception as e:
             print(f"[error] Git commit/push failed: {e}")
             print(f"  Created files: {created_paths}")
