@@ -99,13 +99,15 @@ def _enqueue(text: str, entry_type: str = "note", **extra) -> Optional[str]:
     return entry_id
 
 
-def enqueue_clipboard(text=None, code=False) -> Optional[str]:
+def enqueue_clipboard(text=None, code=False, private=False) -> Optional[str]:
     """Read clipboard and add to note queue. Returns entry id if added, None if duplicate or empty."""
     if text is None:
         text = _get_clipboard()
     extra = {}
     if code:
         extra["code"] = True
+    if private:
+        extra["private"] = True
     return _enqueue(text, "note", **extra)
 
 

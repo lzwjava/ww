@@ -13,6 +13,8 @@ from ww.note.create_note_utils import get_base_path
 from ww.content.fix_mathjax import fix_mathjax_in_file
 from ww.content.fix_table import process_tables_in_file
 
+PRIVATE_NOTES_DIR = "/Users/lzwjava/projects/jekyll-ai-blog/private-note"
+
 
 def _git_toplevel() -> str:
     base = get_base_path()
@@ -137,14 +139,31 @@ def parse_args():
         default="https://github.com/lzwjava/blog-source",
         help="GitHub repo URL for --open",
     )
+    parser.add_argument(
+        "--private",
+        action="store_true",
+        help="Save note to private directory and skip git push",
+    )
     return parser.parse_args()
 
 
 def main():
+    args = parse_args()
+
+    if args.private:
+        # Private notes: skip git checks, skip git push
+        from ww.note.create_note_from_clipboard import create_note_from_content
+        from ww.note.create_note_utils import get_clipboard_content
+
+        print(f"[info] Private note — saving to {PRIVATE_NOTES_DIR}")
+        content = get_clipboard_content()
+        created_path = create_note_from_content(content, directory=PRIVATE_NOTES_DIR)
+        print(f"[info] Private note created at {created_path}")
+        return
+
     check_uncommitted_changes()
     git_pull_rebase()
 
-    args = parse_args()
     random_date = generate_random_date() if args.random else None
     print(f"[debug] random_date: {random_date}")
 

@@ -10,6 +10,8 @@ from ww.note.create_note_utils import get_base_path
 from ww.note.create_normal_log import create_normal_log
 from ww.note.note_queue import get_pending, mark_done, mark_failed
 
+PRIVATE_NOTES_DIR = "/Users/lzwjava/projects/jekyll-ai-blog/private-note"
+
 
 def _git_toplevel() -> str:
     from ww.note.note_workflow import _git_toplevel
@@ -143,6 +145,11 @@ def process_queue(dry_run: bool = False) -> None:
 
                 file_path = create_html(content)
                 print(f"  [ok] Created: {file_path}")
+            elif entry.get("private"):
+                file_path = create_note_from_content(
+                    content, directory=PRIVATE_NOTES_DIR, date=None
+                )
+                print(f"  [ok] Created (private): {file_path}")
             else:
                 file_path = create_note_from_content(content)
                 print(f"  [ok] Created: {file_path}")
@@ -168,7 +175,8 @@ def process_queue(dry_run: bool = False) -> None:
             except Exception as e:
                 print(f"  [warn] Post-processing failed: {e}")
 
-            created_paths.append(file_path)
+            if not entry.get("private"):
+                created_paths.append(file_path)
             mark_done(entry_id, file_path)
             print(f"  [done] {entry_id}")
         else:

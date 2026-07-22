@@ -158,9 +158,7 @@ def _print_help():
     print(
         "  ww gen-video generate    Read pasteboard content and send to gen-video server"
     )
-    print(
-        "  ww gen-video query <id>  Query the status of a video generation job"
-    )
+    print("  ww gen-video query <id>  Query the status of a video generation job")
     print("")
     print("GIF:")
     print("  ww gif                    Create GIF from images")
@@ -353,6 +351,7 @@ def _print_help():
     print("Note:")
     print("  ww note                   Quick: clipboard → queue (fast)")
     print("  ww note --sync            Full pipeline: create, fix, commit, push")
+    print("  ww note --private         Save to private-notes dir, skip git push")
     print("  ww note --code            LLM-wrap code in clipboard, then queue")
     print("  ww note process           Drain queue: create notes, commit, push")
     print("  ww note status            Show queue status")
@@ -574,6 +573,7 @@ def _main_dispatch(raw_args: list):
             # Check if --sync flag is present → old behavior (full pipeline)
             if "--sync" in sys.argv:
                 sys.argv.remove("--sync")
+                # Leave --private in sys.argv for note_workflow argparse
                 print("Tip: Use '/note' in hermes-agent to save assistant responses.")
                 print("")
                 if os.environ.get("NOTE_ENTER_CONFIRM", "1") != "0":
@@ -601,7 +601,10 @@ def _main_dispatch(raw_args: list):
                 # Fast path: read clipboard → queue → return instantly
                 from ww.note.note_queue import enqueue_clipboard
 
-                enqueue_clipboard()
+                private = "--private" in sys.argv
+                if private:
+                    sys.argv.remove("--private")
+                enqueue_clipboard(private=private)
         elif subcmd == "process":
             from ww.note.note_queue_process import main as process_main
 
