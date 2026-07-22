@@ -1,6 +1,8 @@
 import os
 import tempfile
 import unittest
+from pathlib import Path
+from unittest.mock import patch
 
 os.environ.setdefault("OPENROUTER_API_KEY", "test-fake-key")
 
@@ -23,17 +25,19 @@ class TestLoadEnv(unittest.TestCase):
         # Should not raise even if BASE_PATH is unset
         load_env()
 
-    def test_load_env_loads_base_path_dotenv(self):
+    def test_load_env_loads_xdg_dotenv(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            env_file = os.path.join(tmpdir, ".env")
+            xdg_dir = os.path.join(tmpdir, ".config", "ww")
+            os.makedirs(xdg_dir, exist_ok=True)
+            env_file = os.path.join(xdg_dir, ".env")
             with open(env_file, "w") as f:
-                f.write("_WW_ENV_TEST_SENTINEL=from_base_path\n")
+                f.write("_WW_ENV_TEST_SENTINEL=from_xdg\n")
 
-            os.environ["BASE_PATH"] = tmpdir
-            from ww.env import load_env
+            with patch.object(Path, "home", return_value=Path(tmpdir)):
+                from ww.env import load_env
 
-            load_env()
-            self.assertEqual(os.environ.get("_WW_ENV_TEST_SENTINEL"), "from_base_path")
+                load_env()
+                self.assertEqual(os.environ.get("_WW_ENV_TEST_SENTINEL"), "from_xdg")
 
     def test_load_env_skips_missing_base_path_dotenv(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -49,18 +53,20 @@ class TestLoadEnv(unittest.TestCase):
 
         load_env()  # should not attempt to load ./.env specially (no error)
 
-    def test_base_path_env_overrides_default(self):
+    def test_xdg_dotenv_overrides_existing(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            env_file = os.path.join(tmpdir, ".env")
+            xdg_dir = os.path.join(tmpdir, ".config", "ww")
+            os.makedirs(xdg_dir, exist_ok=True)
+            env_file = os.path.join(xdg_dir, ".env")
             with open(env_file, "w") as f:
                 f.write("_WW_ENV_TEST_SENTINEL=overridden\n")
 
-            os.environ["BASE_PATH"] = tmpdir
             os.environ["_WW_ENV_TEST_SENTINEL"] = "original"
-            from ww.env import load_env
+            with patch.object(Path, "home", return_value=Path(tmpdir)):
+                from ww.env import load_env
 
-            load_env()
-            self.assertEqual(os.environ.get("_WW_ENV_TEST_SENTINEL"), "overridden")
+                load_env()
+                self.assertEqual(os.environ.get("_WW_ENV_TEST_SENTINEL"), "overridden")
 
 
 if __name__ == "__main__":

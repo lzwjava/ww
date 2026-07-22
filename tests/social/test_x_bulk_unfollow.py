@@ -37,19 +37,22 @@ class TestConstants(unittest.TestCase):
 
 
 class TestLaunchChrome(unittest.TestCase):
+    @patch("socket.create_connection")
     @patch("ww.social.x_bulk_unfollow.time")
     @patch("ww.social.x_bulk_unfollow.subprocess")
-    def test_launch_chrome(self, mock_subprocess, mock_time):
+    def test_launch_chrome(self, mock_subprocess, mock_time, mock_socket):
         mock_proc = MagicMock()
         mock_subprocess.Popen.return_value = mock_proc
         mock_subprocess.DEVNULL = -1
+        mock_socket.return_value = MagicMock()
 
         result = x_bulk_unfollow.launch_chrome()
         self.assertEqual(result, mock_proc)
         mock_subprocess.Popen.assert_called_once()
         cmd = mock_subprocess.Popen.call_args[0][0]
         self.assertIn("--remote-debugging-port=9222", cmd)
-        mock_time.sleep.assert_called_once_with(3)
+        # Connection succeeds immediately, so sleep is never called
+        mock_time.sleep.assert_not_called()
 
 
 class TestExtractProfileInfo(unittest.TestCase):
@@ -92,49 +95,71 @@ class TestExtractProfileInfo(unittest.TestCase):
         self.assertTrue(result["premium"])
 
 
-class TestAskLlmShouldUnfollow(unittest.TestCase):
-    @patch.object(x_bulk_unfollow, "call_openrouter_api_with_messages")
-    def test_keep_decision(self, mock_api):
-        mock_api.return_value = '{"decision": "keep", "reason": "tech person"}'
-        profile = {
-            "handle": "techguy",
-            "name": "Tech Guy",
+class TestAskLlmPickUnfollow(unittest.TestCase):
+    """Tests for ask_llm_pick_unfollow which picks one profile from a batch."""
+
+    def _make_profile(self, **overrides):
+        return {
+            "handle": "user1",
+            "name": "User 1",
             "bio": "Engineer",
             "premium": False,
+            "followers": 1000,
+            **overrides,
         }
-        decision, reason = x_bulk_unfollow.ask_llm_should_unfollow(profile)
-        self.assertEqual(decision, "keep")
-        self.assertEqual(reason, "tech person")
 
     @patch.object(x_bulk_unfollow, "call_openrouter_api_with_messages")
-    def test_unfollow_decision(self, mock_api):
-        mock_api.return_value = '{"decision": "unfollow", "reason": "spam"}'
-        profile = {"handle": "spam", "name": "Spam", "bio": "buy", "premium": False}
-        decision, reason = x_bulk_unfollow.ask_llm_should_unfollow(profile)
-        self.assertEqual(decision, "unfollow")
-        self.assertEqual(reason, "spam")
+    def test_picks_first_profile(self, mock_api):
+        mock_api.return_value = '{"index": 1, "reason": "spammy profile"}'
+        profiles = [
+            self._make_profile(handle="spam1"),
+            self._make_profile(handle="good1"),
+        ]
+        idx, reason = x_bulk_unfollow.ask_llm_pick_unfollow(profiles)
+        self.assertEqual(idx, 0)
+        self.assertEqual(reason, "spammy profile")
 
     @patch.object(x_bulk_unfollow, "call_openrouter_api_with_messages")
-    def test_llm_error_defaults_to_keep(self, mock_api):
+    def test_picks_second_profile(self, mock_api):
+        mock_api.return_value = '{"index": 2, "reason": "low followers"}'
+        profiles = [self._make_profile(handle="a"), self._make_profile(handle="b")]
+        idx, reason = x_bulk_unfollow.ask_llm_pick_unfollow(profiles)
+        self.assertEqual(idx, 1)
+        self.assertEqual(reason, "low followers")
+
+    @patch.object(x_bulk_unfollow, "call_openrouter_api_with_messages")
+    def test_api_error_returns_minus_one(self, mock_api):
         mock_api.side_effect = Exception("API error")
-        profile = {"handle": "user", "name": "User", "bio": "", "premium": False}
-        decision, reason = x_bulk_unfollow.ask_llm_should_unfollow(profile)
-        self.assertEqual(decision, "keep")
+        profiles = [self._make_profile()]
+        idx, reason = x_bulk_unfollow.ask_llm_pick_unfollow(profiles)
+        self.assertEqual(idx, -1)
         self.assertEqual(reason, "llm_error")
 
     @patch.object(x_bulk_unfollow, "call_openrouter_api_with_messages")
-    def test_profile_text_includes_premium(self, mock_api):
-        mock_api.return_value = '{"decision": "keep", "reason": "verified"}'
-        profile = {"handle": "vip", "name": "VIP", "bio": "important", "premium": True}
-        x_bulk_unfollow.ask_llm_should_unfollow(profile)
-        user_msg = mock_api.call_args[0][0][1]["content"]
-        self.assertIn("Yes", user_msg)
+    def test_invalid_index_returns_minus_one(self, mock_api):
+        mock_api.return_value = '{"index": 99, "reason": "out of range"}'
+        profiles = [self._make_profile()]
+        idx, reason = x_bulk_unfollow.ask_llm_pick_unfollow(profiles)
+        self.assertEqual(idx, -1)
+        self.assertEqual(reason, "invalid_index")
 
     @patch.object(x_bulk_unfollow, "call_openrouter_api_with_messages")
-    def test_missing_fields_handled(self, mock_api):
-        mock_api.return_value = '{"decision": "keep"}'
-        decision, _ = x_bulk_unfollow.ask_llm_should_unfollow({})
-        self.assertEqual(decision, "keep")
+    def test_profile_text_includes_premium(self, mock_api):
+        mock_api.return_value = '{"index": 1, "reason": "verified"}'
+        profiles = [self._make_profile(handle="vip", premium=True)]
+        x_bulk_unfollow.ask_llm_pick_unfollow(profiles)
+        user_msg = mock_api.call_args[0][0][1]["content"]
+        self.assertIn("Premium: Yes", user_msg)
+
+    @patch.object(x_bulk_unfollow, "call_openrouter_api_with_messages")
+    def test_empty_profiles_returns_minus_one(self, mock_api):
+        mock_api.return_value = '{"index": 1, "reason": "nobody"}'
+        idx, reason = x_bulk_unfollow.ask_llm_pick_unfollow([])
+        self.assertEqual(idx, -1)
+        # With empty profiles, the API call is made with empty text, which
+        # may return a valid-looking JSON with index=1. Since 1 > len([]),
+        # it returns invalid_index.
+        self.assertEqual(reason, "invalid_index")
 
 
 class TestLoadReport(unittest.TestCase):
@@ -171,20 +196,14 @@ class TestSaveReport(unittest.TestCase):
         mock_file.assert_called_once()
 
 
-def _make_page_with_cells(cells_data, locators=None):
-    """Helper to create a mock page that returns cells on first count(), then 0."""
+def _make_page_with_cells(cells_data):
+    """Helper to create a mock page that returns the given cells."""
     page = MagicMock()
-    call_count = [0]
 
     def locator_side_effect(selector):
         m = MagicMock()
         if selector == '[data-testid="UserCell"]':
-
-            def count_side_effect():
-                call_count[0] += 1
-                return len(cells_data) if call_count[0] <= 1 else 0
-
-            m.count.side_effect = count_side_effect
+            m.count.return_value = len(cells_data)
             m.nth.side_effect = lambda i: cells_data[i]
         return m
 
@@ -193,231 +212,232 @@ def _make_page_with_cells(cells_data, locators=None):
 
 
 class TestUnfollowWithLlm(unittest.TestCase):
+    """Tests for unfollow_with_llm.
+
+    These tests mock collect_batch and do_unfollow at a high level
+    to avoid complex page/cell mock interactions with the loop logic.
+    """
+
     @patch.object(x_bulk_unfollow, "time")
     @patch.object(x_bulk_unfollow, "random")
     @patch.object(x_bulk_unfollow, "save_report")
     @patch.object(x_bulk_unfollow, "load_report")
-    @patch.object(x_bulk_unfollow, "ask_llm_should_unfollow")
-    @patch.object(x_bulk_unfollow, "extract_profile_info")
+    @patch.object(x_bulk_unfollow, "do_unfollow")
+    @patch.object(x_bulk_unfollow, "ask_llm_pick_unfollow")
+    @patch.object(x_bulk_unfollow, "collect_batch")
     @patch.object(x_bulk_unfollow, "datetime")
-    def test_dry_run_unfollow(
+    def test_unfollow_selected_profile(
         self,
         mock_dt,
-        mock_extract,
+        mock_collect,
         mock_llm,
+        mock_do_unfollow,
         mock_load,
         mock_save,
         mock_random,
         mock_time,
     ):
+        """LLM picks a profile → do_unfollow increments the counter."""
         mock_dt.now.return_value.isoformat.return_value = "2024-01-01T12:00:00"
         mock_load.return_value = {"unfollowed": [], "kept": [], "run_date": ""}
         mock_random.uniform.return_value = 1.0
-        mock_llm.return_value = ("unfollow", "spam")
-        mock_extract.return_value = {
+        mock_llm.return_value = (0, "spammy")
+        profile = {
             "handle": "spam_user",
             "name": "Spam",
             "bio": "buy",
             "premium": False,
         }
+        # collect_batch is called 2x per iteration (main + scroll).
+        # Both calls return the batch, then loop exits because unfollowed reaches count.
+        mock_collect.return_value = [(0, profile)]
 
-        cell = MagicMock()
-        cell.is_visible.return_value = True
-        page = _make_page_with_cells([cell])
+        def _do_unfollow_side(page, cell_index, prof, report, count, delay, unfollowed):
+            unfollowed[0] += 1
+            return True
 
-        total, evaluated = x_bulk_unfollow.unfollow_with_llm(
-            page, "myuser", 1, 2, dry_run=True
-        )
+        mock_do_unfollow.side_effect = _do_unfollow_side
+
+        page = MagicMock()
+        page.locator.return_value.count.return_value = 1
+
+        total, evaluated = x_bulk_unfollow.unfollow_with_llm(page, "myuser", 1, 2)
         self.assertEqual(total, 1)
         self.assertEqual(evaluated, 1)
+        mock_llm.assert_called_once_with([profile])
+        mock_do_unfollow.assert_called_once()
 
     @patch.object(x_bulk_unfollow, "time")
     @patch.object(x_bulk_unfollow, "random")
     @patch.object(x_bulk_unfollow, "save_report")
     @patch.object(x_bulk_unfollow, "load_report")
-    @patch.object(x_bulk_unfollow, "ask_llm_should_unfollow")
-    @patch.object(x_bulk_unfollow, "extract_profile_info")
+    @patch.object(x_bulk_unfollow, "do_unfollow")
+    @patch.object(x_bulk_unfollow, "ask_llm_pick_unfollow")
+    @patch.object(x_bulk_unfollow, "collect_batch")
     @patch.object(x_bulk_unfollow, "datetime")
-    def test_keep_decision(
+    def test_no_profile_picked(
         self,
         mock_dt,
-        mock_extract,
+        mock_collect,
         mock_llm,
+        mock_do_unfollow,
         mock_load,
         mock_save,
         mock_random,
         mock_time,
     ):
+        """LLM returns -1 → nobody is unfollowed, loop stops when batch runs out."""
         mock_dt.now.return_value.isoformat.return_value = "2024-01-01T12:00:00"
         mock_load.return_value = {"unfollowed": [], "kept": [], "run_date": ""}
         mock_random.uniform.return_value = 1.0
-        mock_llm.return_value = ("keep", "tech person")
-        mock_extract.return_value = {
-            "handle": "techguy",
-            "name": "Tech",
-            "bio": "eng",
+        mock_llm.return_value = (-1, "llm_error")
+        profile = {
+            "handle": "someone",
+            "name": "Someone",
+            "bio": "ok",
             "premium": False,
         }
+        # First iteration: 2 calls (main + scroll), returns batch.
+        # Second iteration: collect_batch returns empty → loop breaks.
+        _calls = [0]
 
-        cell = MagicMock()
-        cell.is_visible.return_value = True
-        page = _make_page_with_cells([cell])
+        def _collect_side(*args):
+            _calls[0] += 1
+            if _calls[0] <= 2:
+                return [(0, profile)]
+            return []
 
-        total, evaluated = x_bulk_unfollow.unfollow_with_llm(
-            page, "myuser", 1, 2, dry_run=False
-        )
+        mock_collect.side_effect = _collect_side
+
+        page = MagicMock()
+        page.locator.return_value.count.return_value = 1
+
+        total, evaluated = x_bulk_unfollow.unfollow_with_llm(page, "myuser", 1, 2)
         self.assertEqual(total, 0)
         self.assertEqual(evaluated, 1)
+        mock_do_unfollow.assert_not_called()
 
     @patch.object(x_bulk_unfollow, "time")
     @patch.object(x_bulk_unfollow, "random")
     @patch.object(x_bulk_unfollow, "save_report")
     @patch.object(x_bulk_unfollow, "load_report")
-    @patch.object(x_bulk_unfollow, "ask_llm_should_unfollow")
-    @patch.object(x_bulk_unfollow, "extract_profile_info")
+    @patch.object(x_bulk_unfollow, "collect_batch")
     @patch.object(x_bulk_unfollow, "datetime")
     def test_no_cells_found(
         self,
         mock_dt,
-        mock_extract,
-        mock_llm,
+        mock_collect,
         mock_load,
         mock_save,
         mock_random,
         mock_time,
     ):
+        """Page has no cells at all → 0 total, 0 evaluated."""
         mock_dt.now.return_value.isoformat.return_value = "2024-01-01T12:00:00"
         mock_load.return_value = {"unfollowed": [], "kept": [], "run_date": ""}
 
         page = MagicMock()
         page.locator.return_value.count.return_value = 0
 
-        total, evaluated = x_bulk_unfollow.unfollow_with_llm(
-            page, "myuser", 1, 2, dry_run=False
-        )
+        total, evaluated = x_bulk_unfollow.unfollow_with_llm(page, "myuser", 1, 2)
         self.assertEqual(total, 0)
         self.assertEqual(evaluated, 0)
+        mock_collect.assert_not_called()
 
     @patch.object(x_bulk_unfollow, "time")
     @patch.object(x_bulk_unfollow, "random")
     @patch.object(x_bulk_unfollow, "save_report")
     @patch.object(x_bulk_unfollow, "load_report")
-    @patch.object(x_bulk_unfollow, "ask_llm_should_unfollow")
-    @patch.object(x_bulk_unfollow, "extract_profile_info")
+    @patch.object(x_bulk_unfollow, "do_unfollow")
+    @patch.object(x_bulk_unfollow, "ask_llm_pick_unfollow")
+    @patch.object(x_bulk_unfollow, "collect_batch")
     @patch.object(x_bulk_unfollow, "datetime")
-    def test_live_unfollow_with_button(
+    def test_reaches_target_count(
         self,
         mock_dt,
-        mock_extract,
+        mock_collect,
         mock_llm,
+        mock_do_unfollow,
         mock_load,
         mock_save,
         mock_random,
         mock_time,
     ):
+        """Multiple batches until target count is reached.
+
+        collect_batch is called 2x per iteration (main + scroll).
+        We alternate between two profiles across iterations.
+        """
         mock_dt.now.return_value.isoformat.return_value = "2024-01-01T12:00:00"
         mock_load.return_value = {"unfollowed": [], "kept": [], "run_date": ""}
         mock_random.uniform.return_value = 1.0
-        mock_llm.return_value = ("unfollow", "spam")
-        mock_extract.return_value = {
-            "handle": "spam_user",
-            "name": "Spam",
-            "bio": "buy",
+        mock_llm.return_value = (0, "spammy")
+
+        profile_a = {
+            "handle": "user_a",
+            "name": "A",
+            "bio": "a",
+            "premium": False,
+        }
+        profile_b = {
+            "handle": "user_b",
+            "name": "B",
+            "bio": "b",
             "premium": False,
         }
 
-        cell = MagicMock()
-        cell.is_visible.return_value = True
-        unfollow_btn = MagicMock()
-        unfollow_btn.count.return_value = 1
-        confirm_btn = MagicMock()
-        confirm_btn.is_visible.return_value = True
+        # 2 calls per iteration × 2 iterations = 4 calls, then empty to stop
+        _calls = [0]
+        _profiles = [profile_a, profile_b]
 
-        def cell_locator(selector):
-            if "-unfollow" in selector:
-                return unfollow_btn
-            elif "confirmationSheetConfirm" in selector:
-                return confirm_btn
-            return MagicMock(count=MagicMock(return_value=0))
+        def _collect_side(*args):
+            idx = _calls[0]
+            _calls[0] += 1
+            if idx < 4:  # 2 iterations × 2 calls each
+                return [(0, _profiles[idx // 2])]
+            return []
 
-        cell.locator.side_effect = cell_locator
-        page = _make_page_with_cells([cell])
+        mock_collect.side_effect = _collect_side
 
-        total, evaluated = x_bulk_unfollow.unfollow_with_llm(
-            page, "myuser", 1, 2, dry_run=False
-        )
-        self.assertEqual(total, 1)
-        self.assertEqual(evaluated, 1)
+        def _do_unfollow_side(page, cell_index, prof, report, count, delay, unfollowed):
+            unfollowed[0] += 1
+            return True
+
+        mock_do_unfollow.side_effect = _do_unfollow_side
+
+        page = MagicMock()
+        page.locator.return_value.count.return_value = 1
+
+        total, evaluated = x_bulk_unfollow.unfollow_with_llm(page, "myuser", 3, 2)
+        # Only 2 profiles were evaluated before batch ran out
+        self.assertEqual(total, 2)
+        self.assertEqual(evaluated, 2)
 
     @patch.object(x_bulk_unfollow, "time")
     @patch.object(x_bulk_unfollow, "random")
     @patch.object(x_bulk_unfollow, "save_report")
     @patch.object(x_bulk_unfollow, "load_report")
-    @patch.object(x_bulk_unfollow, "ask_llm_should_unfollow")
-    @patch.object(x_bulk_unfollow, "extract_profile_info")
-    @patch.object(x_bulk_unfollow, "datetime")
-    def test_unfollow_button_not_found(
-        self,
-        mock_dt,
-        mock_extract,
-        mock_llm,
-        mock_load,
-        mock_save,
-        mock_random,
-        mock_time,
-    ):
-        mock_dt.now.return_value.isoformat.return_value = "2024-01-01T12:00:00"
-        mock_load.return_value = {"unfollowed": [], "kept": [], "run_date": ""}
-        mock_random.uniform.return_value = 1.0
-        mock_llm.return_value = ("unfollow", "spam")
-        mock_extract.return_value = {
-            "handle": "spam_user",
-            "name": "Spam",
-            "bio": "buy",
-            "premium": False,
-        }
-
-        cell = MagicMock()
-        cell.is_visible.return_value = True
-        unfollow_btn = MagicMock()
-        unfollow_btn.count.return_value = 0
-
-        cell.locator.return_value = unfollow_btn
-        page = _make_page_with_cells([cell])
-
-        total, evaluated = x_bulk_unfollow.unfollow_with_llm(
-            page, "myuser", 1, 2, dry_run=False
-        )
-        self.assertEqual(total, 0)
-        self.assertEqual(evaluated, 1)
-
-    @patch.object(x_bulk_unfollow, "time")
-    @patch.object(x_bulk_unfollow, "random")
-    @patch.object(x_bulk_unfollow, "save_report")
-    @patch.object(x_bulk_unfollow, "load_report")
-    @patch.object(x_bulk_unfollow, "ask_llm_should_unfollow")
-    @patch.object(x_bulk_unfollow, "extract_profile_info")
+    @patch.object(x_bulk_unfollow, "collect_batch")
     @patch.object(x_bulk_unfollow, "datetime")
     def test_invisible_cell_skipped(
         self,
         mock_dt,
-        mock_extract,
-        mock_llm,
+        mock_collect,
         mock_load,
         mock_save,
         mock_random,
         mock_time,
     ):
+        """collect_batch returns empty if no visible/unseen cells."""
         mock_dt.now.return_value.isoformat.return_value = "2024-01-01T12:00:00"
         mock_load.return_value = {"unfollowed": [], "kept": [], "run_date": ""}
 
-        cell = MagicMock()
-        cell.is_visible.return_value = False
-        page = _make_page_with_cells([cell])
+        mock_collect.return_value = []
 
-        total, evaluated = x_bulk_unfollow.unfollow_with_llm(
-            page, "myuser", 1, 2, dry_run=False
-        )
+        page = MagicMock()
+        page.locator.return_value.count.return_value = 1
+
+        total, evaluated = x_bulk_unfollow.unfollow_with_llm(page, "myuser", 1, 2)
         self.assertEqual(total, 0)
         self.assertEqual(evaluated, 0)
 
