@@ -573,7 +573,7 @@ def _main_dispatch(raw_args: list):
             # Check if --sync flag is present → old behavior (full pipeline)
             if "--sync" in sys.argv:
                 sys.argv.remove("--sync")
-                # Leave --private in sys.argv for note_workflow argparse
+                # Leave --private/-p in sys.argv for note_workflow argparse
                 print("Tip: Use '/note' in hermes-agent to save assistant responses.")
                 print("")
                 if os.environ.get("NOTE_ENTER_CONFIRM", "1") != "0":
@@ -601,9 +601,11 @@ def _main_dispatch(raw_args: list):
                 # Fast path: read clipboard → queue → return instantly
                 from ww.note.note_queue import enqueue_clipboard
 
-                private = "--private" in sys.argv
+                private = "--private" in sys.argv or "-p" in sys.argv
                 if private:
-                    sys.argv.remove("--private")
+                    for flag in ("--private", "-p"):
+                        if flag in sys.argv:
+                            sys.argv.remove(flag)
                 enqueue_clipboard(private=private)
         elif subcmd == "process":
             from ww.note.note_queue_process import main as process_main

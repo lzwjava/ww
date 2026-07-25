@@ -140,6 +140,7 @@ def parse_args():
         help="GitHub repo URL for --open",
     )
     parser.add_argument(
+        "-p",
         "--private",
         action="store_true",
         help="Save note to private directory and skip git push",
