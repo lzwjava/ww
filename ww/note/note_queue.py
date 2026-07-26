@@ -23,7 +23,7 @@ def _load_queue() -> list[dict]:
     if not qf.exists():
         return []
     try:
-        return json.loads(qf.read_text())
+        return json.loads(qf.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return []
 
@@ -31,7 +31,7 @@ def _load_queue() -> list[dict]:
 def _save_queue(queue: list[dict]) -> None:
     qf = _queue_file()
     tmp = qf.with_suffix(".tmp")
-    tmp.write_text(json.dumps(queue, indent=2, ensure_ascii=False))
+    tmp.write_text(json.dumps(queue, indent=2, ensure_ascii=False), encoding="utf-8")
     tmp.rename(qf)  # atomic on POSIX
 
 

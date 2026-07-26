@@ -88,7 +88,7 @@ def watch(interval: float = 2.0) -> None:
 
             # Check for pending entries
             try:
-                queue = json.loads(qf.read_text())
+                queue = json.loads(qf.read_text(encoding="utf-8"))
             except (json.JSONDecodeError, OSError):
                 continue
 
