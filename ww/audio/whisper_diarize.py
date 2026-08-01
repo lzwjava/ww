@@ -13,23 +13,52 @@ Without --hf-token, runs transcription-only (no speaker labels).
 """
 
 import argparse
+import importlib.util
 import os
 import sys
 
-import whisperx
-import torch
+
+def _ensure_deps(*module_names):
+    """Re-exec this script with the project venv python if a required module
+    is missing in the current interpreter (the `ww` console script runs under
+    the system python, while whisperx/torch live in the project .venv)."""
+    missing = [m for m in module_names if importlib.util.find_spec(m) is None]
+    if not missing:
+        return
+    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    venv_py = os.path.join(root, ".venv", "bin", "python")
+    if not os.path.isfile(venv_py):
+        print(
+            f"Error: missing modules {missing} and no project venv at {venv_py}. "
+            "Run `uv sync` in the ww project first.",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
+    print(
+        f"[ww] {', '.join(missing)} not importable here; re-running with {venv_py}",
+        file=sys.stderr,
+    )
+    os.execv(venv_py, [venv_py, os.path.abspath(__file__), *sys.argv[1:]])  # nosec B606 — fixed interpreter path, no shell
 
 
 def _disable_proxy():
     """Unset proxy env vars — HuggingFace downloads stall through local proxy."""
     for var in (
-        "http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY",
-        "all_proxy", "ALL_PROXY",
+        "http_proxy",
+        "https_proxy",
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "all_proxy",
+        "ALL_PROXY",
     ):
         os.environ.pop(var, None)
 
 
 def main():
+    _ensure_deps("whisperx", "torch")
+    import torch  # type: ignore[reportMissingImports]
+    import whisperx  # type: ignore[reportMissingImports]
+
     parser = argparse.ArgumentParser(
         description="Transcribe audio with optional speaker diarization (whisperx)."
     )
@@ -54,7 +83,7 @@ def main():
         "--hf-token",
         default=None,
         help="HuggingFace token for pyannote diarization. Falls back to HF_TOKEN env var. "
-             "Without this, runs transcription-only (no speaker labels).",
+        "Without this, runs transcription-only (no speaker labels).",
     )
     parser.add_argument(
         "--num-speakers",
@@ -63,11 +92,15 @@ def main():
         help="Hint: exact number of speakers (improves diarization accuracy)",
     )
     parser.add_argument(
-        "--batch-size", type=int, default=4, help="Batch size for transcription (default: 4)"
+        "--batch-size",
+        type=int,
+        default=4,
+        help="Batch size for transcription (default: 4)",
     )
     parser.add_argument(
-        "--no-align", action="store_true",
-        help="Skip wav2vec2 alignment step (faster, less accurate timestamps)"
+        "--no-align",
+        action="store_true",
+        help="Skip wav2vec2 alignment step (faster, less accurate timestamps)",
     )
     parser.add_argument(
         "--output",
@@ -94,7 +127,9 @@ def main():
         output_path = base + suffix
 
     # Step 1: Transcribe
-    print(f"[1/{'3' if do_diarize else '2'}] Loading whisperx model '{args.model}' on {args.device} ({args.compute_type})...")
+    print(
+        f"[1/{'3' if do_diarize else '2'}] Loading whisperx model '{args.model}' on {args.device} ({args.compute_type})..."
+    )
     model = whisperx.load_model(
         args.model,
         device=args.device,
@@ -115,7 +150,11 @@ def main():
                 language_code=args.language, device=args.device
             )
             result = whisperx.align(
-                result["segments"], model_a, metadata, audio, args.device,
+                result["segments"],
+                model_a,
+                metadata,
+                audio,
+                args.device,
                 return_char_alignments=False,
             )
         except Exception as e:
@@ -125,10 +164,9 @@ def main():
     if do_diarize:
         print("[3/3] Running speaker diarization...")
         try:
-            from whisperx.diarize import DiarizationPipeline
-            diarize_model = DiarizationPipeline(
-                token=hf_token, device=args.device
-            )
+            from whisperx.diarize import DiarizationPipeline  # type: ignore[reportMissingImports]
+
+            diarize_model = DiarizationPipeline(token=hf_token, device=args.device)
             diarize_kwargs = {}
             if args.num_speakers:
                 diarize_kwargs["num_speakers"] = args.num_speakers

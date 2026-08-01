@@ -475,7 +475,7 @@ def _print_help():
     print("Whisper:")
     print("  ww whisper <file.mp4>     Transcribe via whisper (Chinese, large, CUDA)")
     print(
-        "  ww whisper <file> --low-memory  Low-VRAM transcription (fp16-only loader, ~3.2 GB for large-v3)"
+        "  ww whisper <file> --low-memory  Low-VRAM transcription (faster-whisper: fp16 ~3.2 GB / int8 ~1.1 GB for large-v3)"
     )
     print(
         "  ww whisper diarize <file> Transcribe with speaker labels (whisperx + pyannote)"
