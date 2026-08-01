@@ -475,6 +475,9 @@ def _print_help():
     print("Whisper:")
     print("  ww whisper <file.mp4>     Transcribe via whisper (Chinese, large, CUDA)")
     print(
+        "  ww whisper <file> --low-memory  Low-VRAM transcription (fp16-only loader, ~3.2 GB for large-v3)"
+    )
+    print(
         "  ww whisper diarize <file> Transcribe with speaker labels (whisperx + pyannote)"
     )
     print(
@@ -1891,6 +1894,12 @@ def _main_dispatch(raw_args: list):
         elif len(sys.argv) > 1 and sys.argv[1] == "diarize":
             sys.argv.pop(1)
             from ww.audio.whisper_diarize import main as m
+
+            m()
+        elif "--low-memory" in sys.argv[1:]:
+            # Memory-safe loader: fp16 on GPU only (~3.2 GB for large-v3)
+            sys.argv.remove("--low-memory")
+            from ww.audio.whisper_low_mem import main as m
 
             m()
         else:
