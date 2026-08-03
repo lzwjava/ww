@@ -13,6 +13,110 @@ except Exception:  # pragma: no cover - optional import for environments without
     PdfWriter = None  # type: ignore
 
 
+def _find_cjk_font():
+    """Locate a system font that supports CJK characters, or None."""
+    candidates = []
+    if platform.system() == "Windows":
+        windir = os.environ.get("WINDIR", r"C:\Windows")
+        fonts = os.path.join(windir, "Fonts")
+        candidates = [
+            os.path.join(fonts, "msyh.ttc"),      # Microsoft YaHei
+            os.path.join(fonts, "msyh.ttf"),
+            os.path.join(fonts, "simhei.ttf"),    # SimHei
+            os.path.join(fonts, "simsun.ttc"),    # SimSun
+            os.path.join(fonts, "Deng.ttf"),      # DengXian
+        ]
+    elif platform.system() == "Darwin":
+        candidates = [
+            "/System/Library/Fonts/PingFang.ttc",
+            "/System/Library/Fonts/STHeiti Light.ttc",
+            "/System/Library/Fonts/Hiragino Sans GB.ttc",
+        ]
+    else:  # Linux / other
+        candidates = [
+            "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+            "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
+            "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
+            "/usr/share/fonts/truetype/arphic/uming.ttc",
+        ]
+    for c in candidates:
+        if os.path.isfile(c):
+            return c
+    return None
+
+
+def _md_to_pdf_via_fpdf(input_markdown_path, output_pdf_path, *, pt: int = 16):
+    """Pure-Python fallback: markdown → HTML → PDF via fpdf2.
+
+    No pandoc/xelatex required. Uses fpdf2's write_html() to render the
+    converted HTML. Loads a system CJK font when available so Chinese/
+    Japanese/Korean text renders correctly.
+    """
+    import markdown as md_lib
+    from fpdf import FPDF
+
+    with open(input_markdown_path, encoding="utf-8") as f:
+        md_text = f.read()
+
+    html = md_lib.markdown(
+        md_text,
+        extensions=["fenced_code", "tables", "toc", "sane_lists", "nl2br"],
+    )
+
+    pdf = FPDF(format="A4")
+    pdf.set_auto_page_break(auto=True, margin=18)
+    pdf.add_page()
+
+    # Use a CJK-capable font if found; otherwise fall back to the built-in Helvetica.
+    cjk_font = _find_cjk_font()
+    if cjk_font:
+        try:
+            pdf.add_font("Main", style="", fname=cjk_font)
+            pdf.add_font("Main", style="B", fname=cjk_font)
+            pdf.set_font("Main", size=pt)
+        except Exception as e:
+            print(f"Warning: could not load CJK font {cjk_font}: {e}")
+            pdf.set_font("Helvetica", size=pt)
+    else:
+        pdf.set_font("Helvetica", size=pt)
+
+    # Inline stylesheet so headings scale relative to body size and code is monospaced.
+    base_pt = max(int(pt * 0.75), 9)
+    h1_sz = int(base_pt * 1.9)
+    h2_sz = int(base_pt * 1.5)
+    h3_sz = int(base_pt * 1.25)
+    from fpdf.fonts import FontFace
+
+    tag_styles = {
+        "h1": FontFace(size_pt=h1_sz, emphasis="B"),
+        "h2": FontFace(size_pt=h2_sz, emphasis="B"),
+        "h3": FontFace(size_pt=h3_sz, emphasis="B"),
+        "h4": FontFace(size_pt=base_pt, emphasis="B"),
+        "h5": FontFace(size_pt=base_pt, emphasis="B"),
+        "h6": FontFace(size_pt=base_pt, emphasis="B"),
+        "pre": FontFace(size_pt=base_pt - 2),
+        "code": FontFace(size_pt=base_pt - 2),
+    }
+    try:
+        pdf.write_html(html, tag_styles=tag_styles)
+    except Exception as e:
+        print(f"Warning: write_html failed ({e}); writing raw markdown text instead")
+        pdf = FPDF(format="A4")
+        pdf.set_auto_page_break(auto=True, margin=18)
+        pdf.add_page()
+        if cjk_font:
+            pdf.add_font("Main", style="", fname=cjk_font)
+            pdf.set_font("Main", size=pt)
+        else:
+            pdf.set_font("Helvetica", size=pt)
+        for line in md_text.splitlines():
+            pdf.multi_cell(0, max(pt * 0.5, 6), line)
+            pdf.ln(1)
+
+    pdf.output(output_pdf_path)
+    return True
+
+
 def text_to_pdf_from_markdown(
     input_markdown_path,
     output_pdf_path,
@@ -36,6 +140,19 @@ def text_to_pdf_from_markdown(
 
     if not os.path.exists(input_markdown_path):
         raise Exception(f"Input file does not exist: {input_markdown_path}")
+
+    # If pandoc isn't installed (common on Windows), fall back to a pure-Python
+    # renderer (markdown + fpdf2) so no system LaTeX toolchain is required.
+    if shutil.which("pandoc") is None:
+        print(
+            "pandoc not found — using built-in renderer (markdown + fpdf2). "
+            "Install pandoc + xelatex for advanced typography."
+        )
+        os.makedirs(os.path.dirname(output_pdf_path) or ".", exist_ok=True)
+        ok = _md_to_pdf_via_fpdf(input_markdown_path, output_pdf_path, pt=pt)
+        if ok:
+            print(f"PDF content written to {output_pdf_path}")
+        return ok
 
     lang = os.path.basename(input_markdown_path).split("-")[-1].split(".")[0]
     CJK_FONT = _font_for_lang(lang)
