@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -32,7 +33,7 @@ def _save_queue(queue: list[dict]) -> None:
     qf = _queue_file()
     tmp = qf.with_suffix(".tmp")
     tmp.write_text(json.dumps(queue, indent=2, ensure_ascii=False), encoding="utf-8")
-    tmp.rename(qf)  # atomic on POSIX
+    os.replace(tmp, qf)  # atomic on POSIX, works on Windows
 
 
 def content_hash(text: str) -> str:
