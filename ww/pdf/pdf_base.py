@@ -63,6 +63,18 @@ def _md_to_pdf_via_fpdf(input_markdown_path, output_pdf_path, *, pt: int = 16):
         extensions=["fenced_code", "tables", "toc", "sane_lists", "nl2br"],
     )
 
+    # fpdf2's write_html can't handle nested tags inside <td>/<th> cells.
+    # Strip inner tags from cells (keep text) so tables still render; if a
+    # table still fails, it is replaced with a placeholder.
+    import re as _re
+
+    def _flatten_cells(m):
+        tag, inner = m.group(1), m.group(2)
+        inner = _re.sub(r"<[^>]+>", "", inner)
+        return f"<{tag}>{inner}</{tag}>"
+
+    html = _re.sub(r"<(td|th)>(.*?)</\1>", _flatten_cells, html, flags=_re.DOTALL)
+
     pdf = FPDF(format="A4")
     pdf.set_auto_page_break(auto=True, margin=18)
     pdf.add_page()
@@ -100,18 +112,72 @@ def _md_to_pdf_via_fpdf(input_markdown_path, output_pdf_path, *, pt: int = 16):
     try:
         pdf.write_html(html, tag_styles=tag_styles)
     except Exception as e:
-        print(f"Warning: write_html failed ({e}); writing raw markdown text instead")
-        pdf = FPDF(format="A4")
-        pdf.set_auto_page_break(auto=True, margin=18)
-        pdf.add_page()
-        if cjk_font:
-            pdf.add_font("Main", style="", fname=cjk_font)
-            pdf.set_font("Main", size=pt)
+        # If the error is table-related, strip tables and retry
+        if "table" in str(e).lower():
+            print("Warning: table rendering not supported, stripping tables")
+            html = _re.sub(r"<table[^>]*>.*?</table>", "", html, flags=_re.DOTALL)
+            try:
+                pdf = None
+                pdf = FPDF(format="A4")
+                pdf.set_auto_page_break(auto=True, margin=18)
+                pdf.add_page()
+                if cjk_font:
+                    pdf.add_font("Main", style="", fname=cjk_font)
+                    pdf.set_font("Main", size=pt)
+                else:
+                    pdf.set_font("Helvetica", size=pt)
+                pdf.write_html(html, tag_styles=tag_styles)
+            except Exception as e2:
+                print(f"Warning: write_html still failed after stripping tables ({e2})")
+                pdf = None
         else:
-            pdf.set_font("Helvetica", size=pt)
-        for line in md_text.splitlines():
-            pdf.multi_cell(0, max(pt * 0.5, 6), line)
-            pdf.ln(1)
+            print(f"Warning: write_html failed ({e})")
+
+        if pdf is None:
+            # Final fallback: render markdown text with basic formatting
+            print("Falling back to plain text rendering")
+            pdf = FPDF(format="A4")
+            pdf.set_auto_page_break(auto=True, margin=18)
+            pdf.add_page()
+            if cjk_font:
+                try:
+                    pdf.add_font("Main", style="", fname=cjk_font)
+                except Exception:
+                    pass
+                try:
+                    pdf.set_font("Main", size=pt)
+                except Exception:
+                    pdf.set_font("Helvetica", size=pt)
+            else:
+                pdf.set_font("Helvetica", size=pt)
+            for line in md_text.splitlines():
+                stripped = line.strip()
+                if stripped.startswith("#"):
+                    level = len(stripped) - len(stripped.lstrip("#"))
+                    text = stripped.lstrip("# ").strip()
+                    sz = max(pt + 4 - level * 2, pt)
+                    pdf.set_font("Main" if cjk_font else "Helvetica", size=sz)
+                    pdf.multi_cell(0, sz * 0.5, text, new_x="LMARGIN", new_y="NEXT")
+                    pdf.set_font("Main" if cjk_font else "Helvetica", size=pt)
+                    pdf.ln(2)
+                elif stripped.startswith(">"):
+                    text = stripped.lstrip("> ").strip()
+                    pdf.multi_cell(0, pt * 0.45, text, new_x="LMARGIN", new_y="NEXT")
+                    pdf.ln(1)
+                elif stripped.startswith(("- ", "* ", "+ ")):
+                    text = "  • " + stripped[2:]
+                    pdf.multi_cell(0, pt * 0.45, text, new_x="LMARGIN", new_y="NEXT")
+                elif stripped and stripped[0].isdigit() and ". " in stripped[:5]:
+                    text = "  " + stripped
+                    pdf.multi_cell(0, pt * 0.45, text, new_x="LMARGIN", new_y="NEXT")
+                elif stripped == "---":
+                    y = pdf.get_y()
+                    pdf.line(10, y, 200, y)
+                    pdf.ln(2)
+                elif stripped == "":
+                    pdf.ln(3)
+                else:
+                    pdf.multi_cell(0, pt * 0.45, line, new_x="LMARGIN", new_y="NEXT")
 
     pdf.output(output_pdf_path)
     return True
