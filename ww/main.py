@@ -248,6 +248,11 @@ def _print_help():
     print("  ww inference test [--model M]  Detect SGLang vs vLLM backend for a model")
     print("                              (default: tencent/hy3-preview)")
     print("")
+    print("SGLang:")
+    print("  ww sglang test [--port P]   Test a local SGLang server with different")
+    print("                              input lengths (TTFT, tok/s, response check)")
+    print("                              (default: http://localhost:30010)")
+    print("")
     print("Latest:")
     print(
         "  ww latest notes [N]        Show filename and title of latest N notes (default 10)"
@@ -2058,6 +2063,24 @@ def _main_dispatch(raw_args: list):
             m()
         else:
             print(f"Unknown inference command: {subcmd}")
+            sys.exit(1)
+
+    elif group == "sglang":
+        subcmd = _pop_subcmd()
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww sglang <command>")
+            print("")
+            print("Commands:")
+            print("  test  Test a local SGLang server with different input lengths")
+            print(
+                "        (default: http://localhost:30010, e.g. ww sglang test --port 30010)"
+            )
+        elif subcmd == "test":
+            from ww.sglang.test import main as m
+
+            m()
+        else:
+            print(f"Unknown sglang command: {subcmd}")
             sys.exit(1)
 
     elif group == "x":

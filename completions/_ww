@@ -14,6 +14,7 @@ _ww() {
         'gif:Create GIF from images'
         'github:GitHub management commands'
         'inference:Inference backend detection (SGLang vs vLLM)'
+        'sglang:Local SGLang server testing'
         'macos:macOS system utilities'
         'image:Image processing commands'
         'proc:Process management commands'
@@ -401,6 +402,11 @@ _ww() {
         'test:Detect SGLang vs vLLM backend for a model'
     )
 
+    local -a sglang_cmds
+    sglang_cmds=(
+        'test:Test local SGLang server with different input lengths'
+    )
+
     local -a clash_cmds
     clash_cmds=(
         'select-provider:Select best proxy provider'
@@ -544,6 +550,7 @@ _ww() {
                 ghostty)       _describe -t commands 'ghostty command' ghostty_cmds ;;
                 headphone)    _describe -t commands 'headphone command' headphone_cmds ;;
                 inference)    _describe -t commands 'inference command' inference_cmds ;;
+                sglang)       _describe -t commands 'sglang command' sglang_cmds ;;
                 clash)         _describe -t commands 'clash command' clash_cmds ;;
                 latest)        _describe -t commands 'latest command' latest_cmds ;;
                 weather)       _describe -t commands 'weather command' weather_cmds ;;
