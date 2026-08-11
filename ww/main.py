@@ -123,6 +123,7 @@ def _print_help():
     )
     print("  ww env ghostty           Install Ghostty terminal on Linux")
     print("  ww env github-desktop    Install GitHub Desktop on macOS and Linux")
+    print("  ww env zed               Install Zed editor on macOS and Linux")
     print("")
     print("FFmpeg:")
     print("  ww ffmpeg m4a <file1.m4a> [file2.m4a ...]")
@@ -1797,6 +1798,7 @@ def _main_dispatch(raw_args: list):
             print("  warp      Install Warp (the Agentic Dev Environment) on Linux")
             print("  ghostty   Install Ghostty terminal on Linux")
             print("  github-desktop   Install GitHub Desktop on macOS and Linux")
+            print("  zed              Install Zed editor on macOS and Linux")
         elif subcmd == "update":
             from ww.llm.update_env import main as m
 
@@ -1811,6 +1813,10 @@ def _main_dispatch(raw_args: list):
             m()
         elif subcmd == "github-desktop":
             from ww.env.github_desktop import main as m
+
+            m()
+        elif subcmd == "zed":
+            from ww.env.zed import main as m
 
             m()
         else:
