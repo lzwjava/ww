@@ -233,6 +233,7 @@ def _print_help():
     print("  ww image compress         Compress images")
     print("  ww image crop             Crop an image")
     print("  ww image exif             Scan images for EXIF GPS location data")
+    print("  ww image face             Face-aware crop to resume/visa/ID sizes")
     print("  ww image photo-compress   Compress photos")
     print("  ww image remove-bg        Remove image background")
     print("  ww image whatsapp         Download images from WhatsApp Web via Safari")
@@ -882,6 +883,7 @@ def _main_dispatch(raw_args: list):
             print("  compress         Compress images")
             print("  photo-compress   Compress photos")
             print("  exif             Scan images for EXIF GPS location data")
+            print("  face             Face-aware crop to resume/visa/ID sizes")
             print("  whatsapp         Download images from WhatsApp Web via Safari")
         elif subcmd == "avatar":
             from ww.image.avatar import main as m
@@ -905,6 +907,10 @@ def _main_dispatch(raw_args: list):
             m()
         elif subcmd == "exif":
             from ww.image.exif import main as m
+
+            m()
+        elif subcmd == "face":
+            from ww.image.face import main as m
 
             m()
         elif subcmd == "whatsapp":
