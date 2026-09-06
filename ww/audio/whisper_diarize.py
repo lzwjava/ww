@@ -19,25 +19,29 @@ import sys
 
 
 def _ensure_deps(*module_names):
-    """Re-exec this script with the project venv python if a required module
-    is missing in the current interpreter (the `ww` console script runs under
-    the system python, while whisperx/torch live in the project .venv)."""
-    missing = [m for m in module_names if importlib.util.find_spec(m) is None]
-    if not missing:
-        return
+    """Re-exec this script with the project venv python.
+
+    `ww` is installed as a global console script (system python), while
+    whisperx/torch live in the project .venv.  The system python can also
+    carry stale copies of these deps, so always prefer the venv unless we
+    are already running inside it.
+    """
     root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     venv_py = os.path.join(root, ".venv", "bin", "python")
+    in_venv = os.path.realpath(sys.prefix) == os.path.realpath(
+        os.path.dirname(os.path.dirname(venv_py))
+    )
+    if in_venv:
+        return  # pinned venv deps are already active
     if not os.path.isfile(venv_py):
+        missing = [m for m in module_names if importlib.util.find_spec(m) is None]
         print(
             f"Error: missing modules {missing} and no project venv at {venv_py}. "
             "Run `uv sync` in the ww project first.",
             file=sys.stderr,
         )
         raise SystemExit(1)
-    print(
-        f"[ww] {', '.join(missing)} not importable here; re-running with {venv_py}",
-        file=sys.stderr,
-    )
+    print(f"[ww] Re-running with project venv python: {venv_py}", file=sys.stderr)
     os.execv(venv_py, [venv_py, os.path.abspath(__file__), *sys.argv[1:]])  # nosec B606 — fixed interpreter path, no shell
 
 

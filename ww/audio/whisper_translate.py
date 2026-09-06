@@ -17,24 +17,36 @@ import sys
 
 
 def _ensure_deps(*module_names):
-    """Re-exec this script with the project venv python if a required module
-    is missing in the current interpreter (the `ww` console script runs under
-    the system python, while faster-whisper/torch live in the project .venv)."""
-    missing = [m for m in module_names if importlib.util.find_spec(m) is None]
-    if not missing:
-        return
+    """Re-exec this script with the project venv python.
+
+    The `ww` console script runs under the system python, which may also carry
+    stale copies of the ML deps (e.g. ctranslate2 4.5.0, whose cuDNN 9.1
+    loader aborts with "Invalid handle. Cannot load symbol
+    cudnnCreateTensorDescriptor").  The pinned, working deps live in the
+    project .venv, so whenever we are not already running inside it, switch
+    to its interpreter.
+    """
     root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     venv_py = os.path.join(root, ".venv", "Scripts", "python.exe")
     if not os.path.isfile(venv_py):
         venv_py = os.path.join(root, ".venv", "bin", "python")
-    if not os.path.isfile(venv_py):
+    in_venv = os.path.realpath(sys.prefix) == os.path.realpath(
+        os.path.dirname(os.path.dirname(venv_py))
+    )
+    if not in_venv and os.path.isfile(venv_py):
+        print(f"[ww] Re-running with project venv python: {venv_py}", file=sys.stderr)
+        os.execv(
+            venv_py,
+            [venv_py, os.path.abspath(__file__), *sys.argv[1:]],
+        )  # nosec B606 — fixed interpreter path, no shell
+    missing = [m for m in module_names if importlib.util.find_spec(m) is None]
+    if missing:
         print(
-            "Error: project venv python not found. "
-            "Run `uv sync` and try again.",
+            f"Error: missing module(s) {missing} and no usable project venv at {venv_py}. "
+            "Run `uv sync` in the ww project first.",
             file=sys.stderr,
         )
         sys.exit(1)
-    os.execv(venv_py, [venv_py] + sys.argv)
 
 
 def _resolve_input(path):
@@ -101,7 +113,9 @@ def main():
 
     basename = os.path.splitext(os.path.basename(input_path))[0]
 
-    print(f"[whisper] Loading model '{args.model}' on {args.device} ({args.compute_type})...")
+    print(
+        f"[whisper] Loading model '{args.model}' on {args.device} ({args.compute_type})..."
+    )
     model = WhisperModel(
         args.model,
         device=args.device,
@@ -117,7 +131,9 @@ def main():
     segments, info = model.transcribe(input_path, language=args.language, beam_size=5)
 
     detected_language = info.language
-    print(f"\n[whisper] Detected language: {detected_language} ({info.language_probability * 100:.1f}%)")
+    print(
+        f"\n[whisper] Detected language: {detected_language} ({info.language_probability * 100:.1f}%)"
+    )
     print(f"[whisper] Duration: {info.duration:.1f}s\n")
 
     segments = list(segments)
@@ -187,4 +203,10 @@ def main():
     # Also print to stdout
     print("\n--- Transcription ---")
     for seg in segments:
-        print(f"[{_format_timestamp(seg.start)} --> {_format_timestamp(seg.end)}] {seg.text.strip()}")
+        print(
+            f"[{_format_timestamp(seg.start)} --> {_format_timestamp(seg.end)}] {seg.text.strip()}"
+        )
+
+
+if __name__ == "__main__":
+    main()
