@@ -209,6 +209,11 @@ def _print_help():
     print("Hermes:")
     print("  ww hermes check            Check Hermes agent note plugin health")
     print("")
+    print("Memory:")
+    print(
+        "  ww memory <host>          Remote memory chip diagnostics (SPD, usage, health)"
+    )
+    print("")
     print("Host:")
     print("  ww host                   Show all hosts")
     print("  ww host dmit              DMIT server")
@@ -1498,6 +1503,11 @@ def _main_dispatch(raw_args: list):
 
     elif group == "linux":
         from ww.linux.main import main as m
+
+        m()
+
+    elif group == "memory":
+        from ww.machine.memory import main as m
 
         m()
 
