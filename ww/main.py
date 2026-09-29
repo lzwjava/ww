@@ -214,6 +214,12 @@ def _print_help():
         "  ww memory <host>          Remote memory chip diagnostics (SPD, usage, health)"
     )
     print("")
+    print("Monitor:")
+    print(
+        "  ww monitor huggingface       Check top 10 trending HF models, alert on change"
+    )
+    print("  ww monitor huggingface --now  Force alert even if unchanged")
+    print("")
     print("Host:")
     print("  ww host                   Show all hosts")
     print("  ww host dmit              DMIT server")
@@ -2235,6 +2241,28 @@ def _main_dispatch(raw_args: list):
             print(f"Unknown amd-dev-cloud command: {subcmd}")
             sys.exit(1)
 
+    elif group == "monitor":
+        subcmd = _pop_subcmd()
+        if subcmd == "huggingface":
+            from ww.monitor.huggingface import main as m
+
+            m()
+        elif subcmd in ("", "--help", "-h"):
+            print("Usage: ww monitor <command>")
+            print("")
+            print("Commands:")
+            print(
+                "  huggingface       Monitor top 10 trending HF models and alert via Telegram"
+            )
+            print("")
+            print("Flags for huggingface:")
+            print("  --now             Force alert even if top 10 unchanged")
+            print("  --hours N         Look back N hours (cron use)")
+            print("")
+        else:
+            print(f"Unknown monitor command: {subcmd}")
+            sys.exit(1)
+
     elif group == "vision-model":
         subcmd = _pop_subcmd()
         if subcmd == "" or subcmd in ("--help", "-h"):
@@ -2297,6 +2325,7 @@ def _main_dispatch(raw_args: list):
             "macos",
             "marp",
             "md",
+            "monitor",
             "network",
             "note",
             "openrouter",
