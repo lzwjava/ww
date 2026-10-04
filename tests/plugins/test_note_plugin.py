@@ -1,5 +1,7 @@
+import json
 import os
 import sys
+import tempfile
 import unittest
 from contextlib import ExitStack
 from pathlib import Path
@@ -7,8 +9,12 @@ from unittest.mock import patch
 
 os.environ.setdefault("OPENROUTER_API_KEY", "test-fake-key")
 
-# Import the note plugin from ~/.hermes/plugins/note/
-_plugin_parent = str(Path.home() / ".hermes" / "plugins")
+# Import the note plugin from the repo copy (agent_plugin/) — the source of
+# truth that gets deployed to ~/.hermes/plugins. Importing the installed copy
+# would make these tests depend on the machine's plugin version.
+_plugin_parent = str(
+    Path(__file__).resolve().parents[2] / "agent_plugin" / "hermes" / "plugins"
+)
 sys.path.insert(0, _plugin_parent)
 
 from note import _strip_reasoning_tags, _content_as_text, _handle_note  # noqa: E402
@@ -79,27 +85,21 @@ class TestContentAsText(unittest.TestCase):
         self.assertEqual(result, "42")
 
 
-_FAKE_PATH = "/fake/path.md"
-
-
 class TestHandleNoteParsing(unittest.TestCase):
     def _mock_deps(self, msg_content="x" * 300):
-        """Set up mocks for all external deps used by _handle_note.
-        Returns the create_note_from_content mock for assertion."""
+        """Mock external deps and point the note queue at a temp file.
+        Returns the temp queue file path."""
         msg = {"role": "assistant", "content": msg_content}
         self._patchers = ExitStack()
         self._patchers.enter_context(
             patch("note._get_assistant_messages", return_value=[msg])
         )
         self._patchers.enter_context(patch("dotenv.load_dotenv"))
-        cnfc = self._patchers.enter_context(
-            patch(
-                "ww.note.create_note_from_clipboard.create_note_from_content",
-                return_value=_FAKE_PATH,
-            )
+        queue_file = Path(tempfile.mkdtemp()) / "note_queue.json"
+        self._patchers.enter_context(
+            patch("ww.note.note_queue._queue_file", return_value=queue_file)
         )
-        self._patchers.enter_context(patch("ww.github.gitmessageai.gitmessageai"))
-        return cnfc
+        return queue_file
 
     def setUp(self):
         self._stack = ExitStack()
@@ -121,15 +121,20 @@ class TestHandleNoteParsing(unittest.TestCase):
             self.assertIn("Invalid", result)
 
     def test_title_arg(self):
-        cnfc = self._mock_deps()
+        queue_file = self._mock_deps()
         result = _handle_note('--title "My Title"')
         self.assertIsNotNone(result)
-        self.assertIn("saved", result.lower())
-        _, kwargs = cnfc.call_args
-        self.assertEqual(kwargs.get("custom_title"), "My Title")
+        self.assertIn("Queued", result)
+        entries = json.loads(queue_file.read_text(encoding="utf-8"))
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0].get("custom_title"), "My Title")
+        self.assertEqual(entries[0].get("status"), "pending")
 
     def test_dir_arg(self):
-        cnfc = self._mock_deps()
-        _handle_note("--dir /custom/dir")
-        _, kwargs = cnfc.call_args
-        self.assertEqual(kwargs.get("directory"), "/custom/dir")
+        queue_file = self._mock_deps()
+        result = _handle_note("--dir /custom/dir")
+        self.assertIsNotNone(result)
+        self.assertIn("Queued", result)
+        entries = json.loads(queue_file.read_text(encoding="utf-8"))
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0].get("directory"), "/custom/dir")
