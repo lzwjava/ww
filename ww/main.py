@@ -391,6 +391,10 @@ def _print_help():
     print("  ww openrouter info        Account summary: credits, usage, key details")
     print("  ww openrouter models      List available models")
     print("")
+    print("Pi:")
+    print("  ww pi set-model <provider>/<model>  Set pi agent default model")
+    print("  ww pi show-model          Show pi agent default model")
+    print("")
     print("PDF:")
     print("  ww pdf code2pdf           Convert code files in a directory to PDF")
     print("  ww pdf markdown-pdf       Convert a markdown file to PDF")
@@ -2295,6 +2299,26 @@ def _main_dispatch(raw_args: list):
             print(f"Unknown vision-model command: {subcmd}")
             sys.exit(1)
 
+    elif group == "pi":
+        subcmd = _pop_subcmd()
+        if subcmd == "" or subcmd in ("--help", "-h"):
+            print("Usage: ww pi <command>")
+            print("")
+            print("Commands:")
+            print("  set-model <provider>/<model>  Set pi agent default model")
+            print("  show-model          Show pi agent default model")
+        elif subcmd == "set-model":
+            from ww.pi.set_model import main as m
+
+            m()
+        elif subcmd == "show-model":
+            from ww.pi.show_model import main as m
+
+            m()
+        else:
+            print(f"Unknown pi command: {subcmd}")
+            sys.exit(1)
+
     else:
         # Suggest similar commands when exact match fails
         all_groups = [
@@ -2342,6 +2366,7 @@ def _main_dispatch(raw_args: list):
             "note",
             "openrouter",
             "pdf",
+            "pi",
             "proc",
             "projects",
             "qwen",

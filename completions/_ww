@@ -33,6 +33,7 @@ _ww() {
         'read:RAG document indexing and query'
         'llm:LLM comparison tools'
         'openrouter:OpenRouter account management'
+        'pi:Pi agent settings (default model)'
         'env:Environment management'
         'appearance:Switch macOS appearance (webcam auto)'
         'benchmark:GPU benchmark (local or remote)'
@@ -314,6 +315,12 @@ _ww() {
         'models:List available models'
     )
 
+    local -a pi_cmds
+    pi_cmds=(
+        'set-model:Set pi agent default model'
+        'show-model:Show pi agent default model'
+    )
+
     local -a env_cmds
     env_cmds=(
         'update:Pick a top Arena model and update MODEL= in .env'
@@ -561,6 +568,7 @@ _ww() {
                 read)          _describe -t commands 'read command' read_cmds ;;
                 llm)           _describe -t commands 'llm command' llm_cmds ;;
                 openrouter)    _describe -t commands 'openrouter command' openrouter_cmds ;;
+                pi)            _describe -t commands 'pi command' pi_cmds ;;
                 env)           _describe -t commands 'env command' env_cmds ;;
                 appearance)    _describe -t commands 'appearance command' appearance_cmds ;;
                 benchmark)     _describe -t commands 'benchmark command' benchmark_cmds ;;
@@ -683,6 +691,12 @@ _ww() {
                             _arguments '--days[Number of days]:days:' ;;
                         models)
                             _arguments '--json[JSON output]' ;;
+                    esac
+                    ;;
+                pi)
+                    case $words[3] in
+                        set-model)
+                            _arguments '--provider[Provider when model id contains a slash]:provider:' ;;
                     esac
                     ;;
                 read)
