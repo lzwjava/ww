@@ -19,6 +19,7 @@ def _print_help():
     print("  wol          Send a Wake-on-LAN packet")
     print("  terminal     Open a fullscreen terminal")
     print("  switch-keys  Swap Caps Lock and Left Control keys")
+    print("  screen-lock  Control idle screen lock delay (Ubuntu/GNOME)")
     print("  pinyin       Set up Chinese Pinyin input via IBus+libpinyin")
     print("  check-fan    Diagnose why system fans are loud")
 
@@ -71,6 +72,10 @@ def main():
         run()
     elif subcmd == "check-fan":
         from ww.linux.check_fan import run
+
+        run()
+    elif subcmd == "screen-lock":
+        from ww.linux.screen_lock import run
 
         run()
     else:

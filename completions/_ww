@@ -369,8 +369,25 @@ _ww() {
         'disk:Show disk usage'
         'battery:Show battery status'
         'proxy-setup:Interactively configure APT proxy'
+        'setup:Run general Linux setup tasks'
         'wol:Send a Wake-on-LAN packet'
         'terminal:Open a fullscreen terminal'
+        'switch-keys:Swap Caps Lock and Left Control keys'
+        'pinyin:Set up Chinese Pinyin input via IBus+libpinyin'
+        'check-fan:Diagnose why system fans are loud'
+        'screen-lock:Control idle screen lock delay (Ubuntu/GNOME)'
+    )
+
+    local -a screen_lock_cmds
+    screen_lock_cmds=(
+        'status:Show current screen-lock settings'
+        'delay:Lock after a delay (default 2h)'
+        'on:Turn the automatic screen lock on'
+        'off:Turn the automatic screen lock off'
+        'blank:Idle time before the screen blanks'
+        'suspend-pw:Password after wake from suspend (on/off)'
+        'lockdown:Disable the lock screen entirely (on/off)'
+        'help:Show help'
     )
 
     local -a keyboard_cmds
@@ -720,6 +737,13 @@ _ww() {
                             ;;
                         post)
                             _arguments '--n[Max files to process]:n:'
+                            ;;
+                    esac
+                    ;;
+                linux)
+                    case $words[3] in
+                        screen-lock)
+                            _describe -t commands 'screen-lock action' screen_lock_cmds
                             ;;
                     esac
                     ;;

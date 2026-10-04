@@ -281,6 +281,7 @@ def _print_help():
     print("  ww linux disk         Show disk usage")
     print("  ww linux gpu          Show GPU and CUDA details")
     print("  ww linux proxy-setup  Interactively configure APT proxy")
+    print("  ww linux screen-lock  Control idle screen lock delay (Ubuntu/GNOME)")
     print("  ww linux switch-keys  Swap Caps Lock and Left Control keys")
     print("  ww linux system       Comprehensive system overview")
     print("  ww linux terminal     Open a fullscreen terminal")
