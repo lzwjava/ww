@@ -5,17 +5,59 @@ whisper_diarize.py — Whisper transcription with optional speaker diarization v
 Uses faster-whisper backend + pyannote for speaker labels.
 Outputs a .txt file with [START → END] [SPEAKER:] text per segment.
 
-Diarization requires a valid HuggingFace token with accepted pyannote license:
-  https://huggingface.co/pyannote/speaker-diarization-3.1
-  https://huggingface.co/pyannote/segmentation-3.0
+Diarization requires a valid HuggingFace token with accepted pyannote access
+(one-time, browser):
+  https://huggingface.co/pyannote/speaker-diarization-community-1  (whisperx default)
+  https://huggingface.co/pyannote/speaker-diarization-3.1          (--diarize-model)
+  https://huggingface.co/pyannote/segmentation-3.0                 (underlying model)
 
-Without --hf-token, runs transcription-only (no speaker labels).
+The token is taken from --hf-token, the HF_TOKEN env var, or the token file
+cached by `huggingface-cli login` (~/.cache/huggingface/token). Without any of
+those, runs transcription-only (no speaker labels).
 """
 
 import argparse
+import glob
 import importlib.util
 import os
 import sys
+
+
+def _prepend_libpython_dir():
+    """Make torchcodec loadable when the interpreter lacks libpython3.11.so.1.0.
+
+    pyannote.audio >= 4 imports torchcodec for file-based audio decoding.
+    torchcodec ships one .so set per FFmpeg major (4-7); on this machine the
+    FFmpeg-6 variant matches the system libav* libraries, but its custom-ops
+    library also links libpython3.11.so.1.0.  /usr/bin/python3.11 is Ubuntu's
+    static ESM build (no -dev package), so that file is absent and torchcodec
+    refuses to load -- pyannote then prints a long "torchcodec is not installed
+    correctly" warning at every run.
+
+    We locate an ABI-compatible shared libpython under uv-managed / pyenv
+    Pythons and put its directory on LD_LIBRARY_PATH.  Only the re-exec'd venv
+    interpreter benefits (ld.so reads the variable at process start), and the
+    running interpreter's already-exported Python symbols win over the freshly
+    dlopen'd library, so this is safe.  If none is found, behavior is unchanged
+    (pyannote merely warns again).
+    """
+    if "libpython3.11.so.1.0" in os.environ.get("LD_LIBRARY_PATH", ""):
+        return
+    bases = [
+        os.path.expanduser("~/.local/share/uv/python"),
+        os.path.expanduser("~/.pyenv/versions"),
+    ]
+    lib_dirs = []
+    for base in bases:
+        for pattern in ("cpython-3.11*/lib", "3.11*/lib"):
+            lib_dirs.extend(sorted(glob.glob(os.path.join(base, pattern))))
+    for d in lib_dirs:
+        if os.path.isfile(os.path.join(d, "libpython3.11.so.1.0")):
+            current = os.environ.get("LD_LIBRARY_PATH", "")
+            parts = current.split(":") if current else []
+            if d not in parts:
+                os.environ["LD_LIBRARY_PATH"] = d + ((":" + current) if current else "")
+            return
 
 
 def _ensure_deps(*module_names):
@@ -41,6 +83,9 @@ def _ensure_deps(*module_names):
             file=sys.stderr,
         )
         raise SystemExit(1)
+    # torchcodec (imported by pyannote.audio via whisperx) fails to dlopen under
+    # the static system python3.11 unless libpython3.11.so.1.0 is reachable.
+    _prepend_libpython_dir()
     print(f"[ww] Re-running with project venv python: {venv_py}", file=sys.stderr)
     os.execv(venv_py, [venv_py, os.path.abspath(__file__), *sys.argv[1:]])  # nosec B606 — fixed interpreter path, no shell
 
@@ -86,14 +131,22 @@ def main():
     parser.add_argument(
         "--hf-token",
         default=None,
-        help="HuggingFace token for pyannote diarization. Falls back to HF_TOKEN env var. "
-        "Without this, runs transcription-only (no speaker labels).",
+        help="HuggingFace token for pyannote diarization. Falls back to HF_TOKEN env var "
+        "and then to the token cached by `huggingface-cli login`. Without any token, "
+        "runs transcription-only (no speaker labels).",
     )
     parser.add_argument(
         "--num-speakers",
         type=int,
         default=None,
         help="Hint: exact number of speakers (improves diarization accuracy)",
+    )
+    parser.add_argument(
+        "--diarize-model",
+        default=None,
+        help="pyannote pipeline repo for diarization (default: whisperx's "
+        "pyannote/speaker-diarization-community-1). Use pyannote/speaker-diarization-3.1 "
+        "or the community pipeline after accepting access on huggingface.co.",
     )
     parser.add_argument(
         "--batch-size",
@@ -111,6 +164,12 @@ def main():
         default=None,
         help="Output file path (default: <input>_diarized.txt or <input>_transcribed.txt)",
     )
+    parser.add_argument(
+        "--no-proxy",
+        action="store_true",
+        help="Unset proxy env vars for model downloads (for machines with a direct "
+        "route to huggingface.co; otherwise the default proxy env is kept)",
+    )
     args = parser.parse_args()
 
     input_path = os.path.abspath(args.input_file)
@@ -119,10 +178,28 @@ def main():
         sys.exit(1)
 
     hf_token = args.hf_token or os.environ.get("HF_TOKEN")
+    if not hf_token:
+        # Fall back to the token cached by `huggingface-cli login`.
+        try:
+            with open(
+                os.path.join(os.path.expanduser("~"), ".cache", "huggingface", "token"),
+                encoding="utf-8",
+            ) as f:
+                hf_token = f.read().strip()
+        except OSError:
+            hf_token = None
     do_diarize = bool(hf_token)
+    if not do_diarize:
+        print(
+            "      No HuggingFace token found — running transcription-only (no speaker "
+            "labels). Pass --hf-token or set HF_TOKEN."
+        )
 
-    # Disable proxy to avoid HuggingFace download stalls
-    _disable_proxy()
+    # Diarization needs to download pyannote models from the Hub.  Proxy env is
+    # kept by default (some machines have no direct route to huggingface.co);
+    # --no-proxy opts into the old behavior for boxes with a direct connection.
+    if args.no_proxy:
+        _disable_proxy()
 
     output_path = args.output
     if not output_path:
@@ -170,7 +247,9 @@ def main():
         try:
             from whisperx.diarize import DiarizationPipeline  # type: ignore[reportMissingImports]
 
-            diarize_model = DiarizationPipeline(token=hf_token, device=args.device)
+            diarize_model = DiarizationPipeline(
+                model_name=args.diarize_model, token=hf_token, device=args.device
+            )
             diarize_kwargs = {}
             if args.num_speakers:
                 diarize_kwargs["num_speakers"] = args.num_speakers
