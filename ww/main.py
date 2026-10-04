@@ -118,6 +118,11 @@ def _print_help():
     print(
         "  ww env update             Pick a top Arena model and update MODEL= in .env"
     )
+    print("")
+    print("Keyboard:")
+    print(
+        "  ww keyboard capslock-ctrl Toggle Caps Lock <-> Left Ctrl swap (Ubuntu/GNOME)"
+    )
     print(
         "  ww env warp               Install Warp (the Agentic Dev Environment) on Linux"
     )
@@ -1512,6 +1517,11 @@ def _main_dispatch(raw_args: list):
 
         m()
 
+    elif group == "keyboard":
+        from ww.keyboard.main import main as m
+
+        m()
+
     elif group == "memory":
         from ww.machine.memory import main as m
 
@@ -2319,6 +2329,7 @@ def _main_dispatch(raw_args: list):
             "image",
             "inference",
             "java",
+            "keyboard",
             "latest",
             "linux",
             "llm",

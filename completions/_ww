@@ -48,6 +48,7 @@ _ww() {
         'whisper:Transcribe via whisper'
         'host:Show host info'
         'linux:Linux system utilities'
+        'keyboard:Keyboard commands (Caps Lock/Ctrl swap)'
         'cloudflare:Cloudflare analytics'
         'ghostty:Ghostty terminal commands'
         'clash:Clash proxy management'
@@ -372,6 +373,11 @@ _ww() {
         'terminal:Open a fullscreen terminal'
     )
 
+    local -a keyboard_cmds
+    keyboard_cmds=(
+        'capslock-ctrl:Toggle Caps Lock <-> Left Ctrl swap'
+    )
+
     local -a benchmark_cmds
     benchmark_cmds=(
         '--ssh:Upload and run on remote server (USER@HOST:PORT)'
@@ -547,6 +553,7 @@ _ww() {
                 whisper)       _describe -t commands 'whisper command' whisper_cmds ;;
                 host)          _describe -t commands 'host command' host_cmds ;;
                 linux)         _describe -t commands 'linux command' linux_cmds ;;
+                keyboard)      _describe -t commands 'keyboard command' keyboard_cmds ;;
                 cloudflare)    _describe -t commands 'cloudflare command' cloudflare_cmds ;;
                 ghostty)       _describe -t commands 'ghostty command' ghostty_cmds ;;
                 headphone)    _describe -t commands 'headphone command' headphone_cmds ;;
