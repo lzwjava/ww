@@ -199,7 +199,7 @@ _ww() {
         'save-wifi-list:Save WiFi network list'
         'hack-wifi:WiFi password utilities'
         'wifi-gen-password:Generate WiFi password'
-        'ip-scan:Scan IP addresses on network'
+        'ip-scan:Scan IP addresses on network (--hostname tests SSH access)'
         'port-scan:Scan open ports'
         'wifi-scan:Scan for WiFi networks'
         'wifi-scan-best:Scan WiFi and recommend best signal'
@@ -604,6 +604,18 @@ _ww() {
             ;;
         subcmd2)
             case $words[2] in
+                network)
+                    case $words[3] in
+                        ip-scan)
+                            _arguments \
+                                '--hostname[SSH username to test on live hosts]:hostname:' \
+                                '--ssh-port[SSH port to test]:port:' \
+                                '--delay[Show ping delay (ms) for hosts that are up]' \
+                                '-p[Port to check]:port:' \
+                                ':network:_default'
+                            ;;
+                    esac
+                    ;;
                 gen-video)
                     case $words[3] in
                         set-privacy)

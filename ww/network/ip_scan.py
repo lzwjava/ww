@@ -59,6 +59,61 @@ def is_host_up(host, port=None):
         return is_host_up_by_ping(host)
 
 
+def test_ssh_access(ip, hostname, port=22):
+    """Test if we can SSH into ip as `hostname` using key-based auth (no password prompt)."""
+    cmd = [
+        "ssh",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=3",
+        "-o",
+        "PasswordAuthentication=no",
+        "-o",
+        "StrictHostKeyChecking=accept-new",
+        "-p",
+        str(port),
+        f"{hostname}@{ip}",
+        "true",
+    ]
+    try:
+        result = subprocess.run(cmd, check=False, capture_output=True, timeout=8)
+        return result.returncode == 0
+    except (subprocess.TimeoutExpired, OSError):
+        return False
+
+
+def test_ssh_on_host(ip, hostname, port, results):
+    """Test SSH port and login on a single IP, storing (ip, port_open, ssh_ok) in results."""
+    port_open = is_host_up_by_port(ip, port)
+    ssh_ok = False
+    if port_open:
+        ssh_ok = test_ssh_access(ip, hostname, port)
+    results.append((ip, port_open, ssh_ok))
+
+
+def test_ssh_network(up_ips, hostname, port=22):
+    """Test SSH access to all live IPs in parallel. Returns list of (ip, port_open, ssh_ok)."""
+    print(f"\nTesting SSH access as '{hostname}' on port {port}...")
+    results = []
+    threads = []
+    semaphore = threading.Semaphore(MAX_THREADS)
+
+    def test_with_semaphore(ip_str):
+        with semaphore:
+            test_ssh_on_host(ip_str, hostname, port, results)
+
+    for ip in up_ips:
+        thread = threading.Thread(target=test_with_semaphore, args=(ip,))
+        threads.append(thread)
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+
+    return results
+
+
 def scan_ip(ip_str, up_ips, port=None, show_delay=False, delays=None):
     """
     Scans a single IP address and prints its status.
@@ -121,6 +176,16 @@ def main():
         action="store_true",
         help="Show ping delay (ms) for hosts that are up",
     )
+    parser.add_argument(
+        "--hostname",
+        help="SSH username to test on live hosts (e.g. --hostname lzw)",
+    )
+    parser.add_argument(
+        "--ssh-port",
+        type=int,
+        default=22,
+        help="SSH port to test (default: 22)",
+    )
     args = parser.parse_args()
 
     network_to_scan = args.network
@@ -134,6 +199,26 @@ def main():
             print(f"  {ip}  avg {delays[ip]:.1f} ms")
         else:
             print(f"  {ip}")
+
+    if args.hostname and up_ips:
+        results = test_ssh_network(up_ips, args.hostname, args.ssh_port)
+        print(f"\nSSH test results (as {args.hostname}, port {args.ssh_port}):")
+        accessible = []
+        for ip, port_open, ssh_ok in results:
+            if ssh_ok:
+                print(f"  {ip}  port open  SSH OK")
+                accessible.append(ip)
+            elif port_open:
+                print(f"  {ip}  port open  SSH failed (auth or permission denied)")
+            else:
+                print(f"  {ip}  port closed")
+
+        if accessible:
+            print(f"\nAccessible via {args.hostname}@:")
+            for ip in accessible:
+                print(f"  {ip}")
+        else:
+            print(f"\nNo hosts allow SSH access as {args.hostname}")
 
 
 if __name__ == "__main__":

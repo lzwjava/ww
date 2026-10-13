@@ -1077,7 +1077,9 @@ def _main_dispatch(raw_args: list):
             print("  save-wifi-list     Save WiFi network list")
             print("  hack-wifi          WiFi password utilities")
             print("  wifi-gen-password  Generate WiFi password")
-            print("  ip-scan            Scan IP addresses on network")
+            print(
+                "  ip-scan            Scan IP addresses (--hostname USER tests SSH access)"
+            )
             print("  port-scan          Scan open ports")
             print("  wifi-scan          Scan for WiFi networks")
             print("  wifi-scan-best     Scan WiFi and recommend best signal")
