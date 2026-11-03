@@ -442,8 +442,9 @@ def render_card(avatar, data, intro, out_path, lang="en", scale=2, theme="dark")
 
     # Arial has no CJK glyphs — for mixed EN text draw Latin with Arial and
     # CJK chars with a CJK font (per-run, keeps Arial wrapping metrics).
-    latin_body_f = _load_font(int(40 * s), lang="en")
-    cjk_body_f = _load_font(int(40 * s), lang="zh")
+    # Bold weights for a bit more presence on the About Me body.
+    latin_body_f = _load_font(int(38 * s), bold=True, lang="en")
+    cjk_body_f = _load_font(int(40 * s), bold=True, lang="zh")
     line_h = (60 if zh else 58) * s
     para_gap = 22 * s
     y = y0 + 96 * s
