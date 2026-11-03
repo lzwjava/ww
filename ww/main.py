@@ -43,6 +43,11 @@ def _print_help():
     print("  ww benchmark --ssh HOST:PORT  Upload script and run on remote server")
     print("  ww benchmark --key PATH       SSH key (default: ~/.ssh/id_ed25519)")
     print("")
+    print("Card:")
+    print("  ww card [--photo FILE] [--resume FILE] [-o DIR] [--llm]")
+    print("                         Business card from resume + photo (avatar + card)")
+    print("  ww card avatar [--photo FILE] [-o DIR]   Extract square face avatar only")
+    print("")
     print("Clash:")
     print("  ww clash query-dns [host]   Test AliDNS DoH resolution")
     print("  ww clash gnome-proxy <set|unset>   Toggle GNOME proxy (Linux)")
@@ -940,6 +945,31 @@ def _main_dispatch(raw_args: list):
             m()
         else:
             print(f"Unknown image command: {subcmd}")
+            sys.exit(1)
+
+    elif group == "card":
+        subcmd = _pop_subcmd()
+        if subcmd.startswith("-"):
+            if subcmd in ("--help", "-h"):
+                print(
+                    "Usage: ww card [--photo FILE] [--resume FILE] [-o DIR] [--intro TEXT] [--llm]"
+                )
+                print("       ww card avatar [--photo FILE] [-o DIR]")
+                return
+            sys.argv.insert(1, subcmd)  # push back for card module parsing
+            subcmd = "make"
+        if subcmd in ("", "make"):
+            sys.argv.insert(1, "make")
+            from ww.card.card import main as m
+
+            m()
+        elif subcmd == "avatar":
+            sys.argv.insert(1, "avatar")
+            from ww.card.card import main as m
+
+            m()
+        else:
+            print(f"Unknown card command: {subcmd}")
             sys.exit(1)
 
     elif group == "proc":

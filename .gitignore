@@ -53,3 +53,6 @@ uv.lock
 tmp/
 
 ww.db
+
+# Generated business card output
+card_output/
