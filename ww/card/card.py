@@ -45,8 +45,13 @@ ZH_ROLE = "创始人 · AI 全栈工程师"
 EN_ROLE = "Founder & AI Full Stack Engineer"
 ZH_LOCATION = "中国广州"
 TRUTHSOFT_URL = "truthsoft.dev"
+PHONE = "+86 132-6163-0925"
+EMAIL = "lzwjava@gmail.com"
 ZH_CONTACT_LABELS = {
     "truthsoft": "求真软件",
+    "email": "邮箱",
+    "wechat": "微信",
+    "whatsapp": "WhatsApp",
     "github": "GitHub",
     "blog": "博客",
     "linkedin": "领英",
@@ -55,6 +60,9 @@ ZH_CONTACT_LABELS = {
 }
 EN_CONTACT_LABELS = {
     "truthsoft": "TruthSoft",
+    "email": "Email",
+    "wechat": "WeChat",
+    "whatsapp": "WhatsApp",
     "github": "GitHub",
     "blog": "Blog",
     "linkedin": "LinkedIn",
@@ -346,18 +354,21 @@ def render_card(avatar, data, intro, out_path, lang="en"):
         d.text((x0, y), ln, font=body_f, fill=TEXT)
         y += line_h
 
-    # "FIND ME" label — TruthSoft first, then GitHub / Blog / LinkedIn
-    priority = ["truthsoft", "github", "blog", "linkedin", "ai portfolio"]
+    # "FIND ME" label — TruthSoft, then contact channels, then GitHub / Blog
+    priority = ["truthsoft", "email", "wechat", "whatsapp", "github", "blog"]
     contact_map = dict(data["links"])
     contact_map.setdefault("truthsoft", "https://" + TRUTHSOFT_URL)
+    contact_map.setdefault("email", EMAIL)
+    contact_map.setdefault("wechat", PHONE)
+    contact_map.setdefault("whatsapp", PHONE)
     contacts = []
     for key in priority:
         if key in contact_map:
             contacts.append((key, contact_map[key]))
-        if len(contacts) == 5:
+        if len(contacts) == 6:
             break
     if not contacts:
-        contacts = list(contact_map.items())[:5]
+        contacts = list(contact_map.items())[:6]
     find_y = y + 40
     d.text((x0, find_y), find_label, font=label_f, fill=ACCENT)
     find_w = d.textlength(find_label, font=label_f)
