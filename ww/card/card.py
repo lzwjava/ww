@@ -332,8 +332,9 @@ def _word_wrap(text, max_w, width_fn):
     return lines
 
 
-def render_card(avatar, data, intro, out_path, lang="en"):
+def render_card(avatar, data, intro, out_path, lang="en", scale=2):
     zh = lang == "zh"
+    s = float(scale)
     name = ZH_NAME if zh else data["name"]
     role = ZH_ROLE if zh else EN_ROLE
     loc = ZH_LOCATION if zh else data["location"]
@@ -341,47 +342,48 @@ def render_card(avatar, data, intro, out_path, lang="en"):
     contact_label = "联系" if zh else "CONTACT"
     contact_labels = ZH_CONTACT_LABELS if zh else EN_CONTACT_LABELS
 
-    img = Image.new("RGB", (CARD_W, CARD_H), BG)
+    img = Image.new("RGB", (int(CARD_W * s), int(CARD_H * s)), BG)
     d = ImageDraw.Draw(img)
 
     # --- left panel ---------------------------------------------------------
-    d.rectangle((0, 0, 760, CARD_H), fill=PANEL)
-    d.rectangle((756, 0, 760, CARD_H), fill=ACCENT)  # accent divider
+    d.rectangle((0, 0, 760 * s, CARD_H * s), fill=PANEL)
+    d.rectangle((756 * s, 0, 760 * s, CARD_H * s), fill=ACCENT)  # accent divider
 
     # avatar (circular)
-    av_size = 400
+    av_size = int(400 * s)
     av = avatar.resize((av_size, av_size), Image.LANCZOS)
-    av_center = (380, 292)
+    av_center = (int(380 * s), int(292 * s))
     img.paste(
         av,
         (av_center[0] - av_size // 2, av_center[1] - av_size // 2),
         _circle_mask(av_size),
     )
+    ring = max(4, int(6 * s))
     d.ellipse(
         (
-            av_center[0] - av_size // 2 - 6,
-            av_center[1] - av_size // 2 - 6,
-            av_center[0] + av_size // 2 + 6,
-            av_center[1] + av_size // 2 + 6,
+            av_center[0] - av_size // 2 - ring,
+            av_center[1] - av_size // 2 - ring,
+            av_center[0] + av_size // 2 + ring,
+            av_center[1] + av_size // 2 + ring,
         ),
         outline=ACCENT,
-        width=6,
+        width=ring,
     )
 
     # name
-    name_f = _load_font(80, bold=True, lang=lang)
+    name_f = _load_font(int(80 * s), bold=True, lang=lang)
     nw = d.textlength(name, font=name_f)
-    d.text((380 - nw / 2, 560), name, font=name_f, fill=TEXT)
+    d.text((380 * s - nw / 2, 560 * s), name, font=name_f, fill=TEXT)
 
     # role
-    role_f = _load_font(40, bold=True, lang=lang)
+    role_f = _load_font(int(40 * s), bold=True, lang=lang)
     rw = d.textlength(role, font=role_f)
-    d.text((380 - rw / 2, 668), role, font=role_f, fill=ACCENT)
+    d.text((380 * s - rw / 2, 668 * s), role, font=role_f, fill=ACCENT)
 
     # location
-    loc_f = _load_font(32, lang=lang)
+    loc_f = _load_font(int(32 * s), lang=lang)
     lw_ = d.textlength(loc, font=loc_f)
-    d.text((380 - lw_ / 2, 742), loc, font=loc_f, fill=MUTED)
+    d.text((380 * s - lw_ / 2, 742 * s), loc, font=loc_f, fill=MUTED)
 
     # --- left panel: contacts ----------------------------------------------
     priority = ["truthsoft", "email", "wechat", "whatsapp", "github"]
@@ -399,35 +401,35 @@ def render_card(avatar, data, intro, out_path, lang="en"):
     if not contacts:
         contacts = list(contact_map.items())[:5]
 
-    d.line((60, 852, 700, 852), fill=(49, 79, 114), width=3)  # divider
-    cap_f = _load_font(28, bold=True, lang=lang)
-    d.text((60, 880), contact_label, font=cap_f, fill=ACCENT)
+    d.line((60 * s, 852 * s, 700 * s, 852 * s), fill=(49, 79, 114), width=max(2, int(3 * s)))  # divider
+    cap_f = _load_font(int(28 * s), bold=True, lang=lang)
+    d.text((60 * s, 880 * s), contact_label, font=cap_f, fill=ACCENT)
 
-    contact_f = _load_font(30, lang=lang)
-    cy_ = 936
-    contact_h = 50
+    contact_f = _load_font(int(30 * s), lang=lang)
+    cy_ = 936 * s
+    contact_h = 50 * s
     for label, val in contacts:
         short = val.replace("https://", "").replace("http://", "")
         disp = contact_labels.get(label, label.title())
-        d.text((60, cy_), f"{disp}: {short}", font=contact_f, fill=TEXT)
+        d.text((60 * s, cy_), f"{disp}: {short}", font=contact_f, fill=TEXT)
         cy_ += contact_h
 
     # --- right: about me ----------------------------------------------------
-    x0, y0 = 900, 150
-    max_w = CARD_W - x0 - 160  # right margin 160
+    x0, y0 = 900 * s, 150 * s
+    max_w = CARD_W * s - x0 - 160 * s  # right margin 160
 
-    label_f = _load_font(38, bold=True, lang=lang)
+    label_f = _load_font(int(38 * s), bold=True, lang=lang)
     d.text((x0, y0), about_label, font=label_f, fill=ACCENT)
     about_w = d.textlength(about_label, font=label_f)
-    d.rectangle((x0, y0 + 52, x0 + about_w + 40, y0 + 56), fill=ACCENT)
+    d.rectangle((x0, y0 + 52 * s, x0 + about_w + 40 * s, y0 + 56 * s), fill=ACCENT)
 
     # Arial has no CJK glyphs — for mixed EN text draw Latin with Arial and
     # CJK chars with a CJK font (per-run, keeps Arial wrapping metrics).
-    latin_body_f = _load_font(40, lang="en")
-    cjk_body_f = _load_font(40, lang="zh")
-    line_h = 60 if zh else 58
-    para_gap = 22
-    y = y0 + 96
+    latin_body_f = _load_font(int(40 * s), lang="en")
+    cjk_body_f = _load_font(int(40 * s), lang="zh")
+    line_h = (60 if zh else 58) * s
+    para_gap = 22 * s
+    y = y0 + 96 * s
     for para in intro.split("\n\n"):
         if not para.strip():
             continue
@@ -447,10 +449,10 @@ def render_card(avatar, data, intro, out_path, lang="en"):
         y += para_gap
 
     # watermark
-    wm_f = _load_font(30, lang=lang)
+    wm_f = _load_font(int(30 * s), lang=lang)
     wm = f"{TRUTHSOFT_URL}  ·  lzwjava.com  ·  github.com/lzwjava"
-    ww_ = CARD_W - d.textlength(wm, font=wm_f) - 80
-    d.text((ww_, CARD_H - 70), wm, font=wm_f, fill=MUTED)
+    ww_ = CARD_W * s - d.textlength(wm, font=wm_f) - 80 * s
+    d.text((ww_, CARD_H * s - 70 * s), wm, font=wm_f, fill=MUTED)
 
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
     img.save(out_path, "PNG")
@@ -467,6 +469,7 @@ def _usage():
     print("  --resume, -r FILE  Resume Markdown (default: jekyll-ai-blog resume)")
     print("  --out, -o DIR      Output directory (default: ./card_output)")
     print("  --lang en|zh       Card language (default: en)")
+    print("  --scale N          Pixel density multiplier 1-8 (default: 2, i.e. 4200x2400)")
     print("  --intro TEXT       Custom 'About me' intro text")
     print("  --llm              Generate the intro with OpenRouter from the resume")
     print("  -h, --help         Show this help")
@@ -484,6 +487,7 @@ def main():
     resume = None
     out_dir = "card_output"
     lang = "en"
+    scale = 2.0
     intro = None
     use_llm = False
 
@@ -504,6 +508,9 @@ def main():
             i += 2
         elif a == "--lang":
             lang = args[i + 1]
+            i += 2
+        elif a == "--scale":
+            scale = args[i + 1]
             i += 2
         elif a == "--llm":
             use_llm = True
@@ -530,6 +537,13 @@ def main():
     if lang not in ("en", "zh"):
         print(f"[card] unknown --lang {lang!r} (expected en or zh)")
         sys.exit(1)
+    try:
+        scale = float(scale)
+        if scale < 1 or scale > 8:
+            raise ValueError
+    except ValueError:
+        print(f"[card] --scale must be a number between 1 and 8 (got {scale!r})")
+        sys.exit(1)
 
     # ---- step 1: avatar ----------------------------------------------------
     avatar_img, avatar_path = extract_avatar(photo, out_dir)
@@ -550,5 +564,6 @@ def main():
 
     # ---- step 3: business card ---------------------------------------------
     out_path = os.path.join(out_dir, f"business_card_{lang}.png")
-    render_card(avatar_img, data, intro, out_path, lang)
+    render_card(avatar_img, data, intro, out_path, lang, scale)
+    print(f"[card] rendered at {scale:.1f}x density ({int(CARD_W*scale)}x{int(CARD_H*scale)} px)")
     print(f"[card] done ({lang}) — card + avatar in: {os.path.abspath(out_dir)}")

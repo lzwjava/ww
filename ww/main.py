@@ -44,7 +44,7 @@ def _print_help():
     print("  ww benchmark --key PATH       SSH key (default: ~/.ssh/id_ed25519)")
     print("")
     print("Card:")
-    print("  ww card [--photo FILE] [--resume FILE] [-o DIR] [--llm]")
+    print("  ww card [--photo FILE] [--resume FILE] [-o DIR] [--lang en|zh] [--scale N] [--llm]")
     print("                         Business card from resume + photo (avatar + card)")
     print("  ww card avatar [--photo FILE] [-o DIR]   Extract square face avatar only")
     print("")
@@ -953,7 +953,7 @@ def _main_dispatch(raw_args: list):
             if subcmd in ("--help", "-h"):
                 print(
                     "Usage: ww card [--photo FILE] [--resume FILE] [-o DIR] [--lang en|zh] "
-                    "[--intro TEXT] [--llm]"
+                    "[--scale N] [--intro TEXT] [--llm]"
                 )
                 print("       ww card avatar [--photo FILE] [-o DIR]")
                 return
