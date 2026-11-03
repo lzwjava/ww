@@ -27,17 +27,17 @@ DEFAULT_RESUME = os.path.expanduser(
 )
 
 DEFAULT_INTRO = (
-    "Founder of TruthSoft (求真软件) — an AI-native software studio with four "
-    "business lines: model training & inference, AI transformation consulting, "
-    "AI apps & agents, and general app development. Runs a 52 GB CUDA GPU lab "
-    "and ships delivery on 1B+ LLM tokens a day. Co-founded Square Root "
-    "Technology in 2016; restarted as TruthSoft in 2026."
+    "Founder of TruthSoft (求真软件), an AI-native software studio. Previously a "
+    "software engineer at LeanCloud and TEKsystems, and founder of Fun Live "
+    "(趣直播) and Square Root Technology — serving companies such as Yuanfudao "
+    "(猿辅导), Fenbi (粉笔), Jiangsu TV, DBS and HSBC as a project manager or "
+    "software engineer."
 )
 
 ZH_INTRO = (
-    "求真软件（TruthSoft）创始人：AI 原生软件工作室，四条业务线——模型训练与推理、"
-    "AI 转型咨询、AI 应用与智能体开发、一般应用开发。自建 52 GB CUDA 二手 GPU 实验室，"
-    "交付项目日均消耗 10 亿+ tokens。前身平方根科技（2016–2019），2026 年重启。"
+    "求真软件（TruthSoft）创始人。曾就职 LeanCloud、TEKsystems，创办过趣直播与平方根科技，"
+    "以项目经理 / 软件工程师身份服务过猿辅导、粉笔、江苏卫视、星展银行（DBS）、"
+    "汇丰银行（HSBC）。"
 )
 
 ZH_NAME = "李智维"
