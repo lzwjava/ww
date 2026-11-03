@@ -355,7 +355,6 @@ def render_card(avatar, data, intro, out_path, lang="en", scale=2, theme="dark",
     )
     name = ZH_NAME if zh else data["name"]
     role = ZH_ROLE if zh else EN_ROLE
-    loc = ZH_LOCATION if zh else data["location"]
     about_label = "关于我" if zh else "ABOUT ME"
     contact_label = "联系" if zh else "CONTACT"
     contact_labels = ZH_CONTACT_LABELS if zh else EN_CONTACT_LABELS
@@ -398,16 +397,11 @@ def render_card(avatar, data, intro, out_path, lang="en", scale=2, theme="dark",
     rw = d.textlength(role, font=role_f)
     d.text((380 * s - rw / 2, 668 * s), role, font=role_f, fill=ACCENT)
 
-    # location
-    loc_f = _load_font(int(32 * s), lang=lang)
-    lw_ = d.textlength(loc, font=loc_f)
-    d.text((380 * s - lw_ / 2, 742 * s), loc, font=loc_f, fill=MUTED)
-
-    # --- WeChat QR code (centered under the location line) ------------------
+    # --- WeChat QR code (centered under the role line) ----------------------
     qr_ready = False
     if qr_path and os.path.exists(qr_path):
-        qr_target = int(82 * s)
-        pad = int(6 * s)
+        qr_target = int(130 * s)
+        pad = int(8 * s)
         try:
             qr = Image.open(qr_path).convert("RGB")
             side = min(qr.size)
@@ -422,7 +416,7 @@ def render_card(avatar, data, intro, out_path, lang="en", scale=2, theme="dark",
             chip = Image.new("RGB", (qr_target + 2 * pad, qr_target + 2 * pad), (255, 255, 255))
             chip.paste(qr, (pad, pad))
             chip_left = int(380 * s - (qr_target + 2 * pad) / 2)
-            chip_top = int(806 * s)  # just below the location text
+            chip_top = int(736 * s)  # just below the role line
             img.paste(chip, (chip_left, chip_top))
             qr_ready = True
         except Exception as e:  # noqa: BLE001
@@ -444,12 +438,12 @@ def render_card(avatar, data, intro, out_path, lang="en", scale=2, theme="dark",
     if not contacts:
         contacts = list(contact_map.items())[:4]
 
-    d.line((60 * s, 896 * s, 700 * s, 896 * s), fill=DIVIDER, width=max(2, int(3 * s)))  # divider
+    d.line((60 * s, 884 * s, 700 * s, 884 * s), fill=DIVIDER, width=max(2, int(3 * s)))  # divider
     cap_f = _load_font(int(28 * s), bold=True, lang=lang)
-    d.text((60 * s, 922 * s), contact_label, font=cap_f, fill=ACCENT)
+    d.text((60 * s, 910 * s), contact_label, font=cap_f, fill=ACCENT)
 
     contact_f = _load_font(int(30 * s), lang=lang)
-    cy_ = 968 * s
+    cy_ = 956 * s
     contact_h = 42 * s
     for label, val in contacts:
         short = val.replace("https://", "").replace("http://", "")
