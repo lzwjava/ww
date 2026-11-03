@@ -293,6 +293,42 @@ def _wrap_cjk(draw, text, font, max_w):
     return lines
 
 
+def _has_cjk(s):
+    """True if the string contains CJK ideographs (needs a CJK font)."""
+    return any("\u4e00" <= c <= "\u9fff" or "\u3000" <= c <= "\u303f" for c in s)
+
+
+def _mixed_width(text, latin_f, cjk_f):
+    """Advance width of text drawing Latin with latin_f and CJK with cjk_f."""
+    return sum(
+        cjk_f.getlength(c) if _has_cjk(c) else latin_f.getlength(c) for c in text
+    )
+
+
+def _draw_mixed(d, xy, text, latin_f, cjk_f, fill):
+    """Draw text, using latin_f for Latin chars and cjk_f for CJK chars."""
+    x, y = xy
+    for ch in text:
+        f = cjk_f if _has_cjk(ch) else latin_f
+        d.text((x, y), ch, font=f, fill=fill)
+        x += f.getlength(ch)
+
+
+def _word_wrap(text, max_w, width_fn):
+    lines, cur = [], ""
+    for w in text.split():
+        trial = f"{cur} {w}".strip()
+        if width_fn(trial) <= max_w:
+            cur = trial
+        else:
+            if cur:
+                lines.append(cur)
+            cur = w
+    if cur:
+        lines.append(cur)
+    return lines
+
+
 def render_card(avatar, data, intro, out_path, lang="en"):
     zh = lang == "zh"
     name = ZH_NAME if zh else data["name"]
@@ -382,16 +418,28 @@ def render_card(avatar, data, intro, out_path, lang="en"):
     about_w = d.textlength(about_label, font=label_f)
     d.rectangle((x0, y0 + 52, x0 + about_w + 40, y0 + 56), fill=ACCENT)
 
-    body_f = _load_font(40, lang=lang)
+    # Arial has no CJK glyphs — for mixed EN text draw Latin with Arial and
+    # CJK chars with a CJK font (per-run, keeps Arial wrapping metrics).
+    latin_body_f = _load_font(40, lang="en")
+    cjk_body_f = _load_font(40, lang="zh")
     line_h = 60 if zh else 58
     para_gap = 22
     y = y0 + 96
     for para in intro.split("\n\n"):
         if not para.strip():
             continue
-        lines = _wrap(d, para.strip(), body_f, max_w, cjk=zh)
+        para = para.strip()
+        if zh:
+            lines = _wrap_cjk(d, para, cjk_body_f, max_w)
+        elif _has_cjk(para):
+            lines = _word_wrap(para, max_w, lambda t: _mixed_width(t, latin_body_f, cjk_body_f))
+        else:
+            lines = _word_wrap(para, max_w, lambda t: latin_body_f.getlength(t))
         for ln in lines:
-            d.text((x0, y), ln, font=body_f, fill=TEXT)
+            if zh or not _has_cjk(ln):
+                d.text((x0, y), ln, font=zh and cjk_body_f or latin_body_f, fill=TEXT)
+            else:
+                _draw_mixed(d, (x0, y), ln, latin_body_f, cjk_body_f, TEXT)
             y += line_h
         y += para_gap
 
