@@ -321,17 +321,17 @@ def render_card(avatar, data, intro, out_path, lang="en"):
     )
 
     # name
-    name_f = _load_font(72, bold=True, lang=lang)
+    name_f = _load_font(84, bold=True, lang=lang)
     nw = d.textlength(name, font=name_f)
     d.text((380 - nw / 2, 580), name, font=name_f, fill=TEXT)
 
     # role
-    role_f = _load_font(36, bold=True, lang=lang)
+    role_f = _load_font(42, bold=True, lang=lang)
     rw = d.textlength(role, font=role_f)
     d.text((380 - rw / 2, 690), role, font=role_f, fill=ACCENT)
 
     # location
-    loc_f = _load_font(30, lang=lang)
+    loc_f = _load_font(34, lang=lang)
     lw_ = d.textlength(loc, font=loc_f)
     d.text((380 - lw_ / 2, 770), loc, font=loc_f, fill=MUTED)
 
@@ -340,22 +340,22 @@ def render_card(avatar, data, intro, out_path, lang="en"):
     max_w = CARD_W - x0 - 160  # right margin 160
 
     # "ABOUT" label
-    label_f = _load_font(34, bold=True, lang=lang)
+    label_f = _load_font(38, bold=True, lang=lang)
     d.text((x0, y0), about_label, font=label_f, fill=ACCENT)
     about_w = d.textlength(about_label, font=label_f)
     d.rectangle((x0, y0 + 52, x0 + about_w + 40, y0 + 56), fill=ACCENT)
 
     # intro body
-    body_f = _load_font(38, lang=lang)
+    body_f = _load_font(42, lang=lang)
     lines = _wrap(d, intro, body_f, max_w, cjk=zh)
     y = y0 + 96
-    line_h = 58 if zh else 56
+    line_h = 62 if zh else 60
     for ln in lines:
         d.text((x0, y), ln, font=body_f, fill=TEXT)
         y += line_h
 
-    # "FIND ME" label — TruthSoft, then contact channels, then GitHub / Blog
-    priority = ["truthsoft", "email", "wechat", "whatsapp", "github", "blog"]
+    # "FIND ME" label — TruthSoft site, then contact channels, then GitHub
+    priority = ["truthsoft", "email", "wechat", "whatsapp", "github"]
     contact_map = dict(data["links"])
     contact_map.setdefault("truthsoft", "https://" + TRUTHSOFT_URL)
     contact_map.setdefault("email", EMAIL)
@@ -365,18 +365,18 @@ def render_card(avatar, data, intro, out_path, lang="en"):
     for key in priority:
         if key in contact_map:
             contacts.append((key, contact_map[key]))
-        if len(contacts) == 6:
+        if len(contacts) == 5:
             break
     if not contacts:
-        contacts = list(contact_map.items())[:6]
+        contacts = list(contact_map.items())[:5]
     find_y = y + 40
     d.text((x0, find_y), find_label, font=label_f, fill=ACCENT)
     find_w = d.textlength(find_label, font=label_f)
     d.rectangle((x0, find_y + 52, x0 + find_w + 40, find_y + 56), fill=ACCENT)
 
-    contact_f = _load_font(32, lang=lang)
+    contact_f = _load_font(34, lang=lang)
     cy_ = find_y + 96
-    contact_h = 54
+    contact_h = 56
     if contacts:
         for label, url in contacts[:5]:
             short = url.replace("https://", "").replace("http://", "")
@@ -387,7 +387,7 @@ def render_card(avatar, data, intro, out_path, lang="en"):
         d.text((x0, cy_), "github.com/lzwjava · lzwjava.com", font=contact_f, fill=TEXT)
 
     # watermark
-    wm_f = _load_font(26, lang=lang)
+    wm_f = _load_font(30, lang=lang)
     wm = f"{TRUTHSOFT_URL}  ·  lzwjava.com  ·  github.com/lzwjava"
     ww_ = CARD_W - d.textlength(wm, font=wm_f) - 80
     d.text((ww_, CARD_H - 70), wm, font=wm_f, fill=MUTED)
