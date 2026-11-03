@@ -27,17 +27,26 @@ DEFAULT_RESUME = os.path.expanduser(
 )
 
 DEFAULT_INTRO = (
-    "Founder of TruthSoft (求真软件), an AI-native software studio. Previously a "
-    "software engineer at LeanCloud and TEKsystems, and founder of Fun Live "
-    "(趣直播) and Square Root Technology — serving companies such as Yuanfudao "
-    "(猿辅导), Fenbi (粉笔), Jiangsu TV, DBS and HSBC as a project manager or "
-    "software engineer."
+    "Founder of TruthSoft (求真软件). Previously a software engineer at LeanCloud "
+    "and TEKsystems, and founder of Fun Live (趣直播) and Square Root Technology — "
+    "serving Yuanfudao (猿辅导), Fenbi (粉笔), Jiangsu TV, DBS and HSBC as a project "
+    "manager or software engineer.\n\n"
+    "Full-stack & mobile engineer: Android, iOS, Vue, React, Angular, Java/Spring, "
+    "Python; familiar with logging, database and microservice modules on Alibaba "
+    "Cloud, AWS and Azure.\n\n"
+    "Male, born 1995, resides in Guangzhou. Top 300 in Guangdong NOIP 2011, ~1,000 "
+    "algorithm problems solved, IELTS 6.5. 16,000+ engineers connected across "
+    "platforms; blog ~100,000 monthly page views."
 )
 
 ZH_INTRO = (
-    "求真软件（TruthSoft）创始人。曾就职 LeanCloud、TEKsystems，创办过趣直播与平方根科技，"
-    "以项目经理 / 软件工程师身份服务过猿辅导、粉笔、江苏卫视、星展银行（DBS）、"
-    "汇丰银行（HSBC）。"
+    "求真软件（TruthSoft）创始人。曾就职 LeanCloud、TEKsystems，创办趣直播与平方根科技，"
+    "以项目经理/软件工程师身份服务过猿辅导、粉笔、江苏卫视、星展银行（DBS）、"
+    "汇丰银行（HSBC）。\n\n"
+    "移动端（Android/iOS）、前端（Vue/React/Angular）、后端（Java/Spring、Python），"
+    "熟悉阿里云、AWS、Azure 上的日志、数据库与微服务架构。\n\n"
+    "男，1995 年生，广州。广东 NOIP 2011 前 300，线上解题 1000+，雅思 6.5。"
+    "各平台长期连接 16000+ 工程师，博客月访问约 10 万。"
 )
 
 ZH_NAME = "李智维"
@@ -290,7 +299,7 @@ def render_card(avatar, data, intro, out_path, lang="en"):
     role = ZH_ROLE if zh else EN_ROLE
     loc = ZH_LOCATION if zh else data["location"]
     about_label = "关于我" if zh else "ABOUT ME"
-    find_label = "联系我" if zh else "FIND ME"
+    contact_label = "联系" if zh else "CONTACT"
     contact_labels = ZH_CONTACT_LABELS if zh else EN_CONTACT_LABELS
 
     img = Image.new("RGB", (CARD_W, CARD_H), BG)
@@ -303,7 +312,7 @@ def render_card(avatar, data, intro, out_path, lang="en"):
     # avatar (circular)
     av_size = 400
     av = avatar.resize((av_size, av_size), Image.LANCZOS)
-    av_center = (380, 300)
+    av_center = (380, 292)
     img.paste(
         av,
         (av_center[0] - av_size // 2, av_center[1] - av_size // 2),
@@ -321,40 +330,21 @@ def render_card(avatar, data, intro, out_path, lang="en"):
     )
 
     # name
-    name_f = _load_font(84, bold=True, lang=lang)
+    name_f = _load_font(80, bold=True, lang=lang)
     nw = d.textlength(name, font=name_f)
-    d.text((380 - nw / 2, 580), name, font=name_f, fill=TEXT)
+    d.text((380 - nw / 2, 560), name, font=name_f, fill=TEXT)
 
     # role
-    role_f = _load_font(42, bold=True, lang=lang)
+    role_f = _load_font(40, bold=True, lang=lang)
     rw = d.textlength(role, font=role_f)
-    d.text((380 - rw / 2, 690), role, font=role_f, fill=ACCENT)
+    d.text((380 - rw / 2, 668), role, font=role_f, fill=ACCENT)
 
     # location
-    loc_f = _load_font(34, lang=lang)
+    loc_f = _load_font(32, lang=lang)
     lw_ = d.textlength(loc, font=loc_f)
-    d.text((380 - lw_ / 2, 770), loc, font=loc_f, fill=MUTED)
+    d.text((380 - lw_ / 2, 742), loc, font=loc_f, fill=MUTED)
 
-    # --- right content ------------------------------------------------------
-    x0, y0 = 900, 150
-    max_w = CARD_W - x0 - 160  # right margin 160
-
-    # "ABOUT" label
-    label_f = _load_font(38, bold=True, lang=lang)
-    d.text((x0, y0), about_label, font=label_f, fill=ACCENT)
-    about_w = d.textlength(about_label, font=label_f)
-    d.rectangle((x0, y0 + 52, x0 + about_w + 40, y0 + 56), fill=ACCENT)
-
-    # intro body
-    body_f = _load_font(42, lang=lang)
-    lines = _wrap(d, intro, body_f, max_w, cjk=zh)
-    y = y0 + 96
-    line_h = 62 if zh else 60
-    for ln in lines:
-        d.text((x0, y), ln, font=body_f, fill=TEXT)
-        y += line_h
-
-    # "FIND ME" label — TruthSoft site, then contact channels, then GitHub
+    # --- left panel: contacts ----------------------------------------------
     priority = ["truthsoft", "email", "wechat", "whatsapp", "github"]
     contact_map = dict(data["links"])
     contact_map.setdefault("truthsoft", "https://" + TRUTHSOFT_URL)
@@ -369,22 +359,41 @@ def render_card(avatar, data, intro, out_path, lang="en"):
             break
     if not contacts:
         contacts = list(contact_map.items())[:5]
-    find_y = y + 40
-    d.text((x0, find_y), find_label, font=label_f, fill=ACCENT)
-    find_w = d.textlength(find_label, font=label_f)
-    d.rectangle((x0, find_y + 52, x0 + find_w + 40, find_y + 56), fill=ACCENT)
 
-    contact_f = _load_font(34, lang=lang)
-    cy_ = find_y + 96
-    contact_h = 56
-    if contacts:
-        for label, url in contacts[:5]:
-            short = url.replace("https://", "").replace("http://", "")
-            disp = contact_labels.get(label, label.title())
-            d.text((x0, cy_), f"{disp}: {short}", font=contact_f, fill=TEXT)
-            cy_ += contact_h
-    else:
-        d.text((x0, cy_), "github.com/lzwjava · lzwjava.com", font=contact_f, fill=TEXT)
+    d.line((60, 852, 700, 852), fill=(49, 79, 114), width=3)  # divider
+    cap_f = _load_font(28, bold=True, lang=lang)
+    d.text((60, 880), contact_label, font=cap_f, fill=ACCENT)
+
+    contact_f = _load_font(30, lang=lang)
+    cy_ = 936
+    contact_h = 50
+    for label, val in contacts:
+        short = val.replace("https://", "").replace("http://", "")
+        disp = contact_labels.get(label, label.title())
+        d.text((60, cy_), f"{disp}: {short}", font=contact_f, fill=TEXT)
+        cy_ += contact_h
+
+    # --- right: about me ----------------------------------------------------
+    x0, y0 = 900, 150
+    max_w = CARD_W - x0 - 160  # right margin 160
+
+    label_f = _load_font(38, bold=True, lang=lang)
+    d.text((x0, y0), about_label, font=label_f, fill=ACCENT)
+    about_w = d.textlength(about_label, font=label_f)
+    d.rectangle((x0, y0 + 52, x0 + about_w + 40, y0 + 56), fill=ACCENT)
+
+    body_f = _load_font(40, lang=lang)
+    line_h = 60 if zh else 58
+    para_gap = 22
+    y = y0 + 96
+    for para in intro.split("\n\n"):
+        if not para.strip():
+            continue
+        lines = _wrap(d, para.strip(), body_f, max_w, cjk=zh)
+        for ln in lines:
+            d.text((x0, y), ln, font=body_f, fill=TEXT)
+            y += line_h
+        y += para_gap
 
     # watermark
     wm_f = _load_font(30, lang=lang)
