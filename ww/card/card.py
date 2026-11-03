@@ -27,22 +27,21 @@ DEFAULT_RESUME = os.path.expanduser(
 )
 
 DEFAULT_INTRO = (
-    "Founder of TruthSoft (求真软件). Previously at LeanCloud and TEKsystems, and "
-    "founder of Fun Live (趣直播) and Square Root Technology — served around 50 "
-    "companies as a PM / software engineer, incl. Yuanfudao (猿辅导), Fenbi (粉笔), "
-    "Jiangsu TV, DBS, HSBC.\n\n"
+    "Founder of TruthSoft (求真软件), a Guangzhou-based AI-native studio. "
+    "Previously at LeanCloud and TEKsystems, founder of Fun Live (趣直播) and Square "
+    "Root Technology — delivered 50+ projects as a PM / software engineer for "
+    "Yuanfudao (猿辅导), Fenbi (粉笔), Jiangsu TV, DBS, HSBC.\n\n"
     "Full-stack & mobile engineer: Android, iOS, Vue, React, Angular, Java/Spring, "
     "Python, small model training & inference (PyTorch/CUDA); familiar with logging, "
     "database and microservice modules on Alibaba Cloud, AWS and Azure.\n\n"
-    "Male, born 1995, resides in Guangzhou. Top 300 in Guangdong NOIP 2011, ~1,000 "
-    "algorithm problems solved, IELTS 6.5. 16,000+ engineers connected across "
-    "platforms; blog ~100,000 monthly page views."
+    "Male, born 1995, Guangzhou. Guangdong NOIP 2011 top 300, ~1,000 problems "
+    "solved, IELTS 6.5. 16,000+ engineers connected; blog ~100K monthly views."
 )
 
 ZH_INTRO = (
-    "求真软件（TruthSoft）创始人。曾就职 LeanCloud、TEKsystems，创办趣直播与平方根科技，"
-    "以项目经理/软件工程师身份服务过猿辅导、粉笔、江苏卫视、星展银行（DBS）、"
-    "汇丰银行（HSBC）等五十家公司。\n\n"
+    "求真软件（TruthSoft）创始人、广州 AI 原生软件公司。曾就职 LeanCloud、TEKsystems，"
+    "创办趣直播与平方根科技，以项目经理/软件工程师身份交付 50+ 项目，服务过"
+    "猿辅导、粉笔、江苏卫视、星展银行（DBS）、汇丰银行（HSBC）等。\n\n"
     "移动端（Android/iOS）、前端（Vue/React/Angular）、后端（Java/Spring、Python）、"
     "小模型训练与推理（PyTorch/CUDA），熟悉阿里云、AWS、Azure 上的日志、"
     "数据库与微服务架构。\n\n"
