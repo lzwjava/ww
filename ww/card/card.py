@@ -403,6 +403,31 @@ def render_card(avatar, data, intro, out_path, lang="en", scale=2, theme="dark",
     lw_ = d.textlength(loc, font=loc_f)
     d.text((380 * s - lw_ / 2, 742 * s), loc, font=loc_f, fill=MUTED)
 
+    # --- WeChat QR code (centered under the location line) ------------------
+    qr_ready = False
+    if qr_path and os.path.exists(qr_path):
+        qr_target = int(82 * s)
+        pad = int(6 * s)
+        try:
+            qr = Image.open(qr_path).convert("RGB")
+            side = min(qr.size)
+            qr = qr.crop(
+                (
+                    (qr.size[0] - side) // 2,
+                    (qr.size[1] - side) // 2,
+                    (qr.size[0] + side) // 2,
+                    (qr.size[1] + side) // 2,
+                )
+            ).resize((qr_target, qr_target), Image.LANCZOS)
+            chip = Image.new("RGB", (qr_target + 2 * pad, qr_target + 2 * pad), (255, 255, 255))
+            chip.paste(qr, (pad, pad))
+            chip_left = int(380 * s - (qr_target + 2 * pad) / 2)
+            chip_top = int(806 * s)  # just below the location text
+            img.paste(chip, (chip_left, chip_top))
+            qr_ready = True
+        except Exception as e:  # noqa: BLE001
+            print(f"[card] could not draw QR code: {e}")
+
     # --- left panel: contacts ----------------------------------------------
     priority = ["truthsoft", "email", "wechat", "whatsapp", "github"]
     contact_map = dict(data["links"])
@@ -419,41 +444,18 @@ def render_card(avatar, data, intro, out_path, lang="en", scale=2, theme="dark",
     if not contacts:
         contacts = list(contact_map.items())[:4]
 
-    d.line((60 * s, 852 * s, 700 * s, 852 * s), fill=DIVIDER, width=max(2, int(3 * s)))  # divider
+    d.line((60 * s, 896 * s, 700 * s, 896 * s), fill=DIVIDER, width=max(2, int(3 * s)))  # divider
     cap_f = _load_font(int(28 * s), bold=True, lang=lang)
-    d.text((60 * s, 880 * s), contact_label, font=cap_f, fill=ACCENT)
+    d.text((60 * s, 922 * s), contact_label, font=cap_f, fill=ACCENT)
 
     contact_f = _load_font(int(30 * s), lang=lang)
-    cy_ = 930 * s
+    cy_ = 968 * s
     contact_h = 42 * s
     for label, val in contacts:
         short = val.replace("https://", "").replace("http://", "")
         disp = contact_labels.get(label, label.title())
         d.text((60 * s, cy_), f"{disp}: {short}", font=contact_f, fill=TEXT)
         cy_ += contact_h
-
-    # --- WeChat QR code (bottom of left panel) ------------------------------
-    if qr_path and os.path.exists(qr_path):
-        qr_target = int(84 * s)
-        pad = int(6 * s)
-        try:
-            qr = Image.open(qr_path).convert("RGB")
-            side = min(qr.size)
-            qr = qr.crop(
-                (
-                    (qr.size[0] - side) // 2,
-                    (qr.size[1] - side) // 2,
-                    (qr.size[0] + side) // 2,
-                    (qr.size[1] + side) // 2,
-                )
-            ).resize((qr_target, qr_target), Image.LANCZOS)
-            chip = Image.new("RGB", (qr_target + 2 * pad, qr_target + 2 * pad), (255, 255, 255))
-            chip.paste(qr, (pad, pad))
-            chip_left = int(380 * s - (qr_target + 2 * pad) / 2)
-            chip_top = int(CARD_H * s - (qr_target + 2 * pad) - 8 * s)
-            img.paste(chip, (chip_left, chip_top))
-        except Exception as e:  # noqa: BLE001
-            print(f"[card] could not draw QR code: {e}")
 
     # --- right: about me ----------------------------------------------------
     x0, y0 = 900 * s, 150 * s
