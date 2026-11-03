@@ -57,6 +57,7 @@ ZH_ROLE = "创始人 · AI 全栈工程师"
 EN_ROLE = "Founder & AI Full Stack Engineer"
 ZH_LOCATION = "中国广州"
 TRUTHSOFT_URL = "truthsoft.dev"
+WECHAT_QR = "/Users/lzwjava/Downloads/qrcode.jpg"  # WeChat QR code image
 PHONE = "+86 132-6163-0925"
 EMAIL = "lzwjava@gmail.com"
 ZH_CONTACT_LABELS = {
@@ -345,7 +346,7 @@ def _word_wrap(text, max_w, width_fn):
     return lines
 
 
-def render_card(avatar, data, intro, out_path, lang="en", scale=2, theme="dark"):
+def render_card(avatar, data, intro, out_path, lang="en", scale=2, theme="dark", qr_path=None):
     zh = lang == "zh"
     s = float(scale)
     pal = THEMES.get(theme, THEMES["dark"])
@@ -413,23 +414,46 @@ def render_card(avatar, data, intro, out_path, lang="en", scale=2, theme="dark")
     for key in priority:
         if key in contact_map:
             contacts.append((key, contact_map[key]))
-        if len(contacts) == 5:
+        if len(contacts) == 4:  # keep room for the WeChat QR code below
             break
     if not contacts:
-        contacts = list(contact_map.items())[:5]
+        contacts = list(contact_map.items())[:4]
 
     d.line((60 * s, 852 * s, 700 * s, 852 * s), fill=DIVIDER, width=max(2, int(3 * s)))  # divider
     cap_f = _load_font(int(28 * s), bold=True, lang=lang)
     d.text((60 * s, 880 * s), contact_label, font=cap_f, fill=ACCENT)
 
     contact_f = _load_font(int(30 * s), lang=lang)
-    cy_ = 936 * s
-    contact_h = 50 * s
+    cy_ = 930 * s
+    contact_h = 42 * s
     for label, val in contacts:
         short = val.replace("https://", "").replace("http://", "")
         disp = contact_labels.get(label, label.title())
         d.text((60 * s, cy_), f"{disp}: {short}", font=contact_f, fill=TEXT)
         cy_ += contact_h
+
+    # --- WeChat QR code (bottom of left panel) ------------------------------
+    if qr_path and os.path.exists(qr_path):
+        qr_target = int(84 * s)
+        pad = int(6 * s)
+        try:
+            qr = Image.open(qr_path).convert("RGB")
+            side = min(qr.size)
+            qr = qr.crop(
+                (
+                    (qr.size[0] - side) // 2,
+                    (qr.size[1] - side) // 2,
+                    (qr.size[0] + side) // 2,
+                    (qr.size[1] + side) // 2,
+                )
+            ).resize((qr_target, qr_target), Image.LANCZOS)
+            chip = Image.new("RGB", (qr_target + 2 * pad, qr_target + 2 * pad), (255, 255, 255))
+            chip.paste(qr, (pad, pad))
+            chip_left = int(380 * s - (qr_target + 2 * pad) / 2)
+            chip_top = int(CARD_H * s - (qr_target + 2 * pad) - 8 * s)
+            img.paste(chip, (chip_left, chip_top))
+        except Exception as e:  # noqa: BLE001
+            print(f"[card] could not draw QR code: {e}")
 
     # --- right: about me ----------------------------------------------------
     x0, y0 = 900 * s, 150 * s
@@ -489,6 +513,7 @@ def _usage():
     print("  --lang en|zh       Card language (default: en)")
     print(f"  --theme dark|light Color theme (default: dark; options: {', '.join(THEMES)})")
     print("  --scale N          Pixel density multiplier 1-8 (default: 2, i.e. 4200x2400)")
+    print("  --qr FILE          WeChat QR code image (default: ~/Downloads/qrcode.jpg)")
     print("  --intro TEXT       Custom 'About me' intro text")
     print("  --llm              Generate the intro with OpenRouter from the resume")
     print("  -h, --help         Show this help")
@@ -508,6 +533,7 @@ def main():
     lang = "en"
     scale = 2.0
     theme = "dark"
+    qr_path = WECHAT_QR if os.path.exists(WECHAT_QR) else None
     intro = None
     use_llm = False
 
@@ -534,6 +560,9 @@ def main():
             i += 2
         elif a == "--theme":
             theme = args[i + 1]
+            i += 2
+        elif a == "--qr":
+            qr_path = args[i + 1]
             i += 2
         elif a == "--llm":
             use_llm = True
@@ -570,6 +599,9 @@ def main():
     if theme not in THEMES:
         print(f"[card] unknown --theme {theme!r} (available: {', '.join(THEMES)})")
         sys.exit(1)
+    if qr_path and not os.path.exists(qr_path):
+        print(f"[card] QR image not found: {qr_path}")
+        sys.exit(1)
 
     # ---- step 1: avatar ----------------------------------------------------
     avatar_img, avatar_path = extract_avatar(photo, out_dir)
@@ -590,6 +622,6 @@ def main():
 
     # ---- step 3: business card ---------------------------------------------
     out_path = os.path.join(out_dir, f"business_card_{lang}.png")
-    render_card(avatar_img, data, intro, out_path, lang, scale, theme)
+    render_card(avatar_img, data, intro, out_path, lang, scale, theme, qr_path)
     print(f"[card] rendered {theme} theme at {scale:.1f}x ({int(CARD_W*scale)}x{int(CARD_H*scale)} px)")
     print(f"[card] done ({lang}) — card + avatar in: {os.path.abspath(out_dir)}")
