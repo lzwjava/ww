@@ -27,10 +27,10 @@ DEFAULT_RESUME = os.path.expanduser(
 )
 
 DEFAULT_INTRO = (
-    "Founder of TruthSoft (求真软件), a Guangzhou-based AI-native studio. "
-    "Previously at LeanCloud and TEKsystems, founder of Fun Live (趣直播) and Square "
-    "Root Technology — delivered 50+ projects as a PM / software engineer for "
-    "Yuanfudao (猿辅导), Fenbi (粉笔), Jiangsu TV, DBS, HSBC.\n\n"
+    "Founder of TruthSoft, a Guangzhou-based AI-native studio. Previously at "
+    "LeanCloud and TEKsystems, founder of Fun Live and Square Root Technology — "
+    "delivered 50+ projects as a PM / software engineer for Yuanfudao, Fenbi, "
+    "Jiangsu TV, DBS, HSBC.\n\n"
     "Full-stack & mobile engineer: Android, iOS, Vue, React, Angular, Java/Spring, "
     "Python, small model training & inference (PyTorch/CUDA); familiar with logging, "
     "database and microservice modules on Alibaba Cloud, AWS and Azure.\n\n"
