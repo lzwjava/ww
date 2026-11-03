@@ -41,7 +41,7 @@ DEFAULT_INTRO = (
 )
 
 ZH_INTRO = (
-    "求真软件（TruthSoft）创始人、广州 AI 原生软件公司。曾就职 LeanCloud、TEKsystems，"
+    "求真软件创始人、广州 AI 原生软件公司。曾就职 LeanCloud、TEKsystems，"
     "创办趣直播与平方根科技，以项目经理/软件工程师身份交付 50+ 项目，服务过"
     "猿辅导、粉笔、江苏卫视、星展银行 DBS、汇丰银行 HSBC 等。\n\n"
     "移动端 Android/iOS、前端 Vue/React/Angular、后端 Java/Spring/Python、"
