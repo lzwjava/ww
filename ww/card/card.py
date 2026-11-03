@@ -85,12 +85,25 @@ EN_CONTACT_LABELS = {
 # Card canvas (3.5" x 2" scaled up)
 CARD_W, CARD_H = 2100, 1200
 
-# Palette — warm espresso/caramel theme matched to the avatar photo tones
-BG = (43, 32, 24)  # warm dark espresso
-PANEL = (74, 53, 39)  # left panel warm umber
-ACCENT = (226, 173, 106)  # caramel gold accent
-TEXT = (245, 237, 227)  # cream
-MUTED = (178, 158, 136)  # warm taupe
+# Palettes — both matched to the avatar photo tones (warm beige/brown/caramel)
+THEMES = {
+    "dark": {
+        "bg": (43, 32, 24),  # warm dark espresso
+        "panel": (74, 53, 39),  # warm umber
+        "accent": (226, 173, 106),  # caramel gold
+        "text": (245, 237, 227),  # cream
+        "muted": (178, 158, 136),  # warm taupe
+        "divider": (96, 70, 50),
+    },
+    "light": {
+        "bg": (247, 240, 230),  # cream
+        "panel": (219, 200, 175),  # warm beige
+        "accent": (180, 116, 52),  # dark caramel
+        "text": (62, 45, 32),  # dark espresso
+        "muted": (133, 110, 92),  # warm gray-brown
+        "divider": (196, 172, 142),
+    },
+}
 
 FONT_BOLD_PATHS = [
     "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
@@ -332,9 +345,13 @@ def _word_wrap(text, max_w, width_fn):
     return lines
 
 
-def render_card(avatar, data, intro, out_path, lang="en", scale=2):
+def render_card(avatar, data, intro, out_path, lang="en", scale=2, theme="dark"):
     zh = lang == "zh"
     s = float(scale)
+    pal = THEMES.get(theme, THEMES["dark"])
+    (BG, PANEL, ACCENT, TEXT, MUTED, DIVIDER) = (
+        pal["bg"], pal["panel"], pal["accent"], pal["text"], pal["muted"], pal["divider"],
+    )
     name = ZH_NAME if zh else data["name"]
     role = ZH_ROLE if zh else EN_ROLE
     loc = ZH_LOCATION if zh else data["location"]
@@ -401,7 +418,7 @@ def render_card(avatar, data, intro, out_path, lang="en", scale=2):
     if not contacts:
         contacts = list(contact_map.items())[:5]
 
-    d.line((60 * s, 852 * s, 700 * s, 852 * s), fill=(96, 70, 50), width=max(2, int(3 * s)))  # divider
+    d.line((60 * s, 852 * s, 700 * s, 852 * s), fill=DIVIDER, width=max(2, int(3 * s)))  # divider
     cap_f = _load_font(int(28 * s), bold=True, lang=lang)
     d.text((60 * s, 880 * s), contact_label, font=cap_f, fill=ACCENT)
 
@@ -469,6 +486,7 @@ def _usage():
     print("  --resume, -r FILE  Resume Markdown (default: jekyll-ai-blog resume)")
     print("  --out, -o DIR      Output directory (default: ./card_output)")
     print("  --lang en|zh       Card language (default: en)")
+    print(f"  --theme dark|light Color theme (default: dark; options: {', '.join(THEMES)})")
     print("  --scale N          Pixel density multiplier 1-8 (default: 2, i.e. 4200x2400)")
     print("  --intro TEXT       Custom 'About me' intro text")
     print("  --llm              Generate the intro with OpenRouter from the resume")
@@ -488,6 +506,7 @@ def main():
     out_dir = "card_output"
     lang = "en"
     scale = 2.0
+    theme = "dark"
     intro = None
     use_llm = False
 
@@ -511,6 +530,9 @@ def main():
             i += 2
         elif a == "--scale":
             scale = args[i + 1]
+            i += 2
+        elif a == "--theme":
+            theme = args[i + 1]
             i += 2
         elif a == "--llm":
             use_llm = True
@@ -544,6 +566,9 @@ def main():
     except ValueError:
         print(f"[card] --scale must be a number between 1 and 8 (got {scale!r})")
         sys.exit(1)
+    if theme not in THEMES:
+        print(f"[card] unknown --theme {theme!r} (available: {', '.join(THEMES)})")
+        sys.exit(1)
 
     # ---- step 1: avatar ----------------------------------------------------
     avatar_img, avatar_path = extract_avatar(photo, out_dir)
@@ -564,6 +589,6 @@ def main():
 
     # ---- step 3: business card ---------------------------------------------
     out_path = os.path.join(out_dir, f"business_card_{lang}.png")
-    render_card(avatar_img, data, intro, out_path, lang, scale)
-    print(f"[card] rendered at {scale:.1f}x density ({int(CARD_W*scale)}x{int(CARD_H*scale)} px)")
+    render_card(avatar_img, data, intro, out_path, lang, scale, theme)
+    print(f"[card] rendered {theme} theme at {scale:.1f}x ({int(CARD_W*scale)}x{int(CARD_H*scale)} px)")
     print(f"[card] done ({lang}) — card + avatar in: {os.path.abspath(out_dir)}")
