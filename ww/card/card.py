@@ -31,11 +31,13 @@ DEFAULT_INTRO = (
     "LeanCloud and TEKsystems, founder of Fun Live and Square Root Technology — "
     "delivered 50+ projects as a PM / software engineer for Yuanfudao, Fenbi, "
     "Jiangsu TV, DBS, HSBC.\n\n"
-    "Full-stack & mobile engineer: Android, iOS, Vue, React, Angular, Java/Spring, "
-    "Python, small model training & inference (PyTorch/CUDA); familiar with logging, "
-    "database and microservice modules on Alibaba Cloud, AWS and Azure.\n\n"
-    "Male, born 1995, Guangzhou. Guangdong NOIP 2011 top 300, ~1,000 problems "
-    "solved, IELTS 6.5. 16,000+ engineers connected; blog ~100K monthly views."
+    "Full-stack engineer & mobile dev: Android, iOS, Vue, React, Angular, "
+    "Java/Spring, Python; small-model training & inference (PyTorch/CUDA); cloud: "
+    "Alibaba Cloud, AWS, Azure.\n\n"
+    "Male, born 1995, Guangzhou · NOIP top 300 · IELTS 6.5. One year at Beijing "
+    "Forestry University, then dropped out to work & start up; associate degree "
+    "in progress at GDUFS (13 exams passed). 16,000+ engineers connected; blog "
+    "~100K monthly views."
 )
 
 ZH_INTRO = (
@@ -45,8 +47,9 @@ ZH_INTRO = (
     "移动端（Android/iOS）、前端（Vue/React/Angular）、后端（Java/Spring、Python）、"
     "小模型训练与推理（PyTorch/CUDA），熟悉阿里云、AWS、Azure 上的日志、"
     "数据库与微服务架构。\n\n"
-    "男，1995 年生，广州。广东 NOIP 2011 前 300，线上解题 1000+，雅思 6.5。"
-    "各平台长期连接 16000+ 工程师，博客月访问约 10 万。"
+    "男，1995 年生，广州。广东 NOIP 2011 前 300，雅思 6.5。曾就读北京林业大学一年"
+    "后退学工作创业，现读广东外语外贸大学专科（13 科已过）。各平台长期连接 "
+    "16000+ 工程师，博客月访问约 10 万。"
 )
 
 ZH_NAME = "李智维"
