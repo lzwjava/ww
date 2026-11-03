@@ -85,12 +85,12 @@ EN_CONTACT_LABELS = {
 # Card canvas (3.5" x 2" scaled up)
 CARD_W, CARD_H = 2100, 1200
 
-# Palette
-BG = (13, 27, 44)  # deep navy
-PANEL = (21, 45, 72)  # left panel navy
-ACCENT = (78, 190, 255)  # light blue accent
-TEXT = (236, 241, 248)
-MUTED = (148, 166, 188)
+# Palette — warm espresso/caramel theme matched to the avatar photo tones
+BG = (43, 32, 24)  # warm dark espresso
+PANEL = (74, 53, 39)  # left panel warm umber
+ACCENT = (226, 173, 106)  # caramel gold accent
+TEXT = (245, 237, 227)  # cream
+MUTED = (178, 158, 136)  # warm taupe
 
 FONT_BOLD_PATHS = [
     "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
@@ -401,7 +401,7 @@ def render_card(avatar, data, intro, out_path, lang="en", scale=2):
     if not contacts:
         contacts = list(contact_map.items())[:5]
 
-    d.line((60 * s, 852 * s, 700 * s, 852 * s), fill=(49, 79, 114), width=max(2, int(3 * s)))  # divider
+    d.line((60 * s, 852 * s, 700 * s, 852 * s), fill=(96, 70, 50), width=max(2, int(3 * s)))  # divider
     cap_f = _load_font(int(28 * s), bold=True, lang=lang)
     d.text((60 * s, 880 * s), contact_label, font=cap_f, fill=ACCENT)
 
