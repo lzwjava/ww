@@ -27,10 +27,10 @@ DEFAULT_RESUME = os.path.expanduser(
 )
 
 DEFAULT_INTRO = (
-    "Founder of TruthSoft (求真软件). Previously a software engineer at LeanCloud "
-    "and TEKsystems, and founder of Fun Live (趣直播) and Square Root Technology — "
-    "serving around 50 companies as a project manager or software engineer, "
-    "including Yuanfudao (猿辅导), Fenbi (粉笔), Jiangsu TV, DBS and HSBC.\n\n"
+    "Founder of TruthSoft (求真软件). Previously at LeanCloud and TEKsystems, and "
+    "founder of Fun Live (趣直播) and Square Root Technology — served around 50 "
+    "companies as a PM / software engineer, incl. Yuanfudao (猿辅导), Fenbi (粉笔), "
+    "Jiangsu TV, DBS, HSBC.\n\n"
     "Full-stack & mobile engineer: Android, iOS, Vue, React, Angular, Java/Spring, "
     "Python, small model training & inference (PyTorch/CUDA); familiar with logging, "
     "database and microservice modules on Alibaba Cloud, AWS and Azure.\n\n"
