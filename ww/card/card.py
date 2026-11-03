@@ -27,31 +27,39 @@ DEFAULT_RESUME = os.path.expanduser(
 )
 
 DEFAULT_INTRO = (
-    "Full-stack & AI engineer with 12 years of experience (9 corporate + 3 "
-    "freelance) — banking platforms at HSBC and DBS, two startups, and 10 "
-    "open-source projects with 500+ commits each. Hands-on LLM practice: trained "
-    "GPT-2 up to 1.5B parameters on H200 and MI300X GPUs, ~5B tokens consumed "
-    "in the past year. Blogger with 400+ posts and ~75K monthly page views. "
-    "Open to AI / full-stack roles — Guangzhou, Shenzhen, Hong Kong, Singapore, "
-    "or remote."
+    "Founder of TruthSoft (求真软件) — an AI-native software studio with four "
+    "business lines: model training & inference, AI transformation consulting, "
+    "AI apps & agents, and general app development. Runs a 52 GB CUDA GPU lab "
+    "and ships delivery on 1B+ LLM tokens a day. Co-founded Square Root "
+    "Technology in 2016; restarted as TruthSoft in 2026."
 )
 
 ZH_INTRO = (
-    "拥有 12 年以上经验的全栈与 AI 工程师（9 年企业、3 年自由职业），参与过汇丰（HSBC）"
-    "与星展（DBS）银行平台，也是 10 个 500+ 提交开源项目的主要开发者。热衷 LLM：在 H200 "
-    "与 MI300X 上训练 GPT-2 至 1.5B 参数，近一年消费约 50 亿 token。博主：400+ 文章，月访问"
-    "约 7.5 万。欢迎 AI / 全栈岗位，广州、深圳、香港、新加坡或远程。"
+    "求真软件（TruthSoft）创始人：AI 原生软件工作室，四条业务线——模型训练与推理、"
+    "AI 转型咨询、AI 应用与智能体开发、一般应用开发。自建 52 GB CUDA 二手 GPU 实验室，"
+    "交付项目日均消耗 10 亿+ tokens。前身平方根科技（2016–2019），2026 年重启。"
 )
 
 ZH_NAME = "李智维"
-ZH_ROLE = "AI 工程师"
+ZH_ROLE = "创始人 · AI 全栈工程师"
+EN_ROLE = "Founder & AI Full Stack Engineer"
 ZH_LOCATION = "中国广州"
+TRUTHSOFT_URL = "truthsoft.dev"
 ZH_CONTACT_LABELS = {
+    "truthsoft": "求真软件",
     "github": "GitHub",
     "blog": "博客",
     "linkedin": "领英",
     "ai portfolio": "AI 作品集",
     "software portfolio": "软件作品集",
+}
+EN_CONTACT_LABELS = {
+    "truthsoft": "TruthSoft",
+    "github": "GitHub",
+    "blog": "Blog",
+    "linkedin": "LinkedIn",
+    "ai portfolio": "AI Portfolio",
+    "software portfolio": "Software Portfolio",
 }
 
 # Card canvas (3.5" x 2" scaled up)
@@ -271,11 +279,11 @@ def _wrap_cjk(draw, text, font, max_w):
 def render_card(avatar, data, intro, out_path, lang="en"):
     zh = lang == "zh"
     name = ZH_NAME if zh else data["name"]
-    role = ZH_ROLE if zh else data["role"]
+    role = ZH_ROLE if zh else EN_ROLE
     loc = ZH_LOCATION if zh else data["location"]
     about_label = "关于我" if zh else "ABOUT ME"
     find_label = "联系我" if zh else "FIND ME"
-    contact_labels = ZH_CONTACT_LABELS if zh else {}
+    contact_labels = ZH_CONTACT_LABELS if zh else EN_CONTACT_LABELS
 
     img = Image.new("RGB", (CARD_W, CARD_H), BG)
     d = ImageDraw.Draw(img)
@@ -338,16 +346,18 @@ def render_card(avatar, data, intro, out_path, lang="en"):
         d.text((x0, y), ln, font=body_f, fill=TEXT)
         y += line_h
 
-    # "FIND ME" label — prioritize GitHub / Blog / LinkedIn
-    priority = ["github", "blog", "linkedin", "ai portfolio", "software portfolio"]
+    # "FIND ME" label — TruthSoft first, then GitHub / Blog / LinkedIn
+    priority = ["truthsoft", "github", "blog", "linkedin", "ai portfolio"]
+    contact_map = dict(data["links"])
+    contact_map.setdefault("truthsoft", "https://" + TRUTHSOFT_URL)
     contacts = []
     for key in priority:
-        if key in data["links"]:
-            contacts.append((key, data["links"][key]))
+        if key in contact_map:
+            contacts.append((key, contact_map[key]))
         if len(contacts) == 5:
             break
     if not contacts:
-        contacts = list(data["links"].items())[:5]
+        contacts = list(contact_map.items())[:5]
     find_y = y + 40
     d.text((x0, find_y), find_label, font=label_f, fill=ACCENT)
     find_w = d.textlength(find_label, font=label_f)
@@ -367,7 +377,7 @@ def render_card(avatar, data, intro, out_path, lang="en"):
 
     # watermark
     wm_f = _load_font(26, lang=lang)
-    wm = f"lzwjava.com  ·  github.com/lzwjava  ·  {role}"
+    wm = f"{TRUTHSOFT_URL}  ·  lzwjava.com  ·  github.com/lzwjava"
     ww_ = CARD_W - d.textlength(wm, font=wm_f) - 80
     d.text((ww_, CARD_H - 70), wm, font=wm_f, fill=MUTED)
 
