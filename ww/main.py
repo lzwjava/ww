@@ -952,7 +952,8 @@ def _main_dispatch(raw_args: list):
         if subcmd.startswith("-"):
             if subcmd in ("--help", "-h"):
                 print(
-                    "Usage: ww card [--photo FILE] [--resume FILE] [-o DIR] [--intro TEXT] [--llm]"
+                    "Usage: ww card [--photo FILE] [--resume FILE] [-o DIR] [--lang en|zh] "
+                    "[--intro TEXT] [--llm]"
                 )
                 print("       ww card avatar [--photo FILE] [-o DIR]")
                 return

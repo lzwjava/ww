@@ -8,7 +8,7 @@ Workflow:
      short self-intro and contact links parsed from the resume.
 
 Usage:
-  ww card [--photo FILE] [--resume FILE] [-o DIR] [--intro TEXT] [--llm]
+  ww card [--photo FILE] [--resume FILE] [-o DIR] [--lang en|zh] [--intro TEXT] [--llm]
   ww card avatar [--photo FILE] [-o DIR]
 """
 
@@ -36,6 +36,24 @@ DEFAULT_INTRO = (
     "or remote."
 )
 
+ZH_INTRO = (
+    "拥有 12 年以上经验的全栈与 AI 工程师（9 年企业、3 年自由职业），参与过汇丰（HSBC）"
+    "与星展（DBS）银行平台，也是 10 个 500+ 提交开源项目的主要开发者。热衷 LLM：在 H200 "
+    "与 MI300X 上训练 GPT-2 至 1.5B 参数，近一年消费约 50 亿 token。博主：400+ 文章，月访问"
+    "约 7.5 万。欢迎 AI / 全栈岗位，广州、深圳、香港、新加坡或远程。"
+)
+
+ZH_NAME = "李智维"
+ZH_ROLE = "AI 工程师"
+ZH_LOCATION = "中国广州"
+ZH_CONTACT_LABELS = {
+    "github": "GitHub",
+    "blog": "博客",
+    "linkedin": "领英",
+    "ai portfolio": "AI 作品集",
+    "software portfolio": "软件作品集",
+}
+
 # Card canvas (3.5" x 2" scaled up)
 CARD_W, CARD_H = 2100, 1200
 
@@ -56,13 +74,28 @@ FONT_REG_PATHS = [
     "/System/Library/Fonts/HelveticaNeue.ttc",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
 ]
+FONT_CJK_BOLD_PATHS = [
+    "/System/Library/Fonts/STHeiti Medium.ttc",
+    "/System/Library/Fonts/Hiragino Sans GB.ttc",
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
+]
+FONT_CJK_REG_PATHS = [
+    "/System/Library/Fonts/Hiragino Sans GB.ttc",
+    "/System/Library/Fonts/STHeiti Medium.ttc",
+    "/System/Library/Fonts/STHeiti Light.ttc",
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+]
 
 
 # ---------------------------------------------------------------------------
 # fonts
 # ---------------------------------------------------------------------------
-def _load_font(size, bold=False):
-    for path in FONT_BOLD_PATHS if bold else FONT_REG_PATHS:
+def _load_font(size, bold=False, lang="en"):
+    if lang == "zh":
+        paths = FONT_CJK_BOLD_PATHS if bold else FONT_CJK_REG_PATHS
+    else:
+        paths = FONT_BOLD_PATHS if bold else FONT_REG_PATHS
+    for path in paths:
         try:
             return ImageFont.truetype(path, size)
         except OSError:
@@ -104,30 +137,39 @@ def parse_resume(md_path):
     return data
 
 
-def _curated_intro():
-    return DEFAULT_INTRO
+def _curated_intro(lang="en"):
+    return ZH_INTRO if lang == "zh" else DEFAULT_INTRO
 
 
-def _llm_intro(resume_text):
+def _llm_intro(resume_text, lang="en"):
     """Generate a short first-person intro with OpenRouter; fallback on failure."""
     try:
         from ww.llm.openrouter_client import call_openrouter_api_with_messages
 
-        prompt = (
-            "Write a concise 3-4 sentence professional 'About me' intro for a "
-            "business card, in first person, based on this resume. Keep it under "
-            "430 characters total. Plain text only, no markdown, no heading.\n\n"
-            + (resume_text[:6000] if resume_text else "")
-        )
+        if lang == "zh":
+            prompt = (
+                "根据这份简历，为名片写一段简洁的中文“关于我”介绍，第一人称，"
+                "3-4 句话，总字数控制在 150 字以内。纯文本，不要 markdown，不要标题。\n\n"
+                + (resume_text[:6000] if resume_text else "")
+            )
+            limit = 170
+        else:
+            prompt = (
+                "Write a concise 3-4 sentence professional 'About me' intro for a "
+                "business card, in first person, based on this resume. Keep it under "
+                "430 characters total. Plain text only, no markdown, no heading.\n\n"
+                + (resume_text[:6000] if resume_text else "")
+            )
+            limit = 460
         out = call_openrouter_api_with_messages(
             [{"role": "user", "content": prompt}], max_tokens=300
         )
         text = out.strip().strip('"').strip()
         if text:
-            return text[:460]
+            return text[:limit]
     except Exception as e:  # noqa: BLE001 — network/API issues, fall back
         print(f"[card] LLM intro failed ({e}); using curated intro")
-    return _curated_intro()
+    return _curated_intro(lang)
 
 
 # ---------------------------------------------------------------------------
@@ -191,7 +233,9 @@ def _circle_mask(size):
     return mask
 
 
-def _wrap(draw, text, font, max_w):
+def _wrap(draw, text, font, max_w, cjk=False):
+    if cjk:
+        return _wrap_cjk(draw, text, font, max_w)
     words = text.split()
     lines, cur = [], ""
     for w in words:
@@ -207,7 +251,32 @@ def _wrap(draw, text, font, max_w):
     return lines
 
 
-def render_card(avatar, data, intro, out_path):
+def _wrap_cjk(draw, text, font, max_w):
+    """CJK-friendly wrap — Chinese can break anywhere (prefer after spaces/punct)."""
+    lines, cur = [], ""
+    for ch in text:
+        if draw.textlength(cur + ch, font=font) <= max_w:
+            cur += ch
+        else:
+            cur = cur.rstrip()
+            if cur:
+                lines.append(cur)
+            cur = "" if ch == " " else ch
+    cur = cur.strip()
+    if cur:
+        lines.append(cur)
+    return lines
+
+
+def render_card(avatar, data, intro, out_path, lang="en"):
+    zh = lang == "zh"
+    name = ZH_NAME if zh else data["name"]
+    role = ZH_ROLE if zh else data["role"]
+    loc = ZH_LOCATION if zh else data["location"]
+    about_label = "关于我" if zh else "ABOUT ME"
+    find_label = "联系我" if zh else "FIND ME"
+    contact_labels = ZH_CONTACT_LABELS if zh else {}
+
     img = Image.new("RGB", (CARD_W, CARD_H), BG)
     d = ImageDraw.Draw(img)
 
@@ -236,20 +305,17 @@ def render_card(avatar, data, intro, out_path):
     )
 
     # name
-    name_f = _load_font(72, bold=True)
-    name = data["name"]
+    name_f = _load_font(72, bold=True, lang=lang)
     nw = d.textlength(name, font=name_f)
     d.text((380 - nw / 2, 580), name, font=name_f, fill=TEXT)
 
     # role
-    role_f = _load_font(36, bold=True)
-    role = data["role"]
+    role_f = _load_font(36, bold=True, lang=lang)
     rw = d.textlength(role, font=role_f)
     d.text((380 - rw / 2, 690), role, font=role_f, fill=ACCENT)
 
     # location
-    loc_f = _load_font(30)
-    loc = data["location"]
+    loc_f = _load_font(30, lang=lang)
     lw_ = d.textlength(loc, font=loc_f)
     d.text((380 - lw_ / 2, 770), loc, font=loc_f, fill=MUTED)
 
@@ -258,15 +324,16 @@ def render_card(avatar, data, intro, out_path):
     max_w = CARD_W - x0 - 160  # right margin 160
 
     # "ABOUT" label
-    label_f = _load_font(34, bold=True)
-    d.text((x0, y0), "ABOUT ME", font=label_f, fill=ACCENT)
-    d.rectangle((x0, y0 + 52, x0 + 320, y0 + 56), fill=ACCENT)
+    label_f = _load_font(34, bold=True, lang=lang)
+    d.text((x0, y0), about_label, font=label_f, fill=ACCENT)
+    about_w = d.textlength(about_label, font=label_f)
+    d.rectangle((x0, y0 + 52, x0 + about_w + 40, y0 + 56), fill=ACCENT)
 
     # intro body
-    body_f = _load_font(38)
-    lines = _wrap(d, intro, body_f, max_w)
+    body_f = _load_font(38, lang=lang)
+    lines = _wrap(d, intro, body_f, max_w, cjk=zh)
     y = y0 + 96
-    line_h = 56
+    line_h = 58 if zh else 56
     for ln in lines:
         d.text((x0, y), ln, font=body_f, fill=TEXT)
         y += line_h
@@ -282,23 +349,25 @@ def render_card(avatar, data, intro, out_path):
     if not contacts:
         contacts = list(data["links"].items())[:5]
     find_y = y + 40
-    d.text((x0, find_y), "FIND ME", font=label_f, fill=ACCENT)
-    d.rectangle((x0, find_y + 52, x0 + 260, find_y + 56), fill=ACCENT)
+    d.text((x0, find_y), find_label, font=label_f, fill=ACCENT)
+    find_w = d.textlength(find_label, font=label_f)
+    d.rectangle((x0, find_y + 52, x0 + find_w + 40, find_y + 56), fill=ACCENT)
 
-    contact_f = _load_font(32)
+    contact_f = _load_font(32, lang=lang)
     cy_ = find_y + 96
     contact_h = 54
     if contacts:
         for label, url in contacts[:5]:
             short = url.replace("https://", "").replace("http://", "")
-            d.text((x0, cy_), f"{label.title()}: {short}", font=contact_f, fill=TEXT)
+            disp = contact_labels.get(label, label.title())
+            d.text((x0, cy_), f"{disp}: {short}", font=contact_f, fill=TEXT)
             cy_ += contact_h
     else:
         d.text((x0, cy_), "github.com/lzwjava · lzwjava.com", font=contact_f, fill=TEXT)
 
     # watermark
-    wm_f = _load_font(26)
-    wm = f"lzwjava.com  ·  github.com/lzwjava  ·  {data['role']}"
+    wm_f = _load_font(26, lang=lang)
+    wm = f"lzwjava.com  ·  github.com/lzwjava  ·  {role}"
     ww_ = CARD_W - d.textlength(wm, font=wm_f) - 80
     d.text((ww_, CARD_H - 70), wm, font=wm_f, fill=MUTED)
 
@@ -316,6 +385,7 @@ def _usage():
     print("  --photo, -p FILE   Source photo (default: ~/Downloads photo)")
     print("  --resume, -r FILE  Resume Markdown (default: jekyll-ai-blog resume)")
     print("  --out, -o DIR      Output directory (default: ./card_output)")
+    print("  --lang en|zh       Card language (default: en)")
     print("  --intro TEXT       Custom 'About me' intro text")
     print("  --llm              Generate the intro with OpenRouter from the resume")
     print("  -h, --help         Show this help")
@@ -332,6 +402,7 @@ def main():
     photo = None
     resume = None
     out_dir = "card_output"
+    lang = "en"
     intro = None
     use_llm = False
 
@@ -349,6 +420,9 @@ def main():
             i += 2
         elif a == "--intro":
             intro = args[i + 1]
+            i += 2
+        elif a == "--lang":
+            lang = args[i + 1]
             i += 2
         elif a == "--llm":
             use_llm = True
@@ -372,6 +446,9 @@ def main():
     if photo is None or not os.path.exists(photo):
         print("[card] no photo found — pass one with --photo FILE")
         sys.exit(1)
+    if lang not in ("en", "zh"):
+        print(f"[card] unknown --lang {lang!r} (expected en or zh)")
+        sys.exit(1)
 
     # ---- step 1: avatar ----------------------------------------------------
     avatar_img, avatar_path = extract_avatar(photo, out_dir)
@@ -388,9 +465,9 @@ def main():
     data = parse_resume(resume)
 
     if intro is None:
-        intro = _llm_intro(resume_text) if use_llm else _curated_intro()
+        intro = _llm_intro(resume_text, lang) if use_llm else _curated_intro(lang)
 
     # ---- step 3: business card ---------------------------------------------
-    out_path = os.path.join(out_dir, "business_card.png")
-    render_card(avatar_img, data, intro, out_path)
-    print(f"[card] done — card + avatar in: {os.path.abspath(out_dir)}")
+    out_path = os.path.join(out_dir, f"business_card_{lang}.png")
+    render_card(avatar_img, data, intro, out_path, lang)
+    print(f"[card] done ({lang}) — card + avatar in: {os.path.abspath(out_dir)}")
