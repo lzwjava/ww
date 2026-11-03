@@ -29,8 +29,8 @@ DEFAULT_RESUME = os.path.expanduser(
 DEFAULT_INTRO = (
     "Founder of TruthSoft (求真软件). Previously a software engineer at LeanCloud "
     "and TEKsystems, and founder of Fun Live (趣直播) and Square Root Technology — "
-    "serving Yuanfudao (猿辅导), Fenbi (粉笔), Jiangsu TV, DBS and HSBC as a project "
-    "manager or software engineer.\n\n"
+    "serving around 50 companies as a project manager or software engineer, "
+    "including Yuanfudao (猿辅导), Fenbi (粉笔), Jiangsu TV, DBS and HSBC.\n\n"
     "Full-stack & mobile engineer: Android, iOS, Vue, React, Angular, Java/Spring, "
     "Python, small model training & inference (PyTorch/CUDA); familiar with logging, "
     "database and microservice modules on Alibaba Cloud, AWS and Azure.\n\n"
@@ -42,7 +42,7 @@ DEFAULT_INTRO = (
 ZH_INTRO = (
     "求真软件（TruthSoft）创始人。曾就职 LeanCloud、TEKsystems，创办趣直播与平方根科技，"
     "以项目经理/软件工程师身份服务过猿辅导、粉笔、江苏卫视、星展银行（DBS）、"
-    "汇丰银行（HSBC）。\n\n"
+    "汇丰银行（HSBC）等五十家公司。\n\n"
     "移动端（Android/iOS）、前端（Vue/React/Angular）、后端（Java/Spring、Python）、"
     "小模型训练与推理（PyTorch/CUDA），熟悉阿里云、AWS、Azure 上的日志、"
     "数据库与微服务架构。\n\n"
