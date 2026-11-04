@@ -27,29 +27,35 @@ DEFAULT_RESUME = os.path.expanduser(
 )
 
 DEFAULT_INTRO = (
-    "Founder of TruthSoft, a Guangzhou-based AI-native studio. Previously at "
-    "LeanCloud and TEKsystems, founder of Fun Live and Square Root Technology — "
-    "delivered 50+ projects as a PM / software engineer for Yuanfudao, Fenbi, "
-    "Jiangsu TV, DBS, HSBC.\n\n"
+    "Founder of TruthSoft, a Guangzhou-based AI-native software company with four "
+    "business lines: model training & inference, AI transformation consulting, "
+    "AI application & agent development, and general app development. "
+    "Ex-LeanCloud/TEKsystems; 50+ projects for Yuanfudao, Fenbi, Jiangsu "
+    "TV, DBS, HSBC.\n\n"
     "Full-stack engineer & mobile dev: Android, iOS, Vue, React, Angular, "
     "Java/Spring, Python; small-model training & inference with PyTorch/CUDA; "
     "cloud: Alibaba Cloud, AWS, Azure.\n\n"
     "Male, born 1995, Guangzhou · NOIP top 300 · IELTS 6.5. One year at Beijing "
     "Forestry University, then self-taught along the way; now an associate degree "
     "at GDUFS (13 exams) & an MSc at CSTU. 16,000+ engineers across platforms; "
-    "blog ~100K monthly views."
+    "blog ~100K monthly views.\n\n"
+    "Open-source knowledge base + blog with ~15K shared notes — visit "
+    "lzwjava.com, hope it helps!"
 )
 
 ZH_INTRO = (
-    "求真软件创始人、广州 AI 原生软件公司。曾就职 LeanCloud、TEKsystems，"
-    "创办趣直播与平方根科技，以项目经理/软件工程师身份交付 50+ 项目，服务过"
-    "猿辅导、粉笔、江苏卫视、星展银行 DBS、汇丰银行 HSBC 等。\n\n"
+    "求真软件创始人，广州一家 AI 原生软件公司，四条业务线：模型训练与推理、"
+    "AI 转型咨询、AI 应用与智能体开发、一般应用开发。曾就职 LeanCloud、"
+    "TEKsystems，创办趣直播与平方根科技，以项目经理/软件工程师身份交付 50+ 项目，"
+    "服务过猿辅导、粉笔、江苏卫视、星展银行 DBS、汇丰银行 HSBC 等。\n\n"
     "技术方面，熟悉移动端 Android/iOS、前端 Vue/React/Angular、"
     "后端 Java/Spring/Python、小模型训练与推理 PyTorch/CUDA，以及"
     "阿里云、AWS、Azure 上的日志、数据库与微服务架构。\n\n"
-    "男，1995 年生，广州。广东 NOIP 2011 前 300，雅思 6.5。曾就读北京林业大学一年"
+    "男，1995 年生。广东 NOIP 2011 前 300，雅思 6.5。曾就读北京林业大学一年"
     "后退学工作创业；现读广东外语外贸大学专科（已过 13 科）、美国加州科学技术大学 "
-    "CSTU 硕士在读。各平台连接 16000+ 工程师，博客月访问约 10 万。"
+    "CSTU 硕士在读。各平台连接 16000+ 工程师，博客月访问约 10 万。\n\n"
+    "开源知识库博客，近 1.5 万篇技术笔记免费分享，欢迎访问 lzwjava.com，"
+    "希望能帮到你！"
 )
 
 ZH_NAME = "李智维"
@@ -60,6 +66,7 @@ TRUTHSOFT_URL = "truthsoft.dev"
 WECHAT_QR = "/Users/lzwjava/Downloads/qrcode.jpg"  # WeChat QR code image
 PHONE = "+86 132-6163-0925"
 EMAIL = "lzwjava@gmail.com"
+
 ZH_CONTACT_LABELS = {
     "truthsoft": "求真软件",
     "email": "邮箱",
@@ -83,8 +90,8 @@ EN_CONTACT_LABELS = {
     "software portfolio": "Software Portfolio",
 }
 
-# Card canvas (3.5" x 2" scaled up)
-CARD_W, CARD_H = 2100, 1200
+# Card canvas (taller landscape so the About text fits comfortably)
+CARD_W, CARD_H = 2300, 1920
 
 # Palettes — both matched to the avatar photo tones (warm beige/brown/caramel)
 THEMES = {
@@ -346,12 +353,19 @@ def _word_wrap(text, max_w, width_fn):
     return lines
 
 
-def render_card(avatar, data, intro, out_path, lang="en", scale=2, theme="dark", qr_path=None):
+def render_card(
+    avatar, data, intro, out_path, lang="en", scale=2, theme="dark", qr_path=None
+):
     zh = lang == "zh"
     s = float(scale)
     pal = THEMES.get(theme, THEMES["dark"])
     (BG, PANEL, ACCENT, TEXT, MUTED, DIVIDER) = (
-        pal["bg"], pal["panel"], pal["accent"], pal["text"], pal["muted"], pal["divider"],
+        pal["bg"],
+        pal["panel"],
+        pal["accent"],
+        pal["text"],
+        pal["muted"],
+        pal["divider"],
     )
     name = ZH_NAME if zh else data["name"]
     role = ZH_ROLE if zh else EN_ROLE
@@ -363,13 +377,13 @@ def render_card(avatar, data, intro, out_path, lang="en", scale=2, theme="dark",
     d = ImageDraw.Draw(img)
 
     # --- left panel ---------------------------------------------------------
-    d.rectangle((0, 0, 760 * s, CARD_H * s), fill=PANEL)
-    d.rectangle((756 * s, 0, 760 * s, CARD_H * s), fill=ACCENT)  # accent divider
+    panel_w = 780
+    d.rectangle((0, 0, panel_w * s, CARD_H * s), fill=PANEL)
 
     # avatar (circular)
-    av_size = int(400 * s)
+    av_size = int(520 * s)
     av = avatar.resize((av_size, av_size), Image.LANCZOS)
-    av_center = (int(380 * s), int(292 * s))
+    av_center = (int(panel_w / 2 * s), int(465 * s))
     img.paste(
         av,
         (av_center[0] - av_size // 2, av_center[1] - av_size // 2),
@@ -388,19 +402,19 @@ def render_card(avatar, data, intro, out_path, lang="en", scale=2, theme="dark",
     )
 
     # name
-    name_f = _load_font(int(80 * s), bold=True, lang=lang)
+    name_f = _load_font(int(96 * s), bold=True, lang=lang)
     nw = d.textlength(name, font=name_f)
-    d.text((380 * s - nw / 2, 560 * s), name, font=name_f, fill=TEXT)
+    d.text((panel_w / 2 * s - nw / 2, 815 * s), name, font=name_f, fill=TEXT)
 
     # role
-    role_f = _load_font(int(40 * s), bold=True, lang=lang)
+    role_f = _load_font(int(48 * s), bold=True, lang=lang)
     rw = d.textlength(role, font=role_f)
-    d.text((380 * s - rw / 2, 668 * s), role, font=role_f, fill=ACCENT)
+    d.text((panel_w / 2 * s - rw / 2, 955 * s), role, font=role_f, fill=ACCENT)
 
     # --- WeChat QR code (centered under the role line) ----------------------
     qr_ready = False
     if qr_path and os.path.exists(qr_path):
-        qr_target = int(130 * s)
+        qr_target = int(165 * s)
         pad = int(8 * s)
         try:
             qr = Image.open(qr_path).convert("RGB")
@@ -413,10 +427,12 @@ def render_card(avatar, data, intro, out_path, lang="en", scale=2, theme="dark",
                     (qr.size[1] + side) // 2,
                 )
             ).resize((qr_target, qr_target), Image.LANCZOS)
-            chip = Image.new("RGB", (qr_target + 2 * pad, qr_target + 2 * pad), (255, 255, 255))
+            chip = Image.new(
+                "RGB", (qr_target + 2 * pad, qr_target + 2 * pad), (255, 255, 255)
+            )
             chip.paste(qr, (pad, pad))
-            chip_left = int(380 * s - (qr_target + 2 * pad) / 2)
-            chip_top = int(736 * s)  # just below the role line
+            chip_left = int(panel_w / 2 * s - (qr_target + 2 * pad) / 2)
+            chip_top = int(1080 * s)  # just below the role line
             img.paste(chip, (chip_left, chip_top))
             qr_ready = True
         except Exception as e:  # noqa: BLE001
@@ -438,13 +454,17 @@ def render_card(avatar, data, intro, out_path, lang="en", scale=2, theme="dark",
     if not contacts:
         contacts = list(contact_map.items())[:4]
 
-    d.line((60 * s, 884 * s, 700 * s, 884 * s), fill=DIVIDER, width=max(2, int(3 * s)))  # divider
-    cap_f = _load_font(int(28 * s), bold=True, lang=lang)
-    d.text((60 * s, 910 * s), contact_label, font=cap_f, fill=ACCENT)
+    d.line(
+        (60 * s, 1440 * s, panel_w * s - 60 * s, 1440 * s),
+        fill=DIVIDER,
+        width=max(2, int(3 * s)),
+    )  # divider
+    cap_f = _load_font(int(34 * s), bold=True, lang=lang)
+    d.text((60 * s, 1472 * s), contact_label, font=cap_f, fill=ACCENT)
 
-    contact_f = _load_font(int(30 * s), lang=lang)
-    cy_ = 956 * s
-    contact_h = 42 * s
+    contact_f = _load_font(int(36 * s), lang=lang)
+    cy_ = 1530 * s
+    contact_h = 58 * s
     for label, val in contacts:
         short = val.replace("https://", "").replace("http://", "")
         disp = contact_labels.get(label, label.title())
@@ -452,22 +472,22 @@ def render_card(avatar, data, intro, out_path, lang="en", scale=2, theme="dark",
         cy_ += contact_h
 
     # --- right: about me ----------------------------------------------------
-    x0, y0 = 900 * s, 150 * s
-    max_w = CARD_W * s - x0 - 160 * s  # right margin 160
+    x0, y0 = 1040 * s, 190 * s
+    max_w = CARD_W * s - x0 - 170 * s  # right margin 170
 
-    label_f = _load_font(int(38 * s), bold=True, lang=lang)
+    label_f = _load_font(int(42 * s), bold=True, lang=lang)
     d.text((x0, y0), about_label, font=label_f, fill=ACCENT)
     about_w = d.textlength(about_label, font=label_f)
-    d.rectangle((x0, y0 + 52 * s, x0 + about_w + 40 * s, y0 + 56 * s), fill=ACCENT)
+    d.rectangle((x0, y0 + 56 * s, x0 + about_w + 44 * s, y0 + 61 * s), fill=ACCENT)
 
     # Arial has no CJK glyphs — for mixed EN text draw Latin with Arial and
     # CJK chars with a CJK font (per-run, keeps Arial wrapping metrics).
     # Bold weights for a bit more presence on the About Me body.
-    latin_body_f = _load_font(int(38 * s), bold=True, lang="en")
-    cjk_body_f = _load_font(int(40 * s), bold=True, lang="zh")
-    line_h = (60 if zh else 58) * s
-    para_gap = 22 * s
-    y = y0 + 96 * s
+    latin_body_f = _load_font(int(44 * s), bold=True, lang="en")
+    cjk_body_f = _load_font(int(46 * s), bold=True, lang="zh")
+    line_h = (70 if zh else 68) * s
+    para_gap = 26 * s
+    y = y0 + 116 * s
     for para in intro.split("\n\n"):
         if not para.strip():
             continue
@@ -475,7 +495,9 @@ def render_card(avatar, data, intro, out_path, lang="en", scale=2, theme="dark",
         if zh:
             lines = _wrap_cjk(d, para, cjk_body_f, max_w)
         elif _has_cjk(para):
-            lines = _word_wrap(para, max_w, lambda t: _mixed_width(t, latin_body_f, cjk_body_f))
+            lines = _word_wrap(
+                para, max_w, lambda t: _mixed_width(t, latin_body_f, cjk_body_f)
+            )
         else:
             lines = _word_wrap(para, max_w, lambda t: latin_body_f.getlength(t))
         for ln in lines:
@@ -487,10 +509,10 @@ def render_card(avatar, data, intro, out_path, lang="en", scale=2, theme="dark",
         y += para_gap
 
     # watermark
-    wm_f = _load_font(int(30 * s), lang=lang)
+    wm_f = _load_font(int(34 * s), lang=lang)
     wm = f"{TRUTHSOFT_URL}  ·  lzwjava.com  ·  github.com/lzwjava"
-    ww_ = CARD_W * s - d.textlength(wm, font=wm_f) - 80 * s
-    d.text((ww_, CARD_H * s - 70 * s), wm, font=wm_f, fill=MUTED)
+    ww_ = CARD_W * s - d.textlength(wm, font=wm_f) - 90 * s
+    d.text((ww_, CARD_H * s - 100 * s), wm, font=wm_f, fill=MUTED)
 
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
     img.save(out_path, "PNG")
@@ -507,8 +529,12 @@ def _usage():
     print("  --resume, -r FILE  Resume Markdown (default: jekyll-ai-blog resume)")
     print("  --out, -o DIR      Output directory (default: ./card_output)")
     print("  --lang en|zh       Card language (default: en)")
-    print(f"  --theme dark|light Color theme (default: dark; options: {', '.join(THEMES)})")
-    print("  --scale N          Pixel density multiplier 1-8 (default: 2, i.e. 4200x2400)")
+    print(
+        f"  --theme dark|light Color theme (default: dark; options: {', '.join(THEMES)})"
+    )
+    print(
+        "  --scale N          Pixel density multiplier 1-8 (default: 2, i.e. 4200x2400)"
+    )
     print("  --qr FILE          WeChat QR code image (default: ~/Downloads/qrcode.jpg)")
     print("  --intro TEXT       Custom 'About me' intro text")
     print("  --llm              Generate the intro with OpenRouter from the resume")
@@ -619,5 +645,7 @@ def main():
     # ---- step 3: business card ---------------------------------------------
     out_path = os.path.join(out_dir, f"business_card_{lang}.png")
     render_card(avatar_img, data, intro, out_path, lang, scale, theme, qr_path)
-    print(f"[card] rendered {theme} theme at {scale:.1f}x ({int(CARD_W*scale)}x{int(CARD_H*scale)} px)")
+    print(
+        f"[card] rendered {theme} theme at {scale:.1f}x ({int(CARD_W * scale)}x{int(CARD_H * scale)} px)"
+    )
     print(f"[card] done ({lang}) — card + avatar in: {os.path.abspath(out_dir)}")
