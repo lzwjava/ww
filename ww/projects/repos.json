@@ -7,12 +7,10 @@
       "DeepSeek-Coder-V2",
       "Janus",
       "Qwen3",
-      "Qwen2.5-Coder",
       "Qwen2.5-VL",
       "gpt-2",
       "CLIP",
       "whisper-openai",
-      "evals",
       "llama3",
       "Kimi-k1.5",
       "Qwen2-Audio",
@@ -31,7 +29,6 @@
       "nanoGPT",
       "modded-nanogpt",
       "llm.c",
-      "nanochat",
       "bitsandbytes",
       "fairscale",
       "fairseq",
@@ -62,7 +59,6 @@
       "native-sparse-attention-triton"
     ],
     "ai-inference": [
-      "TensorRT-LLM",
       "dinov2",
       "ggml",
       "ktransformers",
@@ -87,7 +83,6 @@
       "chatbox",
       "aider",
       "LibreChat",
-      "litellm",
       "anything-llm",
       "Whisper",
       "facefusion",
@@ -96,7 +91,6 @@
       "voice-changer",
       "h2ogpt",
       "langchain",
-      "openai-cookbook",
       "anthropic-cookbook",
       "llama_index",
       "mlflow",
@@ -106,7 +100,6 @@
     "ai-agents": [
       "hermes-agent",
       "codex",
-      "claw-code",
       "gpt-researcher",
       "OpenHands",
       "autogen",
@@ -150,7 +143,6 @@
       "yazi",
       "glow",
       "delta",
-      "bun",
       "ramulator2",
       "tiny-gpu",
       "verilator",
@@ -164,7 +156,6 @@
       "openwrt",
       "searxng",
       "shadowsocks-rust",
-      "greptimedb",
       "netty",
       "clash-core",
       "mihomo",
@@ -174,8 +165,7 @@
       "quivr",
       "llm-app",
       "v2rayN",
-      "seeker",
-      "weaviate"
+      "seeker"
     ],
     "web-platforms": [
       "jekyll",
