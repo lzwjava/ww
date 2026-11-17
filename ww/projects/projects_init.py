@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import json
-import os
 import subprocess
 import sys
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 REPOS_BASE = Path.home() / "projects"
@@ -221,7 +219,9 @@ def clone_repo(category: str, name: str, dry_run: bool) -> tuple[str, bool, str]
         print(" done")
         return name, True, f"cloned from {url}"
     else:
-        err = result.stderr.strip().split("\n")[-1] if result.stderr else "unknown error"
+        err = (
+            result.stderr.strip().split("\n")[-1] if result.stderr else "unknown error"
+        )
         print(f" failed: {err}")
         # Clean up partial clone
         if target.exists():
