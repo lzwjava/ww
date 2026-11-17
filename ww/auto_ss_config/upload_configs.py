@@ -51,8 +51,9 @@ def decode_hy2_url(hy2_url):
             server = server_part
             port = 443  # Default port for Hysteria2
 
-        # Extract SNI from query parameters
+        # Extract SNI and insecure from query parameters
         sni = None
+        insecure = False
         if "?" in params:
             query_string = params.split("?", 1)[1]
             for param in query_string.split("&"):
@@ -60,6 +61,8 @@ def decode_hy2_url(hy2_url):
                     key, value = param.split("=", 1)
                     if key == "sni":
                         sni = value
+                    elif key == "insecure" and value.lower() in ("1", "true"):
+                        insecure = True
 
         return {
             "type": "hysteria2",
@@ -67,6 +70,7 @@ def decode_hy2_url(hy2_url):
             "port": port,
             "password": password,
             "sni": sni,
+            "insecure": insecure,
         }
     return None
 
@@ -108,6 +112,8 @@ def create_proxy_config(proxy, index):
         }
         if proxy.get("sni"):
             config["sni"] = proxy["sni"]
+        if proxy.get("insecure"):
+            config["skip-cert-verify"] = True
         return config
     else:
         logger.error(f"Unknown proxy type: {proxy_type}")
@@ -220,10 +226,10 @@ def main():
     bucket_name = config["bucket_name"]
     ss_urls = config["ss_urls"]
 
-    if len(ss_urls) == 1:
+    if len(ss_urls) < 1:
+        raise ValueError("app_config.yaml must contain at least 1 SS URL")
+    elif len(ss_urls) == 1:
         ss_urls.append(ss_urls[0])
-    elif len(ss_urls) != 2:
-        raise ValueError("app_config.yaml must contain exactly 2 SS URLs")
 
     logger.info("Generating Clash config...")
     clash_config_file = generate_clash_config(ss_urls)

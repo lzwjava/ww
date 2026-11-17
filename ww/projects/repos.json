@@ -24,7 +24,6 @@
       "openfold"
     ],
     "ai-training": [
-      "pytorch",
       "Megatron-LM",
       "nanoGPT",
       "modded-nanogpt",
@@ -62,7 +61,6 @@
       "dinov2",
       "ggml",
       "ktransformers",
-      "llama.cpp",
       "llamafile",
       "mlx",
       "mlx-examples",
@@ -82,7 +80,6 @@
       "langfuse",
       "chatbox",
       "aider",
-      "LibreChat",
       "anything-llm",
       "Whisper",
       "facefusion",
@@ -92,13 +89,10 @@
       "h2ogpt",
       "langchain",
       "anthropic-cookbook",
-      "llama_index",
-      "mlflow",
       "bark",
       "DaviRain-Su/empty"
     ],
     "ai-agents": [
-      "hermes-agent",
       "codex",
       "gpt-researcher",
       "OpenHands",
@@ -108,9 +102,7 @@
       "opencode",
       "gemini-cli",
       "claude-code",
-      "AutoGPT",
       "mem0",
-      "crewAI",
       "langgraph",
       "ORG2"
     ],
@@ -121,7 +113,6 @@
       "alacritty",
       "uv",
       "nmap",
-      "warp",
       "iclaw",
       "mcp",
       "ROCm",
@@ -171,7 +162,6 @@
       "jekyll",
       "kramdown",
       "huggingface_hub",
-      "Telegram-iOS",
       "goatcounter"
     ]
   }

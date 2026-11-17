@@ -37,7 +37,6 @@ NAME_TO_REPO: dict[str, str] = {
     "GLM": "THUDM/GLM",
     "openfold": "aqlaboratory/openfold",
     # ai-training
-    "pytorch": "pytorch/pytorch",
     "Megatron-LM": "NVIDIA/Megatron-LM",
     "nanoGPT": "karpathy/nanoGPT",
     "modded-nanogpt": "KellerJordan/modded-nanogpt",
@@ -74,7 +73,6 @@ NAME_TO_REPO: dict[str, str] = {
     "dinov2": "facebookresearch/dinov2",
     "ggml": "ggml-org/ggml",
     "ktransformers": "kvcache-ai/ktransformers",
-    "llama.cpp": "ggml-org/llama.cpp",
     "llamafile": "Mozilla-Ocho/llamafile",
     "mlx": "ml-explore/mlx",
     "mlx-examples": "ml-explore/mlx-examples",
@@ -93,7 +91,6 @@ NAME_TO_REPO: dict[str, str] = {
     "langfuse": "langfuse/langfuse",
     "chatbox": "Bin-Huang/chatbox",
     "aider": "Aider-AI/aider",
-    "LibreChat": "danny-avila/LibreChat",
     "anything-llm": "Mintplex-Labs/anything-llm",
     "Whisper": "openai/whisper",
     "facefusion": "facefusion/facefusion",
@@ -102,12 +99,9 @@ NAME_TO_REPO: dict[str, str] = {
     "h2ogpt": "h2oai/h2ogpt",
     "langchain": "langchain-ai/langchain",
     "anthropic-cookbook": "anthropics/anthropic-cookbook",
-    "llama_index": "run-llama/llama_index",
-    "mlflow": "mlflow/mlflow",
     "bark": "suno-ai/bark",
     "DaviRain-Su/empty": "DaviRain-Su/empty",
     # ai-agents
-    "hermes-agent": "NousResearch/hermes-agent",
     "codex": "openai/codex",
     "gpt-researcher": "assafelovic/gpt-researcher",
     "OpenHands": "All-Hands-AI/OpenHands",
@@ -117,9 +111,7 @@ NAME_TO_REPO: dict[str, str] = {
     "opencode": "opencode-ai/opencode",
     "gemini-cli": "google-gemini/gemini-cli",
     "claude-code": "anthropics/claude-code",
-    "AutoGPT": "Significant-Gravitas/AutoGPT",
     "mem0": "mem0ai/mem0",
-    "crewAI": "crewAIInc/crewAI",
     "langgraph": "langchain-ai/langgraph",
     "ORG2": "",  # placeholder — skip
     # dev-tools
@@ -129,7 +121,6 @@ NAME_TO_REPO: dict[str, str] = {
     "alacritty": "alacritty/alacritty",
     "uv": "astral-sh/uv",
     "nmap": "nmap/nmap",
-    "warp": "warpdotdev/Warp",
     "iclaw": "iClaw/iclaw",
     "mcp": "modelcontextprotocol/mcp",
     "ROCm": "ROCm/ROCm",
@@ -176,7 +167,6 @@ NAME_TO_REPO: dict[str, str] = {
     "jekyll": "jekyll/jekyll",
     "kramdown": "gettalong/kramdown",
     "huggingface_hub": "huggingface/huggingface_hub",
-    "Telegram-iOS": "TelegramMessenger/Telegram-iOS",
     "goatcounter": "arp242/goatcounter",
 }
 

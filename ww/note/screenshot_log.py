@@ -12,6 +12,7 @@ from ww.llm.openrouter_client import (
     call_openrouter_api_with_messages,
 )
 from ww.note.create_note_utils import (
+    TITLE_MAX_CHARS,
     get_base_path,
     process_title_for_filename,
 )
@@ -120,6 +121,31 @@ def _summarize_with_extra_prompt(description, extra_prompt=None):
     return result
 
 
+def _is_degenerate_title(title):
+    """True when the LLM response is unusable as a short title.
+
+    Guards against reasoning-only fallback output (e.g. `content was null`, so
+    the raw chain-of-thought was returned instead of the actual title).
+    """
+    if not title:
+        return True
+    if "\n" in title:
+        return True
+    words = title.split()
+    return len(words) > 6 or len(title) > TITLE_MAX_CHARS
+
+
+def _fallback_title(content):
+    """Deterministic, human-readable title derived from content's first words."""
+    words = (content or "").split()
+    if not words:
+        return "screenshot-note"
+    title = " ".join(words[:6])
+    if len(title) > TITLE_MAX_CHARS:
+        title = title[:TITLE_MAX_CHARS].rsplit(" ", 1)[0]
+    return title
+
+
 def _generate_title_from_content(content, extra_prompt=None):
     snippet = content[:800]
     prompt = "Give a short English title (at most 6 words, no quotes, no explanation) for the following content"
@@ -129,8 +155,21 @@ def _generate_title_from_content(content, extra_prompt=None):
     result = call_openrouter_api(prompt, max_tokens=1024)
     if not result:
         print("Failed to generate title. Using fallback.")
-        return "screenshot-note"
+        return _fallback_title(content)
     title = result.strip().strip('"').strip("'")
+    if _is_degenerate_title(title):
+        # Likely reasoning-only output cut off by max_tokens. Retry once with a
+        # larger budget so the model can finish reasoning and emit the answer.
+        print(
+            f"[warn] Degenerate title output ({len(title)} chars). "
+            f"Retrying with a larger token budget..."
+        )
+        result = call_openrouter_api(prompt, max_tokens=4096)
+        if result:
+            title = result.strip().strip('"').strip("'")
+    if _is_degenerate_title(title):
+        print("[warn] Title generation failed; using deterministic fallback.")
+        return _fallback_title(content)
     return title
 
 

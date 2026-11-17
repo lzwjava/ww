@@ -22,8 +22,12 @@ def process_title_for_filename(title):
     title = title.strip()
     title = re.sub(r"\s+", "-", title)
     title = re.sub(r"[^a-zA-Z0-9-]", "", title)
+    title = re.sub(r"-+", "-", title)
     title = title.lower()
-    return title
+    # Cap slug length so the resulting filename stays under the filesystem
+    # limit (~255 bytes per component), even if the title is garbage (e.g.
+    # reasoning-only output from an LLM).
+    return title[:120].strip("-")
 
 
 def clean_grok_tags(content):
